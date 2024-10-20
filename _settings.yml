@@ -1,0 +1,7 @@
+name: Lukes Script Repository
+version:
+  major: 1
+  minor: 0
+dont_source_scripts:
+  - _install.sh
+  - helpers.sh
