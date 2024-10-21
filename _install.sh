@@ -61,7 +61,7 @@ if ! grep -q "$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
     # Create a block of code to inject into .bashrc
     INJECTION_CODE="\n\n$BASHRC_IDENTIFIER\n"
     INJECTION_CODE+="echo -e \"\e[34m[info] Initializing Lukes Script Repository:\e[0m\"\n"
-    INJECTION_CODE+="for i in \$HOME/scripts/*.sh\n"
+    INJECTION_CODE+="for i in \$HOME/scripts/inject/*.sh\n"
     INJECTION_CODE+="do\n"
     INJECTION_CODE+="    if [[ ! \$(basename \"\$i\") =~ ^(${IGNORE_SCRIPTS// /|})\$ ]]; then\n"
     INJECTION_CODE+="        echo -e \"\e[34m[info]     Loading script: \$(basename \"\$i\")\e[0m\"\n"

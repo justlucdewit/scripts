@@ -8,7 +8,7 @@ To install Lukes script repository. you need to run 2 simple commands.
 
 ```bash
 # Clone the repository into ~/scripts
-git clone https://github.com/justlucdewit/scripts ~
+git clone https://github.com/justlucdewit/scripts ~/scripts
 
 # Execute the install script
 ~/scripts/_install.sh
