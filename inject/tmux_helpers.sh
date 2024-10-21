@@ -1,9 +1,17 @@
-# TODO: Fix bug where sometimes pane names are forgotten
+# TODO: Fix bug where when pane 1 is closed, pane 2 will become 1 and thus take its name
 
+DEBUG_CACHE_WRITING=true
 INDENT="    "
 INACTIVE_LIST_ITEM=" - "
 ACTIVE_LIST_ITEM=" * "
 PANE_NAME_FILE="$HOME/scripts/local_data/tmp/tmux_pane_names.txt"
+
+debug_message() {
+    # echo $($DEBUG_CACHE_WRITING = true)
+    if [[ "$DEBUG_CACHE_WRITING" = true ]]; then
+        print_debug "$1"
+    fi
+}
 
 # Load pane names from the file into the associative array
 declare -gA pane_names
@@ -15,6 +23,7 @@ set_stored_pane_name() {
 }
 
 sync_pane_names() {
+    debug_message "SYNCING PANE NAMES..."
     
     # Make a copy of the old pane names
     declare -A old_pane_names 
@@ -27,13 +36,6 @@ sync_pane_names() {
     declare -gA pane_names
     load_pane_names
 
-    # Loop over the pane names from the save file, and remove it if it does not exist in the old_pane_names
-    for key in "${!pane_names[@]}"; do
-        if [[ -z "${old_pane_names[$key]}" ]]; then
-            unset 'pane_names[$key]'  # Remove the key if it doesn't exist in old_pane_names
-        fi
-    done
-
     # Try to find new, unregistered panes that are not named yet across all sessions
     sessions=$(tmux list-sessions -F '#S')  # Get all session names
 
@@ -42,7 +44,7 @@ sync_pane_names() {
 
         for window in $current_windows; do
             # List all panes in the current window
-            panes=$(tmux list-panes -t "$session:$window" -F '#P')
+            panes=$(tmux list-panes -t "$session:$window" -F '#D')
 
             for pane in $panes; do
                 # Create a key for the current pane
@@ -51,6 +53,7 @@ sync_pane_names() {
                 # Check if this pane is not already in pane_names
                 if [[ -z "pane_names[$pane_key]" ]]; then
                     # If it's a new pane, assign it a default name
+                    debug_message "SYNCING: Storing pane $pane_key in save file as its not in it yet..."
                     set_stored_pane_name "$pane_key" "Unnamed Pane"
                 fi
             done
@@ -77,6 +80,8 @@ list_panes() {
 }
 
 load_pane_names() {
+    debug_message "LOADING PANE NAMES..."
+
     # Ensure the pane names file exists before attempting to load it
     if [[ ! -f "$PANE_NAME_FILE" ]]; then
         return
@@ -97,6 +102,7 @@ load_pane_names() {
 }
 
 save_pane_names() {
+    debug_message "SAVING PANE NAMES..."
     # Ensure the directory exists
     local dir_name=$(dirname "$PANE_NAME_FILE")
     mkdir -p $dir_name
@@ -138,7 +144,7 @@ alias wc="tmux kill-window" # Close window
 alias rw="rename_window" # Rename window
 
 # Short aliases for Session manipulation
-alias sr=""
+alias sr="tmux rename-session"
 alias sl=""
 alias sn="tmux new-session"
 alias sc="tmux kill-session"
@@ -163,7 +169,7 @@ rename_pane() {
     pane_name=$1
     current_session=$(tmux display -p '#S')
     current_window=$(tmux display -p '#I')
-    current_pane=$(tmux display -p '#P')
+    current_pane=$(tmux display -p '#D')
 
     # Create a unique key for the pane
     pane_key="${current_session}:${current_window}:${current_pane}"
@@ -186,17 +192,19 @@ current_pane() {
     save_pane_names
     load_pane_names
 
+    # Get the current session, window, and pane ID (instead of pane number)
     current_session=$(tmux display -p '#S')
     current_window=$(tmux display -p '#I')
-    current_pane_number=$(tmux display -p '#P')
+    current_pane_id=$(tmux display -p '#D')  # Unique pane ID
 
-    # Create a unique key for the current pane
-    pane_key="${current_session}:${current_window}:${current_pane_number}"
+    # Create a unique key for the current pane using the pane ID
+    pane_key="${current_session}:${current_window}:${current_pane_id}"
     current_pane_name=${pane_names[$pane_key]:-"Unnamed Pane"}
 
+    # Display information about the current session, window, and pane
     echo -e "${ACTIVE_LIST_ITEM}Session $current_session: \e[1;34m$current_session\e[0m"
-    echo -e "${INDENT}${ACTIVE_LIST_ITEM}\e[1;32mWindow $current_window: ${window_name}\e[0m"
-    echo -e "${INDENT}${INDENT}${ACTIVE_LIST_ITEM}\e[1;33mPane $current_pane_number: $current_pane_name\e[0m"
+    echo -e "${INDENT}${ACTIVE_LIST_ITEM}\e[1;32mWindow $current_window: Window $current_window\e[0m"
+    echo -e "${INDENT}${INDENT}${ACTIVE_LIST_ITEM}\e[1;33mPane $current_pane_id: $current_pane_name\e[0m"
 }
 
 tlist() {
@@ -206,7 +214,7 @@ tlist() {
     # Get the active session, window, and pane
     active_session=$(tmux display-message -p '#S')
     active_window=$(tmux display-message -p '#I')
-    active_pane=$(tmux display-message -p '#P')
+    active_pane=$(tmux display-message -p '#D')
 
     # List all tmux sessions
     tmux list-sessions -F '#S' | nl -w1 -s': ' | while read session; do
@@ -234,7 +242,7 @@ tlist() {
             fi
 
             # List panes in the current window
-            tmux list-panes -t "$session_name:$window_number" -F '#P: #T' | while read -r pane; do
+            tmux list-panes -t "$session_name:$window_number" -F '#D: #T' | while read -r pane; do
                 pane_number=$(echo "$pane" | cut -d':' -f1 | xargs)  # Get the pane number
 
                 # Create a unique key for the pane
@@ -263,7 +271,7 @@ run_in_pane() {
     load_pane_names
 
     # Get the current pane number
-    local current_pane=$(tmux display-message -p '#P')
+    local current_pane=$(tmux display-message -p '#D')
     
     # Get the target pane number and remove it from
     # the commandline argument list
@@ -276,7 +284,7 @@ run_in_pane() {
 }
 
 # Print the current pane number
-alias tcur="tmux display-message -p 'Current pane number: #P'"
+alias tcur="tmux display-message -p 'Current pane number: #D'"
 
 # Use this to start tmux:
 #   - Creates new session if none found
