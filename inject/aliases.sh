@@ -17,4 +17,8 @@ alias l="ls -la"
 alias rb="reload_bash"
 alias files="explorer.exe ."
 
-alias joke='curl -H "Accept: text/plain" https://icanhazdadjoke.com/'
+unalias joke 2>/dev/null
+joke() {
+    curl -H "Accept: text/plain" https://icanhazdadjoke.com/
+    echo
+}
