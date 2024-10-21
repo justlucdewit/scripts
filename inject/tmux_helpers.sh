@@ -168,7 +168,6 @@ rename_pane() {
 
     # Create a unique key for the pane
     pane_key="${current_session}:${current_window}:${current_pane}"
-    echo "test - $pane_key"
 
     old_name=${pane_names[$pane_key]:-"Unnamed Pane"}
     pane_names[$pane_key]="$pane_name"
