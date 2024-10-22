@@ -1,6 +1,6 @@
 # TODO: Fix bug where when pane 1 is closed, pane 2 will become 1 and thus take its name
 
-DEBUG_CACHE_WRITING=true
+DEBUG_CACHE_WRITING=false
 INDENT="    "
 INACTIVE_LIST_ITEM=" - "
 ACTIVE_LIST_ITEM=" * "
