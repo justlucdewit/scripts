@@ -3,7 +3,7 @@ parse_git_branch() {
     local branch
     branch=$(git branch --show-current 2>/dev/null)
     if [[ -n $branch ]]; then
-        echo " ($branch)"
+        echo "$branch"
     fi
 }
 

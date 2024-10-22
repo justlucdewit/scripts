@@ -4,6 +4,10 @@
 # Declare the array that will hold the merged projects
 declare -gA combined_projects
 
+get_current_project_label() {
+    echo "$(cproj)"
+}
+
 # Function to add a new project to local_settings.yml
 nproj() {
     local project_name="$1"

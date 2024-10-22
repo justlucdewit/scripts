@@ -1,6 +1,0 @@
-dev:0:2:x-frontend-npm
-dev:0:0:x-frontend-sail
-dev:0:1:x-frontend-terminal
-dev:1:5:x-backend-npm
-dev:1:4:x-backend-terminal
-dev:1:3:x-backend-sail
