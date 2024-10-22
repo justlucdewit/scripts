@@ -170,3 +170,29 @@ proj() {
         list_projects "$show_dirs"  # Pass the option to list_projects
     fi
 }
+
+cproj() {
+    local cwd
+    cwd=$(pwd | xargs)  # Get the current working directory
+
+    # Get the list of projects silently
+    local project_list
+    project_list=$(proj --dirs 2>/dev/null | sed '1d')  # Suppress errors and output
+
+    # Parse the project list
+    while IFS= read -r line; do
+        # Extract project name and directory path
+        local project_name
+        local project_path
+        project_name=$(echo "$line" | awk -F ': ' '{print $1}' | sed 's/\x1B\[[0-9;]*m//g')
+        project_path=$(echo "$line" | awk -F ': ' '{print $2}' | sed 's/\x1B\[[0-9;]*m//g')
+        project_path=$(echo "$project_path" | xargs)
+
+        # Compare the project path with the current working directory
+        if [[ "$cwd" == "$project_path" ]]; then
+            echo "$project_name" | awk -F ' - ' '{print $2}'  # Return the project name if it matches
+            return 0
+        fi
+    done <<< "$project_list"
+    return 1
+}

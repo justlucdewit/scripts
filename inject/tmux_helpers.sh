@@ -6,6 +6,64 @@ INACTIVE_LIST_ITEM=" - "
 ACTIVE_LIST_ITEM=" * "
 PANE_NAME_FILE="$HOME/scripts/local_data/tmp/tmux_pane_names.txt"
 
+alias spf="sync_pane_file"
+
+sync_pane_file() {
+    > $PANE_NAME_FILE
+    save_pane_names
+}
+
+get_pane_id() {
+    if [ -z "$1" ]; then
+        echo "Usage: get_pane_number <pane_number>"
+        return 1
+    fi
+
+    local pane_number="$1"
+
+    # Ensure the pane number is a valid number (for safety)
+    if [[ ! "$pane_number" =~ ^[0-9]+$ ]]; then
+        echo "Error: Pane number must be a number."
+        return 1
+    fi
+
+    # Get the pane ID corresponding to the pane number
+    local pane_id=$(tmux list-panes -F "#{pane_index} #{pane_id}" | awk -v num="$pane_number" '$1 == num {print $2}'  | tr -d '%')
+
+    if [ -z "$pane_id" ]; then
+        echo "No pane found with number: $pane_number"
+        return 1
+    fi
+
+    # Output the pane ID
+    echo "$pane_id"
+}
+
+get_pane_number() {
+    if [ -z "$1" ]; then
+        echo "Usage: get_pane_number <pane_id_without_percentage>"
+        return 1
+    fi
+
+    local pane_id="$1"
+    
+    # Ensure the pane ID is a valid number (for safety)
+    if [[ ! "$pane_id" =~ ^[0-9]+$ ]]; then
+        echo "Error: Pane ID must be a number."
+        return 1
+    fi
+
+    local pane_index=$(tmux list-panes -F "#{pane_id},#{pane_index}" | grep "%${pane_id}" | cut -d',' -f2)
+
+    if [ -z "$pane_index" ]; then
+        echo "No pane found with ID: %$pane_id"
+        return 1
+    fi
+
+    # Output the pane index
+    echo "$pane_index"
+}
+
 debug_message() {
     # echo $($DEBUG_CACHE_WRITING = true)
     if [[ "$DEBUG_CACHE_WRITING" = true ]]; then
@@ -166,10 +224,25 @@ rename_window() {
 declare -A pane_names
 rename_pane() {
     sync_pane_names
-    pane_name=$1
+
+    local pane_name
+
+    if [[ $# -eq 1 ]]; then
+        # Only one argument provided: it's the new name, use the current pane
+        pane_name=$1
+        current_pane=$(tmux display-message -p '#D' | tr -d '%')  # Get the current pane id
+    elif [[ $# -eq 2 ]]; then
+        # Two arguments provided: first is the pane index, second is the new name
+        current_pane=$(get_pane_id $1)
+        echo "going for pane $target_pane"
+        pane_name=$2
+    else
+        echo "Usage: rename_pane [<pane_number>] <new_name>"
+        return 1
+    fi
+
     current_session=$(tmux display -p '#S')
     current_window=$(tmux display -p '#I')
-    current_pane=$(tmux display -p '#D')
 
     # Create a unique key for the pane
     pane_key="${current_session}:${current_window}:${current_pane}"
@@ -214,7 +287,7 @@ tlist() {
     # Get the active session, window, and pane
     active_session=$(tmux display-message -p '#S')
     active_window=$(tmux display-message -p '#I')
-    active_pane=$(tmux display-message -p '#D')
+    active_pane=$(tmux display-message -p '#D' | tr -d '%')
 
     # List all tmux sessions
     tmux list-sessions -F '#S' | nl -w1 -s': ' | while read session; do
@@ -243,7 +316,7 @@ tlist() {
 
             # List panes in the current window
             tmux list-panes -t "$session_name:$window_number" -F '#D: #T' | while read -r pane; do
-                pane_number=$(echo "$pane" | cut -d':' -f1 | xargs)  # Get the pane number
+                pane_number=$(echo "$pane" | cut -d':' -f1 | xargs | tr -d '%')  # Get the pane number
 
                 # Create a unique key for the pane
                 pane_key="${session_name}:${window_number}:${pane_number}"
@@ -283,6 +356,32 @@ run_in_pane() {
     tmux send-keys -t $target_pane "$command" C-m
 }
 
+run_in_pane_until_finished() {
+    load_pane_names
+
+    # Get the target pane number and command
+    local target_pane=$1
+    shift
+    local command="$*"
+
+    # Run the command in the target pane
+    tmux send-keys -t $target_pane "$command" C-m
+
+    # Wait for the pane to stop showing activity (becomes idle)
+    while true; do
+        # Capture pane content and check for any command prompt (indicating readiness)
+        local pane_output=$(tmux capture-pane -pt $target_pane -S - )
+
+        # If the last line is a prompt (customize based on your shell prompt), break the loop
+        if [[ $pane_output =~ \$$  ]]; then  # Example: match shell prompt ending with "$ "
+            break
+        fi
+
+        # Sleep to avoid rapid polling
+        sleep 1
+    done
+}
+
 # Print the current pane number
 alias tcur="tmux display-message -p 'Current pane number: #D'"
 
@@ -290,7 +389,12 @@ alias tcur="tmux display-message -p 'Current pane number: #D'"
 #   - Creates new session if none found
 #   - if session found, use that one
 t() {
-    sync_pane_names
+    # Clear all pane names
+    unset pane_names
+    declare -gA pane_names
+    sync_pane_file
+    save_pane_names
+    
     tmux has-session -t "dev" 2>/dev/null
     if [ $? != 0 ]; then
         echo "Creating new session: dev"
@@ -310,4 +414,5 @@ tcloseall() {
 
 alias tca="tcloseall"
 alias rip="run_in_pane"
+alias ripuf="run_in_pane_until_finished"
 alias tc="tclose"
