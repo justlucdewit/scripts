@@ -22,6 +22,10 @@ if ! install_if_not_exist "jq"; then
     exit 1 # Exit the script with error code
 fi
 
+if ! install_if_not_exist "bc"; then
+    exit 1 # Exit the script with error code
+fi
+
 NAME=$(yq e '.name' $SETTINGS_FILE)
 MAJOR_VERSION=$(yq e '.version.major' $SETTINGS_FILE)
 MINOR_VERSION=$(yq e '.version.minor' $SETTINGS_FILE)

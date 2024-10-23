@@ -8,11 +8,6 @@ get_current_project_label() {
     echo "$(cproj)"
 }
 
-reformat_localsettings() {
-    local yaml_file="$HOME/scripts/local_data/local_settings.yml"
-    yq eval --prettyPrint '.' -i "$yaml_file"
-}
-
 # Function to add a new project to local_settings.yml
 nproj() {
     local project_name="$1"
@@ -42,7 +37,7 @@ nproj() {
             echo "Added project '$project_name' to local_settings."
         fi
 
-        reformat_localsettings
+        localsettings_reformat
     else
         echo "YAML file not found: $yaml_file"
     fi
