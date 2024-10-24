@@ -15,7 +15,7 @@ sync_pane_file() {
 
 get_pane_id() {
     if [ -z "$1" ]; then
-        echo "Usage: get_pane_number <pane_number>"
+        echo "Usage: get_pane_id <pane_number>"
         return 1
     fi
 
@@ -198,7 +198,7 @@ alias eu="expand_up"        # Expand a pane up
 alias wr="tmux select-window -t +1" # Move a window right
 alias wl="tmux select-window -t -1" # Move a window left
 alias wn="tmux new-window" # New window
-alias wc="tmux kill-window" # Close window
+alias wk="tmux kill-window" # Close window
 alias rw="rename_window" # Rename window
 
 # Short aliases for Session manipulation
@@ -268,7 +268,7 @@ current_pane() {
     # Get the current session, window, and pane ID (instead of pane number)
     current_session=$(tmux display -p '#S')
     current_window=$(tmux display -p '#I')
-    current_pane_id=$(tmux display -p '#D')  # Unique pane ID
+    current_pane_id=$(tmux display -p '#D' | tr -d '%')  # Unique pane ID
 
     # Create a unique key for the current pane using the pane ID
     pane_key="${current_session}:${current_window}:${current_pane_id}"
@@ -316,17 +316,18 @@ tlist() {
 
             # List panes in the current window
             tmux list-panes -t "$session_name:$window_number" -F '#D: #T' | while read -r pane; do
-                pane_number=$(echo "$pane" | cut -d':' -f1 | xargs | tr -d '%')  # Get the pane number
+                pane_id=$(echo "$pane" | cut -d':' -f1 | xargs | tr -d '%')  # Get the pane number
+                pane_number=$(get_pane_number $pane_id)
 
                 # Create a unique key for the pane
-                pane_key="${session_name}:${window_number}:${pane_number}"
+                pane_key="${session_name}:${window_number}:${pane_id}"
                 pane_name=${pane_names[$pane_key]:-"Unnamed Pane"}
 
                 # Check if pane is active
-                if [ "$session_name" == "$active_session" ] && [ "$window_number" == "$active_window" ] && [ "$pane_number" == "$active_pane" ]; then
-                    echo -e "${INDENT}${INDENT}${ACTIVE_LIST_ITEM}\e[1;33mPane $pane_number: $pane_name\e[0m"
+                if [ "$session_name" == "$active_session" ] && [ "$window_number" == "$active_window" ] && [ "$pane_id" == "$active_pane" ]; then
+                    echo -e "${INDENT}${INDENT}${ACTIVE_LIST_ITEM}\e[1;33mPane $pane_id($pane_number): $pane_name\e[0m"
                 else
-                    echo -e "${INDENT}${INDENT}${INACTIVE_LIST_ITEM}\e[1;33mPane $pane_number: $pane_name\e[0m"
+                    echo -e "${INDENT}${INDENT}${INACTIVE_LIST_ITEM}\e[1;33mPane $pane_id($pane_number): $pane_name\e[0m"
                 fi
             done
         done    
@@ -405,7 +406,17 @@ t() {
     fi
 }
 
-alias tclose="tmux kill-pane"
+tclose() {
+    local pane_index=$1
+
+    # If no pane index was given
+    if [[ -z "$pane_index" ]]; then
+        tmux kill-pane
+    else # If pane index was specified
+        tmux kill-pane -t "%$(get_pane_id $pane_index)"
+    fi
+}
+
 tcloseall() {
     tmux kill-pane -a
     echo "All panes in the current window killed."

@@ -8,6 +8,48 @@ get_current_project_label() {
     echo "$(cproj)"
 }
 
+sprojurl() {
+    local yaml_file="$HOME/scripts/local_data/local_settings.yml"
+    local url="$1"
+
+    if [[ -z "$url" ]]; then
+        echo "Usage: proj_url <Url>"
+        return 1
+    fi
+
+    local project_name=$(cproj)
+    if [[ -z "$project_name" ]]; then
+        echo "Current directory is not a defined project"
+        return 1
+    fi
+
+    yq eval -i ".projects.$project_name.url = \"$url\"" "$yaml_file"
+}
+
+dprojurl() {
+    local yaml_file="$HOME/scripts/local_data/local_settings.yml"
+    
+    local project_name=$(cproj)
+    if [[ -z "$project_name" ]]; then
+        echo "Current directory is not a defined project"
+        return 1
+    fi
+
+    yq eval -i ".projects.$project_name.url = null" "$yaml_file"
+}
+
+gprojurl() {
+    local yaml_file="$HOME/scripts/local_data/local_settings.yml"
+    
+    local project_name=$(cproj)
+    if [[ -z "$project_name" ]]; then
+        echo "Current directory is not a defined project"
+        return 1
+    fi
+
+    lsget ".projects.$project_name.url"
+}
+
 # Function to add a new project to local_settings.yml
 nproj() {
     local project_name="$1"
@@ -33,7 +75,7 @@ nproj() {
             echo "Project '$project_name' already exists in local_settings."
         else
             # Add the new project entry
-            yq eval ".projects[\"$project_name\"] = \"$project_dir\"" -i "$yaml_file"
+            yq eval -i ".projects.$project_name = {\"dir\": \"$project_dir\", \"url\": null}" "$yaml_file"
             echo "Added project '$project_name' to local_settings."
         fi
 
@@ -87,7 +129,7 @@ load_yaml_projects() {
             fi
 
             yaml_projects["$key"]="$value"
-        done < <(yq eval '.projects | to_entries | .[] | .key + "=" + .value' "$yaml_file")
+        done < <(lseval ".projects | to_entries | .[] | .key + \"=\" + .value.dir")
     fi
 }
 

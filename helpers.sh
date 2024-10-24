@@ -1,17 +1,92 @@
+get_filesize() {
+    local file="$1"
+
+    if [[ -f "$file" ]]; then
+        local size_bytes=$(stat --format="%s" "$file")
+
+        if [[ $size_bytes -lt 1024 ]]; then
+            echo "${size_bytes} B"
+        elif [[ $size_bytes -lt 1048576 ]]; then
+            echo "$(bc <<< "scale=2; $size_bytes/1024") KB"
+        elif [[ $size_bytes -lt 1073741824 ]]; then
+            echo "$(bc <<< "scale=2; $size_bytes/1048576") MB"
+        else
+            echo "$(bc <<< "scale=2; $size_bytes/1073741824") GB"
+        fi
+    else
+        echo "File does not exist."
+    fi
+}
+
+get_line_count() {
+    local file="$1"
+
+    if [[ -f "$file" ]]; then
+        wc -l < "$file"
+    else
+        echo "File does not exist."
+    fi
+}
+
 # Formating functions for neatly printing info/error/debug messages
 print_info() {
+    SETTINGS_FILE=~/scripts/_settings.yml
+    SILENT=$(yq e '.silent' "$SETTINGS_FILE")
+    if [[ $SILENT == true ]]; then
+        return 0
+    fi
+
     echo -e "\e[34m[info] $1\e[0m"  # \e[34m is the color code for blue
 }
 
+print_normal() {
+    SETTINGS_FILE=~/scripts/_settings.yml
+    SILENT=$(yq e '.silent' "$SETTINGS_FILE")
+    if [[ $SILENT == true ]]; then
+        return 0
+    fi
+
+    echo "$1"
+}
+
+print_empty_line() {
+    SETTINGS_FILE=~/scripts/_settings.yml
+    SILENT=$(yq e '.silent' "$SETTINGS_FILE")
+    if [[ $SILENT == true ]]; then
+        return 0
+    fi
+
+    echo ""
+}
+
 print_error() {
+    SETTINGS_FILE=~/scripts/_settings.yml
+    SILENT=$(yq e '.silent' "$SETTINGS_FILE")
+    if [[ $SILENT == true ]]; then
+        return 0
+    fi
+
     echo -e "\e[31m[error] $1\e[0m"  # \e[31m is the color code for red
 }
 
 print_debug() {
+    SETTINGS_FILE=~/scripts/_settings.yml
+    DEBUG=$(yq e '.debug' "$SETTINGS_FILE")
+    SILENT=$(yq e '.silent' "$SETTINGS_FILE")
+    if [[ $DEBUG == true || $SILENT == true ]]; then
+        return 0
+    fi
+
     echo -e "\e[33m[debug] $1\e[0m"  # \e[33m is the color code for yellow
 }
 
 print_success() {
+    SETTINGS_FILE=~/scripts/_settings.yml
+    SILENT=$(yq e '.silent' "$SETTINGS_FILE")
+    if [[ $SILENT == true ]]; then
+        return 0
+    fi
+
     echo -e "\e[32m[success] $1\e[0m"  # \e[32m is the color code for green
 }
 
@@ -30,8 +105,6 @@ ensure_sudo() {
         fi
 
         print_info "Sudo access granted."
-    else
-        print_info "Sudo access already available."
     fi
 }
 
@@ -41,8 +114,13 @@ ensure_sudo() {
 # avoids confirmation prompts
 install_if_not_exist() {
     local command_name=$1
+    local test_command_name=$2
 
-    if ! command -v "$command_name" &> /dev/null; then
+    if [[ -z $test_command_name ]]; then
+        test_command_name=$command_name
+    fi
+
+    if ! command -v "$test_command_name" &> /dev/null; then
         print_info "$command_name is not installed. Attempting to install..."
 
         # Detect package manager and install command
@@ -118,7 +196,6 @@ install_if_not_exist() {
         print_info "$command_name has been installed successfully."
         return 0  # Indicate success
     else
-        print_info "$command_name is already installed. Skipping installation..."
         return 0  # Indicate success (since the command is already installed)
     fi
 }

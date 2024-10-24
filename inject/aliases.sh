@@ -1,3 +1,5 @@
+# LSR Module that contains standalone aliases
+
 reload_bash() {
     source ~/.bashrc
     print_success '~/.bashrc reloaded!'
@@ -8,6 +10,8 @@ backup() {
     cp $1 $backup_location -r
 }
 
+alias hosts='powershell.exe -Command "Start-Process \"C:\Program Files\Sublime Text\sublime_text.exe\" -ArgumentList \"C:\Windows\System32\Drivers\etc\hosts\" -Verb RunAs"'
+alias refreshdns='powershell.exe -Command "ipconfig /flushdns"'
 alias c='clear'
 alias p='proj'
 alias cf='cfind'
@@ -16,6 +20,7 @@ alias yesterday='work --date=yesterday'
 alias l="ls -la"
 alias rb="reload_bash"
 alias files="explorer.exe ."
+alias subl='"/mnt/c/Program Files/Sublime Text/sublime_text.exe"'
 
 unalias joke 2>/dev/null
 joke() {

@@ -65,26 +65,103 @@ create_start_layout() {
     rename_pane "$current_project-terminal"
 }
 
+switch() {
+    local project=$1
+
+    # Usage printing
+    if [[ -z $project ]]; then
+        echo "Usage: switch <projectname>"
+        return 0
+    fi
+
+    # Check if project exists
+    local failedSwitching=$(proj "$project" | grep -q "Project not found. Available projects:" && echo true || echo false)
+
+    # Print error
+    if [[ $failedSwitching == true ]]; then
+        print_error "Cannot switch to project '$project' because it does not exist"
+        proj
+        return 1
+    fi
+
+    stop
+    start $project
+}
+
+stop() {
+    # Close everything except the current terminal
+    run_in_pane_until_finished 1 C-c
+    tclose 1
+    run_in_pane_until_finished 0 C-c
+    tclose 0
+    cd ~
+}
+
 start() {
+    # If argument is given, go to that project
+    local project=$1
+    local failedSwitching=$(proj "$project" | grep -q "Project not found. Available projects:" && echo true || echo false)
+
+    # Failed switching to project
+    if [[ $failedSwitching == true ]]; then
+        print_error "Cannot start project '$project' because it does not exist"
+        proj
+        return 1
+    fi
+
+    # Jump to project if needed
+    if [[ -n "$project" ]]; then
+        proj "$project"
+    else # No project was given
+        # If current dir is not a project, dont continue
+        project=$(cproj)
+        if [[ -z "$project" ]]; then
+            print_error "Cant start because current dir is not a defined project"
+            return 1
+        fi
+    fi
+
+    clear
+
     create_start_layout
 
     run_in_pane 0 "clear"
     run_in_pane 1 "clear"
     run_in_pane 2 "clear"
     
-    run_in_pane 2 el 30
+    run_in_pane 2 el 20
     run_in_pane 2 clear
     run_in_pane 2 tls
-    run_in_pane 2 code .
+
+    # TODO: what if no package.json is available?
+    # TODO: what if no laravel available?
+    # TODO: open URL if available
 
     # Get the first available npm script
     npm_script=$(get_first_npm_script)
 
-    # Start the compilers
-    print_info "starting npm with 'npm run $npm_script'"
-    run_in_pane 1 "npm run $npm_script"
-    print_info "starting sail..."
-    run_in_pane 0 sail up
+    # Start npm, make sure no browsers get opened
+    if grep -q "\"$npm_script\": \"vite" package.json; then
+        print_info "starting npm with 'npm run $npm_script -- --open=false'"
+        run_in_pane 1 "npm run $npm_script -- --open=false"
+    else
+        print_info "starting npm with 'npm run $npm_script'"
+        run_in_pane 1 "npm run $npm_script"
+    fi
+
+    # Open URL if available
+    local projurl=$(gprojurl)
+    if [[ "$projurl" == "null" ]]; then
+        # Start sail
+        print_info "starting sail..."
+        run_in_pane 0 sail up
+    else
+        run_in_pane 2 "(sleep 5; explorer.exe $projurl) &" 
+        print_info "starting sail..."
+        run_in_pane 0 sail up
+    fi
+
+    return 0
 }
 
 # Command to freshly install all dependancies and containers

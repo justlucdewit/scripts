@@ -49,3 +49,16 @@ The following is a list of commands to be used in LSR
 | tc | tc | close the current pane |
 | tca | tca | close all panes |
 | rip | rip <pane num> <command> | runs a command in the given pane |
+
+# TODO:
+ + Stop command to stop the current project and undo the layout
+ + Switch command to switch to different project if current project is running
+ + Open URL in browser on start
+ + instead of sourcing individual .sh files, make bashrc compile everything into a combined .sh file and source that
+ - use helper prints for everything
+ - Saving and starting with previous path
+ - Codefind command to find anything in the current codebase in any file
+ - --fuzzy argument for codefind
+ - ChatGpt command
+ - iforgot command
+ - npmscripts --show

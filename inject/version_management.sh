@@ -1,16 +1,22 @@
 # Source the needed helper files
 source ~/scripts/helpers.sh
 
-lsr_status() {
-    # Define the necessary file paths and identifier
-    local BASHRC_PATH=~/.bashrc
-    local BASHRC_IDENTIFIER="# Luke's Script Repository Loader"
-    local SETTINGS_FILE=~/scripts/_settings.yml
-    local HISTORY_FILE=~/scripts/local_data/version_history.yml
+BASHRC_PATH=~/.bashrc
+BASHRC_IDENTIFIER="# Luke's Script Repository Loader"
+BASHRC_STARTER="# !! LSR LOADER START !!"
+BASHRC_ENDERER="# !! LSR LOADER END !!"
+SETTINGS_FILE=~/scripts/_settings.yml
+HISTORY_FILE=~/scripts/local_data/version_history.yml
 
+alias lstatus=lsr_status
+alias linstall=lsr_install
+alias lreinstall=lsr_reinstall
+alias luninstall=lsr_uninstall
+
+lsr_status() {
     # Variable to store installation status
-    bashrc_installed=false
-    local_data_installed=false
+    local bashrc_installed=false
+    local local_data_installed=false
 
     # Check if the identifier exists in .bashrc
     if grep -q "$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
@@ -39,28 +45,45 @@ lsr_status() {
     fi
 }
 
+lsr_install() {
+    ~/scripts/_install.sh
+    reload_bash
+}
+
+lsr_reinstall() {
+    print_info "Uninstalling LSR"
+    lsrsilence true
+    lsr_uninstall
+    lsrsilence false
+
+    print_info "Recompiling LSR"
+    lsrsilence true
+    lsr_compile
+    lsrsilence false
+
+    print_info "Installing LSR"
+    lsrsilence true
+    lsr_install
+    lsrsilence false
+}
+
 lsr_uninstall() {
-    LOCAL_DATA_DIR=~/scripts/local_data
-    HISTORY_FILE="$LOCAL_DATA_DIR/version_history.yml"
-    BASHRC_PATH=~/.bashrc
-    BASHRC_IDENTIFIER="# Luke's Script Repository Loader"
-
-    # Remove version history file if it exists
-    if [ -f "$HISTORY_FILE" ]; then
+    # 1. Remove the version history file if it exists
+    if [[ -f "$HISTORY_FILE" ]]; then
         rm "$HISTORY_FILE"
-        print_info "Removed version history file"
-    else
-        print_info "No version history file found to remove"
+        print_info "Deleted version history file"
     fi
 
-    # Remove injected code from .bashrc
-    if grep -q "$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
-        # Use sed to delete the block starting with the identifier and ending with the next empty line
-        sed -i "/$BASHRC_IDENTIFIER/,/^$/d" "$BASHRC_PATH"
-        print_info "Removed injected script sourcing block"
-    else
-        print_info "No injected script sourcing block found"
+    # 2. Check if the LSR loader section exists before attempting to remove it
+    if grep -q "^$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
+        # Remove the LSR loader section from .bashrc
+        sed -i "/^$BASHRC_STARTER/,/^$BASHRC_ENDERER/d" "$BASHRC_PATH"
+        print_info "Removed LSR loader from $BASHRC_PATH"
     fi
 
-    print_success "Succesfully uninstalled Lukes Script Repository"
+    print_empty_line
+    print_info "LSR has been reinstalled"
+    print_info " - linstall to undo"
+    print_info " - Open new session to confirm"
+    reload_bash
 }

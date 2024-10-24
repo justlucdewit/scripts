@@ -25,6 +25,51 @@ get_project_branch_label() {
 
 PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\[\033[00m\]\[\033[01;34m\]\w\[\033[00m\]$(get_project_branch_label)\$ '
 
+lsrdebug() {
+    local SETTINGS_FILE=~/scripts/_settings.yml
+    local current_value=$(yq e '.debug' "$SETTINGS_FILE")
+
+    if [[ -n "$1" ]]; then
+        # If an argument is passed, set the value based on it
+        if [[ "$1" == "true" || "$1" == "false" ]]; then
+            yq e -i ".debug = $1" "$SETTINGS_FILE"
+            print_info "Debug mode set to $1."
+        else
+            print_error "Invalid argument. Use 'true' or 'false'."
+        fi
+    else
+        # No argument passed, toggle the current value
+        if [[ "$current_value" == "true" ]]; then
+            yq e -i '.debug = false' "$SETTINGS_FILE"
+            print_info "Debug mode disabled."
+        else
+            yq e -i '.debug = true' "$SETTINGS_FILE"
+            print_info "Debug mode enabled."
+        fi
+    fi
+}
+
+lsrsilence() {
+    local SETTINGS_FILE=~/scripts/_settings.yml
+    local current_value=$(yq e '.silent' "$SETTINGS_FILE")
+
+    if [[ -n "$1" ]]; then
+        # If an argument is passed, set the value based on it
+        if [[ "$1" == "true" || "$1" == "false" ]]; then
+            yq e -i ".silent = $1" "$SETTINGS_FILE"
+        else
+            print_error "Invalid argument. Use 'true' or 'false'."
+        fi
+    else
+        # No argument passed, toggle the current value
+        if [[ "$current_value" == "true" ]]; then
+            yq e -i '.silent = false' "$SETTINGS_FILE"
+        else
+            yq e -i '.silent = true' "$SETTINGS_FILE"
+        fi
+    fi
+}
+
 now() {
     local local_settings_file="$HOME/scripts/local_data/local_settings.yml"
     local local_settings_dir="$(dirname "$local_settings_file")"
@@ -144,5 +189,5 @@ now() {
     echo -e "${cyan}$current_time${reset}"
     echo -e "Temperature: ${temp_now_str}°C (${temp_min_str}°C - ${temp_max_str}°C)"
     echo -e "Condition: ${weather_condition} (${wind_speed_str} m/s)"
-    echo ""
+    print_empty_line
 }

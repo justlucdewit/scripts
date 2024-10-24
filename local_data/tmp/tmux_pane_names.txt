@@ -1,0 +1,9 @@
+dev:0:8:tta-npm
+dev:0:2:spectrum-npm
+dev:0:3:spectrum-sail
+dev:0:0:spectrum-sail
+dev:0:1:spectrum-sail
+dev:0:6:spectrum-npm
+dev:0:7:tta-terminal
+dev:0:4:spectrum-npm
+dev:0:5:tta-sail
