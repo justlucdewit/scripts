@@ -84,8 +84,8 @@ lsr_compile
 if ! grep -q "$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
     # Create a block of code to inject into .bashrc
     INJECTION_CODE="\n\n$BASHRC_STARTER\n$BASHRC_IDENTIFIER\n"
-    INJECTION_CODE+="source \"$HOME/scripts/inject/compile.sh\" # Recompile LSR\n" # Recompile LSR
-    INJECTION_CODE+="lsr_compile\n" # Recompile LSR
+    INJECTION_CODE+="# source \"$HOME/scripts/inject/compile.sh\" # Recompile LSR\n" # Recompile LSR
+    INJECTION_CODE+="# lsr_compile\n" # Recompile LSR
     INJECTION_CODE+="source \"$HOME/scripts/build.sh\" # Load LSR in current session\n" # Source the script
     INJECTION_CODE+="$BASHRC_ENDERER"
 

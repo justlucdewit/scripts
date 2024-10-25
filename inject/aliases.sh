@@ -13,7 +13,6 @@ backup() {
 alias hosts='powershell.exe -Command "Start-Process \"C:\Program Files\Sublime Text\sublime_text.exe\" -ArgumentList \"C:\Windows\System32\Drivers\etc\hosts\" -Verb RunAs"'
 alias refreshdns='powershell.exe -Command "ipconfig /flushdns"'
 alias c='clear'
-alias p='proj'
 alias cf='cfind'
 alias today='work --date=today'
 alias yesterday='work --date=yesterday'

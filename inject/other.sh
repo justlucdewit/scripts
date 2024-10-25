@@ -25,6 +25,82 @@ get_project_branch_label() {
 
 PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\[\033[00m\]\[\033[01;34m\]\w\[\033[00m\]$(get_project_branch_label)\$ '
 
+get_dir_part() {
+    current_project=$(cproj)
+    if [[ -n $current_project ]]; then
+        echo " 🔧 $current_project "
+    else
+        current_dir=$(pwd | sed "s|^$HOME|~|")
+        echo " 📝 $current_dir "
+    fi
+}
+
+get_git_part() {
+    local current_branch=$(parse_git_branch)
+
+    if [[ -n $current_branch ]]; then
+        echo -e " 🔗 $current_branch "
+    else
+        echo ""
+    fi
+}
+
+set_powerline_ps1() {
+    local isRoot=0  # Default to not root
+    if [[ ${EUID} -eq 0 ]]; then
+        isRoot=1  # Set to 1 if running as root
+    fi
+
+    PS1=''
+
+    local user_part
+    local dir_part
+    local git_part
+
+    local black="0;0;0"
+    local white="255;255;255"
+    local red="255;0;0"
+    local green="42;135;57"
+    local blue="0;135;175"
+    local yellow="255;200;0"
+
+    # Define colors
+    local blue_bg="\[\033[48;2;${blue}m\]"   # Blue Background
+    local red_bg="\[\033[48;2;${red}m\]"     # Red Background
+    local yellow_bg="\[\033[48;2;${yellow}m\]" # Darker Yellow Background
+    local green_bg="\[\033[48;2;${green}m\]"    # Green Background
+    local black_bg="\[\033[48;2;${black}m\]"    # Black Background
+
+    local yellow_fg="\[\033[38;2;${yellow}m\]" # White Text
+    local green_fg="\[\033[38;2;${green}m\]"       # Green Text
+    local red_fg="\[\033[38;2;${red}m\]"       # Red Text
+    local blue_fg="\[\033[38;2;${blue}m\]"       # Red Text
+    local white_fg="\[\033[38;2;${white}m\]" # White Text
+    local black_fg="\[\033[38;2;${black}m\]"       # Black Text
+
+    if [[ $isRoot ]]; then
+        user_part="${blue_bg}${white_fg} \u@\h ${blue_fg}${yellow_bg}"  # Blue arrow with yellow background
+    else
+        user_part="${red_bg}${white_fg} \u@\h ${red_fg}${yellow_bg}"  # Red arrow with yellow background
+    fi
+
+    # Directory part with darker yellow background and black text
+    dir_part="${white_fg}${yellow_bg}\$(get_dir_part)${green_bg}${yellow_fg}"  # Yellow arrow with green background
+    dir_ending_part="${white_fg}${yellow_bg}\$(get_dir_part)${black_bg}${yellow_fg}"
+
+    # Git part with green background and white text
+    git_part="${white_fg}${green_bg}\$(get_git_part)${green_fg}${black_bg}"  # Green arrow with blue background
+
+    if [[ -z $(get_git_part) ]]; then
+        PS1="${user_part}${dir_ending_part}\[\033[00m\] "
+    else
+        PS1="${user_part}${dir_part}${git_part}\[\033[00m\] "
+    fi
+}
+
+set_powerline_ps1
+PROMPT_COMMAND=set_powerline_ps1
+
 lsrdebug() {
     local SETTINGS_FILE=~/scripts/_settings.yml
     local current_value=$(yq e '.debug' "$SETTINGS_FILE")
@@ -191,3 +267,23 @@ now() {
     echo -e "Condition: ${weather_condition} (${wind_speed_str} m/s)"
     print_empty_line
 }
+
+lhelp() {
+    local lhelp_file="$HOME/scripts/lhelp.txt"
+    
+    while IFS= read -r line || [[ -n $line ]]; do
+        if [[ $line == \#* ]]; then
+            printf "$RED%s$RESET\n" "$line"
+        else
+            printf "%s\n" "$line"
+        fi
+        
+    done < "$lhelp_file"
+
+    print_empty_line
+}
+
+# Ensure tmux is running
+if [ -z "$TMUX" ]; then
+    tmux
+fi

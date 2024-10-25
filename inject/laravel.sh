@@ -90,9 +90,13 @@ switch() {
 
 stop() {
     # Close everything except the current terminal
-    run_in_pane_until_finished 1 C-c
+    print_info "Closing npm pane"
+    run_in_pane 1 C-c
+    sleep 1
     tclose 1
-    run_in_pane_until_finished 0 C-c
+    print_info "Closing sail pane"
+    run_in_pane 0 C-c
+    sleep 3
     tclose 0
     cd ~
 }
@@ -150,7 +154,7 @@ start() {
     fi
 
     # Open URL if available
-    local projurl=$(gprojurl)
+    local projurl=$(get_project_url)
     if [[ "$projurl" == "null" ]]; then
         # Start sail
         print_info "starting sail..."

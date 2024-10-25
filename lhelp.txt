@@ -1,0 +1,21 @@
+Lukes Script Repository (LSR) Created by Luc de Wit
+Source can be found on https://github.com/justlucdewit/scripts
+
+Help for LSR usage:
+
+# Project management
+p                                           List all registered projects
+p <projectname>                             Jump to the directory belonging to that project
+nproj <projectname> [<projectdirectory>]    Register current directory as project <projectname>
+rproj <projectname>                         Un-register project <projectname>
+cproj                                       Print the registered name of the current project
+gprojurl                                    Print the project URL to open in browser on start
+sprojurl <projecturl>                       Set the project URL to open in browser on start
+rprojurl                                    Remove the URL of the current project
+
+# Laravel Project management
+start [<projectname>]                       Starts the given/current laravel project in tmux
+stop                                        Stops the current running laravel project in tmux
+switch <projectname>                        Switches to the given laravel project in tmux
+npmscripts                                  prints the available npm scripts in the current project
+

@@ -55,10 +55,12 @@ The following is a list of commands to be used in LSR
  + Switch command to switch to different project if current project is running
  + Open URL in browser on start
  + instead of sourcing individual .sh files, make bashrc compile everything into a combined .sh file and source that
+ - Ensure no double build
  - use helper prints for everything
  - Saving and starting with previous path
  - Codefind command to find anything in the current codebase in any file
  - --fuzzy argument for codefind
  - ChatGpt command
  - iforgot command
+ - cfind command
  - npmscripts --show
