@@ -6,7 +6,9 @@ declare -gA projects=(
 unset -v user_map
 declare -gA user_map=(
     ["CK"]="Cem"
+    ["luc.dewit"]="Luc"
     ["Luc de Wit"]="Luc"
+    ["justlucdewit"]="Luc"
     ["Reinout Boelens"]="Reinout"
     ["Eli"]="Eli"
     ["Maurits van Mierlo"]="Maurits"
