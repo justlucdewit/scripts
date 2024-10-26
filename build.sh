@@ -1,5 +1,5 @@
 # LSR v1.1
-# Local build (18:03 26/10/2024)
+# Local build (18:20 26/10/2024)
 # Includes LSR modules:
 # - /home/lucdewit/scripts/inject/proj.sh
 # - /home/lucdewit/scripts/inject/compile.sh
@@ -435,8 +435,8 @@ lsr_compile() {
 ########################################
 # Start of LSR module #3               #
 # Injected LSR module: definitions.sh  #
-# Number of lines: 14                  #
-# Filesize: 343 B                      #
+# Number of lines: 16                  #
+# Filesize: 394 B                      #
 ########################################
 unset -v projects
 declare -gA projects=(
@@ -446,7 +446,9 @@ declare -gA projects=(
 unset -v user_map
 declare -gA user_map=(
     ["CK"]="Cem"
+    ["luc.dewit"]="Luc"
     ["Luc de Wit"]="Luc"
+    ["justlucdewit"]="Luc"
     ["Reinout Boelens"]="Reinout"
     ["Eli"]="Eli"
     ["Maurits van Mierlo"]="Maurits"
@@ -1782,7 +1784,7 @@ work() {
 # Start of LSR module #13        #
 # Injected LSR module: other.sh  #
 # Number of lines: 288           #
-# Filesize: 9.48 KB              #
+# Filesize: 9.46 KB              #
 ##################################
 LIGHT_GREEN='\033[1;32m'
 RED='\033[0;31m'
@@ -2031,13 +2033,13 @@ now() {
 
         # Use bc for comparisons
         if (( $(echo "$value < $low_threshold" | bc -l) )); then
-            colored_str="${blue}${value}°C${reset}"
+            colored_str="${blue}${value}${reset}"
         elif (( $(echo "$value >= $low_threshold" | bc -l) && $(echo "$value < $mid_threshold" | bc -l) )); then
-            colored_str="${green}${value}°C${reset}"
+            colored_str="${green}${value}${reset}"
         elif (( $(echo "$value >= $mid_threshold" | bc -l) && $(echo "$value < $high_threshold" | bc -l) )); then
-            colored_str="${yellow}${value}°C${reset}"
+            colored_str="${yellow}${value}${reset}"
         else
-            colored_str="${red}${value}°C${reset}"
+            colored_str="${red}${value}${reset}"
         fi
         echo "$colored_str"
     }

@@ -301,7 +301,9 @@ declare -gA projects=(
 unset -v user_map
 declare -gA user_map=(
     ["CK"]="Cem"
+    ["luc.dewit"]="Luc"
     ["Luc de Wit"]="Luc"
+    ["justlucdewit"]="Luc"
     ["Reinout Boelens"]="Reinout"
     ["Eli"]="Eli"
     ["Maurits van Mierlo"]="Maurits"
@@ -1390,13 +1392,13 @@ now() {
         local high_threshold="$4"
         local colored_str
         if (( $(echo "$value < $low_threshold" | bc -l) )); then
-            colored_str="${blue}${value}°C${reset}"
+            colored_str="${blue}${value}${reset}"
         elif (( $(echo "$value >= $low_threshold" | bc -l) && $(echo "$value < $mid_threshold" | bc -l) )); then
-            colored_str="${green}${value}°C${reset}"
+            colored_str="${green}${value}${reset}"
         elif (( $(echo "$value >= $mid_threshold" | bc -l) && $(echo "$value < $high_threshold" | bc -l) )); then
-            colored_str="${yellow}${value}°C${reset}"
+            colored_str="${yellow}${value}${reset}"
         else
-            colored_str="${red}${value}°C${reset}"
+            colored_str="${red}${value}${reset}"
         fi
         echo "$colored_str"
     }
