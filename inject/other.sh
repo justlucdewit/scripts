@@ -245,13 +245,13 @@ now() {
 
         # Use bc for comparisons
         if (( $(echo "$value < $low_threshold" | bc -l) )); then
-            colored_str="${blue}${value}°C${reset}"
+            colored_str="${blue}${value}${reset}"
         elif (( $(echo "$value >= $low_threshold" | bc -l) && $(echo "$value < $mid_threshold" | bc -l) )); then
-            colored_str="${green}${value}°C${reset}"
+            colored_str="${green}${value}${reset}"
         elif (( $(echo "$value >= $mid_threshold" | bc -l) && $(echo "$value < $high_threshold" | bc -l) )); then
-            colored_str="${yellow}${value}°C${reset}"
+            colored_str="${yellow}${value}${reset}"
         else
-            colored_str="${red}${value}°C${reset}"
+            colored_str="${red}${value}${reset}"
         fi
         echo "$colored_str"
     }
