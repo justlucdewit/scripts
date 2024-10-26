@@ -1,19 +1,19 @@
 # LSR v1.1
-# Local build (14:13 25/10/2024)
+# Local build (18:03 26/10/2024)
 # Includes LSR modules:
-# - /home/luc/scripts/inject/proj.sh
-# - /home/luc/scripts/inject/compile.sh
-# - /home/luc/scripts/inject/definitions.sh
-# - /home/luc/scripts/inject/aliases.sh
-# - /home/luc/scripts/inject/docker_helpers.sh
-# - /home/luc/scripts/inject/git_helpers.sh
-# - /home/luc/scripts/inject/laravel.sh
-# - /home/luc/scripts/inject/local_settings.sh
-# - /home/luc/scripts/inject/tmux_helpers.sh
-# - /home/luc/scripts/inject/version_management.sh
-# - /home/luc/scripts/inject/vim.sh
-# - /home/luc/scripts/inject/work.sh
-# - /home/luc/scripts/inject/other.sh
+# - /home/lucdewit/scripts/inject/proj.sh
+# - /home/lucdewit/scripts/inject/compile.sh
+# - /home/lucdewit/scripts/inject/definitions.sh
+# - /home/lucdewit/scripts/inject/aliases.sh
+# - /home/lucdewit/scripts/inject/docker_helpers.sh
+# - /home/lucdewit/scripts/inject/git_helpers.sh
+# - /home/lucdewit/scripts/inject/laravel.sh
+# - /home/lucdewit/scripts/inject/local_settings.sh
+# - /home/lucdewit/scripts/inject/tmux_helpers.sh
+# - /home/lucdewit/scripts/inject/version_management.sh
+# - /home/lucdewit/scripts/inject/vim.sh
+# - /home/lucdewit/scripts/inject/work.sh
+# - /home/lucdewit/scripts/inject/other.sh
 
 #################################
 # Start of LSR module #1        #
@@ -1848,7 +1848,7 @@ set_powerline_ps1() {
     local red="255;0;0"
     local green="42;135;57"
     local blue="0;135;175"
-    local yellow="255;200;0"
+    local yellow="179;127;55"
 
     # Define colors
     local blue_bg="\[\033[48;2;${blue}m\]"   # Blue Background
