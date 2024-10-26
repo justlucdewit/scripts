@@ -62,7 +62,7 @@ set_powerline_ps1() {
     local red="255;0;0"
     local green="42;135;57"
     local blue="0;135;175"
-    local yellow="255;200;0"
+    local yellow="179;127;55"
 
     # Define colors
     local blue_bg="\[\033[48;2;${blue}m\]"   # Blue Background
