@@ -51,16 +51,20 @@ The following is a list of commands to be used in LSR
 | rip | rip <pane num> <command> | runs a command in the given pane |
 
 # TODO:
- + Stop command to stop the current project and undo the layout
- + Switch command to switch to different project if current project is running
- + Open URL in browser on start
  + instead of sourcing individual .sh files, make bashrc compile everything into a combined .sh file and source that
- - Ensure no double build
- - use helper prints for everything
- - Saving and starting with previous path
+ + Switch command to switch to different project if current project is running
+ + Stop command to stop the current project and undo the layout
+ + Open URL in browser on start
+ + lhelp command
+ - Put user definitions in local settings instead of hardcoded
+ - Use user definitions for gitlog
+ - SSH helpers
+ - Accelerate PS1 loading time
+
  - Codefind command to find anything in the current codebase in any file
+ - Saving and starting with previous path
+ - use helper prints for everything
  - --fuzzy argument for codefind
- - ChatGpt command
- - iforgot command
- - cfind command
+ - Ensure no double build
  - npmscripts --show
+ - ChatGpt command 

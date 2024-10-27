@@ -1,3 +1,5 @@
+# Harcoded projects that are available for all
+# Systems with Lukes Script Repository Installed
 unset -v projects
 declare -gA projects=(
     ["scripts"]="$HOME/scripts" # Add scripts as a hardcoded project

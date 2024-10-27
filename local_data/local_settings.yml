@@ -1,19 +1,20 @@
 projects:
-  spectrum:
-    dir: /home/luc/projects/website-spectrum-59-q3-2022
-    url: http://localhost
+  cca:
+    dir: /home/lucdewit/projects/cca
+    url: null
+  ccvm:
+    dir: /home/lucdewit/projects/ccvm
+    url: null
   tta:
-    dir: /home/luc/projects/tta-onepager
-    url: http://localhost
-  x-back:
-    dir: /home/luc/projects/x-ingredient-api-v2
+    dir: /home/lucdewit/projects/tta-onepager
     url: null
-  x-front:
-    dir: /home/luc/projects/x-ingredient-company-website-new
-    url: null
-  mvdg:
-    dir: /home/luc/projects/mars-maand-van-de-gebitsverzorging-website-2024
-    url: null
+gitusers:
+  CK:
+    fullname: Cem Kuruc
+    shortname: Cem
+  luc.dewit:
+    fullname: Luc de wit
+    shortname: Luc
 weatherapi:
   api_key: 31d5d7acf95f3d816daf14d05c9cc267
   lat: 51.7
