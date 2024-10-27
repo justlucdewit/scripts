@@ -1,5 +1,5 @@
 # LSR v1.1
-# Local build (18:20 26/10/2024)
+# Local build (19:01 27/10/2024)
 # Includes LSR modules:
 # - /home/lucdewit/scripts/inject/proj.sh
 # - /home/lucdewit/scripts/inject/compile.sh
@@ -435,9 +435,11 @@ lsr_compile() {
 ########################################
 # Start of LSR module #3               #
 # Injected LSR module: definitions.sh  #
-# Number of lines: 16                  #
-# Filesize: 394 B                      #
+# Number of lines: 18                  #
+# Filesize: 490 B                      #
 ########################################
+# Harcoded projects that are available for all
+# Systems with Lukes Script Repository Installed
 unset -v projects
 declare -gA projects=(
     ["scripts"]="$HOME/scripts" # Add scripts as a hardcoded project
@@ -914,8 +916,8 @@ fresh_install_sail() {
 ###########################################
 # Start of LSR module #8                  #
 # Injected LSR module: local_settings.sh  #
-# Number of lines: 182                    #
-# Filesize: 5.13 KB                       #
+# Number of lines: 193                    #
+# Filesize: 5.46 KB                       #
 ###########################################
 local_settings_file="$HOME/scripts/local_data/local_settings.yml"
 local_settings_dir="$(dirname "$local_settings_file")"
@@ -924,22 +926,33 @@ alias lsget="localsettings_get"
 alias lsset="localsettings_set"
 alias lseval="localsettings_eval"
 
-localsettings_ensureexists() {
-    local field="$1"
+# localsettings_ensureexists() {
+#     local skip_validation=0
+#     local field
 
-    # Validate the field before proceeding
-    if ! yq_validate_only_lookup "$field"; then
-        return 1  # Exit if validation fails
-    fi
+#     # Check for the optional --skip-validation flag
+#     if [[ "$1" == "--skip-validation" ]]; then
+#         skip_validation=1
+#         field="$2"
+#     else
+#         field="$1"
+#     fi
 
-    local value=$(yq e "$field // \"\"" "$local_settings_file")
+#     # Validate the field if --skip-validation is not provided
+#     if [[ "$skip_validation" -eq 0 ]]; then
+#         if ! yq_validate_only_lookup "$field"; then
+#             return 1  # Exit if validation fails
+#         fi
+#     fi
 
-    # Create it if it does not exist
-    if [[ -z "$value" ]]; then
-        yq e -i "$field = null" "$local_settings_file"
-        localsettings_reformat
-    fi
-}
+#     local value=$(yq e "$field // \"\"" "$local_settings_file")
+
+#     # Create it if it does not exist
+#     if [[ -z "$value" ]]; then
+#         yq e -i "$field = null" "$local_settings_file"
+#         localsettings_reformat
+#     fi
+# }
 
 localsettings_eval() {
     local command="."

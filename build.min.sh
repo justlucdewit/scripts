@@ -627,17 +627,6 @@ local_settings_dir="$(dirname "$local_settings_file")"
 alias lsget="localsettings_get"
 alias lsset="localsettings_set"
 alias lseval="localsettings_eval"
-localsettings_ensureexists() {
-    local field="$1"
-    if ! yq_validate_only_lookup "$field"; then
-        return 1  # Exit if validation fails
-    fi
-    local value=$(yq e "$field // \"\"" "$local_settings_file")
-    if [[ -z "$value" ]]; then
-        yq e -i "$field = null" "$local_settings_file"
-        localsettings_reformat
-    fi
-}
 localsettings_eval() {
     local command="."
     if [[ -n $1 ]]; then
