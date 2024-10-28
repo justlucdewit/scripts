@@ -1,19 +1,19 @@
 # LSR v1.1
-# Local build (19:01 27/10/2024)
+# Local build (12:28 28/10/2024)
 # Includes LSR modules:
-# - /home/lucdewit/scripts/inject/proj.sh
-# - /home/lucdewit/scripts/inject/compile.sh
-# - /home/lucdewit/scripts/inject/definitions.sh
-# - /home/lucdewit/scripts/inject/aliases.sh
-# - /home/lucdewit/scripts/inject/docker_helpers.sh
-# - /home/lucdewit/scripts/inject/git_helpers.sh
-# - /home/lucdewit/scripts/inject/laravel.sh
-# - /home/lucdewit/scripts/inject/local_settings.sh
-# - /home/lucdewit/scripts/inject/tmux_helpers.sh
-# - /home/lucdewit/scripts/inject/version_management.sh
-# - /home/lucdewit/scripts/inject/vim.sh
-# - /home/lucdewit/scripts/inject/work.sh
-# - /home/lucdewit/scripts/inject/other.sh
+# - /home/luc/scripts/inject/proj.sh
+# - /home/luc/scripts/inject/compile.sh
+# - /home/luc/scripts/inject/definitions.sh
+# - /home/luc/scripts/inject/aliases.sh
+# - /home/luc/scripts/inject/docker_helpers.sh
+# - /home/luc/scripts/inject/git_helpers.sh
+# - /home/luc/scripts/inject/laravel.sh
+# - /home/luc/scripts/inject/local_settings.sh
+# - /home/luc/scripts/inject/tmux_helpers.sh
+# - /home/luc/scripts/inject/version_management.sh
+# - /home/luc/scripts/inject/vim.sh
+# - /home/luc/scripts/inject/work.sh
+# - /home/luc/scripts/inject/other.sh
 
 #################################
 # Start of LSR module #1        #
@@ -695,7 +695,7 @@ alias d="!f() { git branch -d $1 && git push origin --delete $1; }; f"
 # Start of LSR module #7           #
 # Injected LSR module: laravel.sh  #
 # Number of lines: 215             #
-# Filesize: 5.82 KB                #
+# Filesize: 5.81 KB                #
 ####################################
 alias fresh="fresh_install_sail"
 
@@ -845,8 +845,8 @@ start() {
 
     # Start npm, make sure no browsers get opened
     if grep -q "\"$npm_script\": \"vite" package.json; then
-        print_info "starting npm with 'npm run $npm_script -- --open=false'"
-        run_in_pane 1 "npm run $npm_script -- --open=false"
+        print_info "starting npm with 'npm run $npm_script -- --no-open'"
+        run_in_pane 1 "npm run $npm_script -- --no-open"
     else
         print_info "starting npm with 'npm run $npm_script'"
         run_in_pane 1 "npm run $npm_script"
@@ -916,8 +916,8 @@ fresh_install_sail() {
 ###########################################
 # Start of LSR module #8                  #
 # Injected LSR module: local_settings.sh  #
-# Number of lines: 193                    #
-# Filesize: 5.46 KB                       #
+# Number of lines: 182                    #
+# Filesize: 5.14 KB                       #
 ###########################################
 local_settings_file="$HOME/scripts/local_data/local_settings.yml"
 local_settings_dir="$(dirname "$local_settings_file")"
@@ -926,33 +926,22 @@ alias lsget="localsettings_get"
 alias lsset="localsettings_set"
 alias lseval="localsettings_eval"
 
-# localsettings_ensureexists() {
-#     local skip_validation=0
-#     local field
+localsettings_ensureexists() {
+    local field="$1"
 
-#     # Check for the optional --skip-validation flag
-#     if [[ "$1" == "--skip-validation" ]]; then
-#         skip_validation=1
-#         field="$2"
-#     else
-#         field="$1"
-#     fi
+    # Validate the field before proceeding
+    if ! yq_validate_only_lookup "$field"; then
+        return 1  # Exit if validation fails
+    fi
 
-#     # Validate the field if --skip-validation is not provided
-#     if [[ "$skip_validation" -eq 0 ]]; then
-#         if ! yq_validate_only_lookup "$field"; then
-#             return 1  # Exit if validation fails
-#         fi
-#     fi
+    local value=$(yq e "$field // \"\"" "$local_settings_file")
 
-#     local value=$(yq e "$field // \"\"" "$local_settings_file")
-
-#     # Create it if it does not exist
-#     if [[ -z "$value" ]]; then
-#         yq e -i "$field = null" "$local_settings_file"
-#         localsettings_reformat
-#     fi
-# }
+    # Create it if it does not exist
+    if [[ -z "$value" ]]; then
+        yq e -i "$field = null" "$local_settings_file"
+        localsettings_reformat
+    fi
+}
 
 localsettings_eval() {
     local command="."
@@ -1102,8 +1091,8 @@ yq_validate_only_lookup() {
     fi
 
     # Regular expression to match valid field patterns
-    if [[ ! "$field" =~ ^\.[a-zA-Z_][a-zA-Z0-9_.]*(\[[0-9]+\])?(\.[a-zA-Z_][a-zA-Z0-9_.]*(\[[0-9]+\])?)*$ ]]; then
-        print_error "Invalid field format '${field}'. Only lookup notation is allowed (e.g., .projects or .projects.example).\n"
+    if [[ ! "$field" =~ ^\.[a-zA-Z_-][a-zA-Z0-9_.-]*(\[[0-9]+\])?(\.[a-zA-Z_-][a-zA-Z0-9_.-]*(\[[0-9]+\])?)*$ ]]; then
+        print_error "Invalid field format '${field}'. Only lookup notation is allowed (e.g., .projects or .projects.test-example).\n"
         return 1  # Exit with an error
     fi
 

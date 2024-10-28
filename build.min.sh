@@ -572,8 +572,8 @@ start() {
     run_in_pane 2 tls
     npm_script=$(get_first_npm_script)
     if grep -q "\"$npm_script\": \"vite" package.json; then
-        print_info "starting npm with 'npm run $npm_script -- --open=false'"
-        run_in_pane 1 "npm run $npm_script -- --open=false"
+        print_info "starting npm with 'npm run $npm_script -- --no-open'"
+        run_in_pane 1 "npm run $npm_script -- --no-open"
     else
         print_info "starting npm with 'npm run $npm_script'"
         run_in_pane 1 "npm run $npm_script"
@@ -627,6 +627,17 @@ local_settings_dir="$(dirname "$local_settings_file")"
 alias lsget="localsettings_get"
 alias lsset="localsettings_set"
 alias lseval="localsettings_eval"
+localsettings_ensureexists() {
+    local field="$1"
+    if ! yq_validate_only_lookup "$field"; then
+        return 1  # Exit if validation fails
+    fi
+    local value=$(yq e "$field // \"\"" "$local_settings_file")
+    if [[ -z "$value" ]]; then
+        yq e -i "$field = null" "$local_settings_file"
+        localsettings_reformat
+    fi
+}
 localsettings_eval() {
     local command="."
     if [[ -n $1 ]]; then
@@ -739,8 +750,8 @@ yq_validate_only_lookup() {
     if [[ "$field" == "." ]]; then
         return 0  # Valid case for root access
     fi
-    if [[ ! "$field" =~ ^\.[a-zA-Z_][a-zA-Z0-9_.]*(\[[0-9]+\])?(\.[a-zA-Z_][a-zA-Z0-9_.]*(\[[0-9]+\])?)*$ ]]; then
-        print_error "Invalid field format '${field}'. Only lookup notation is allowed (e.g., .projects or .projects.example).\n"
+    if [[ ! "$field" =~ ^\.[a-zA-Z_-][a-zA-Z0-9_.-]*(\[[0-9]+\])?(\.[a-zA-Z_-][a-zA-Z0-9_.-]*(\[[0-9]+\])?)*$ ]]; then
+        print_error "Invalid field format '${field}'. Only lookup notation is allowed (e.g., .projects or .projects.test-example).\n"
         return 1  # Exit with an error
     fi
     return 0
