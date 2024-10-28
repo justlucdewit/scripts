@@ -146,8 +146,8 @@ start() {
 
     # Start npm, make sure no browsers get opened
     if grep -q "\"$npm_script\": \"vite" package.json; then
-        print_info "starting npm with 'npm run $npm_script -- --open=false'"
-        run_in_pane 1 "npm run $npm_script -- --open=false"
+        print_info "starting npm with 'npm run $npm_script -- --no-open'"
+        run_in_pane 1 "npm run $npm_script -- --no-open"
     else
         print_info "starting npm with 'npm run $npm_script'"
         run_in_pane 1 "npm run $npm_script"
