@@ -170,8 +170,8 @@ yq_validate_only_lookup() {
     fi
 
     # Regular expression to match valid field patterns
-    if [[ ! "$field" =~ ^\.[a-zA-Z_][a-zA-Z0-9_.]*(\[[0-9]+\])?(\.[a-zA-Z_][a-zA-Z0-9_.]*(\[[0-9]+\])?)*$ ]]; then
-        print_error "Invalid field format '${field}'. Only lookup notation is allowed (e.g., .projects or .projects.example).\n"
+    if [[ ! "$field" =~ ^\.[a-zA-Z_-][a-zA-Z0-9_.-]*(\[[0-9]+\])?(\.[a-zA-Z_-][a-zA-Z0-9_.-]*(\[[0-9]+\])?)*$ ]]; then
+        print_error "Invalid field format '${field}'. Only lookup notation is allowed (e.g., .projects or .projects.test-example).\n"
         return 1  # Exit with an error
     fi
 
