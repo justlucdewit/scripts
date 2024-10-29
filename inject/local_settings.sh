@@ -4,6 +4,9 @@ local_settings_dir="$(dirname "$local_settings_file")"
 alias lsget="localsettings_get"
 alias lsset="localsettings_set"
 alias lseval="localsettings_eval"
+alias lsdel="localsettings_delete"
+alias lssort="localsettings_sort"
+alias lsformat="localsettings_reformat"
 
 localsettings_ensureexists() {
     local field="$1"
@@ -20,6 +23,43 @@ localsettings_ensureexists() {
         yq e -i "$field = null" "$local_settings_file"
         localsettings_reformat
     fi
+}
+
+localsettings_sort() {
+    local field=$1
+
+    if [ "$#" -ne 1 ]; then
+        echo "Usage: lssort <path>"
+        return 1  # Return an error code
+    fi
+
+    # Validate the field before proceeding
+    if ! yq_validate_only_lookup "$field"; then
+        return 1  # Exit if validation fails
+    fi
+
+    localsettings_eval_with_save "$field = ($field | to_entries | sort_by(.key) | from_entries)"
+}
+
+localsettings_delete() {
+    local field=$1
+
+    if [ "$#" -ne 1 ]; then
+        echo "Usage: lsdel <path>"
+        return 1  # Return an error code
+    fi
+
+    localsettings_eval_with_save "del($field)"
+}
+
+localsettings_eval_with_save() {
+    local command="."
+
+    if [[ -n $1 ]]; then
+        command="$1"
+    fi
+
+    yq e -iP "$command" "$local_settings_file"
 }
 
 localsettings_eval() {
@@ -180,4 +220,6 @@ yq_validate_only_lookup() {
 
 localsettings_reformat() {
     yq e -P '.' -i "$local_settings_file"
+    localsettings_sort .projects
+    localsettings_sort .gitusers
 }
