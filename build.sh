@@ -1,5 +1,5 @@
 # LSR v1.1
-# Local build (15:05 29/10/2024)
+# Local build (15:52 29/10/2024)
 # Includes LSR modules:
 # - /home/luc/scripts/inject/proj.sh
 # - /home/luc/scripts/inject/compile.sh
@@ -437,7 +437,7 @@ lsr_compile() {
 # Start of LSR module #3               #
 # Injected LSR module: definitions.sh  #
 # Number of lines: 18                  #
-# Filesize: 490 B                      #
+# Filesize: 508 B                      #
 ########################################
 # Harcoded projects that are available for all
 # Systems with Lukes Script Repository Installed
@@ -448,15 +448,15 @@ declare -gA projects=(
 
 unset -v user_map
 declare -gA user_map=(
-    ["CK"]="Cem"
-    ["luc.dewit"]="Luc"
-    ["Luc de Wit"]="Luc"
-    ["justlucdewit"]="Luc"
-    ["Reinout Boelens"]="Reinout"
-    ["Eli"]="Eli"
-    ["Maurits van Mierlo"]="Maurits"
-    ["Bram Gubbels"]="Bram"
-    ["riyadbabouri"]="Riyad"
+    # ["CK"]="Cem"
+    # ["luc.dewit"]="Luc"
+    # ["Luc de Wit"]="Luc"
+    # ["justlucdewit"]="Luc"
+    # ["Reinout Boelens"]="Reinout"
+    # ["Eli"]="Eli"
+    # ["Maurits van Mierlo"]="Maurits"
+    # ["Bram Gubbels"]="Bram"
+    # ["riyadbabouri"]="Riyad"
 )
 ####################################
 # Start of LSR module #4           #
@@ -661,12 +661,13 @@ dockrestart() {
 ########################################
 # Start of LSR module #6               #
 # Injected LSR module: git_helpers.sh  #
-# Number of lines: 156                 #
-# Filesize: 4.82 KB                    #
+# Number of lines: 168                 #
+# Filesize: 5.22 KB                    #
 ########################################
 # Define a function to check if you're in a Git repo and show the current branch
 alias gitusers="git_users_main_command"
 
+# Composite command
 git_users_main_command() {
     # Help command
     if [ ! "$#" -gt 0 ]; then
@@ -676,7 +677,7 @@ git_users_main_command() {
         echo "  - gitusers new <identifier> <fullname>"
         echo "  - gitusers del <identifier>"
         echo "  - gitusers alias <identifier> <alias>"
-        echo "  - gitusers ualias <identifier> <alias>"
+        echo "  - gitusers unlias <identifier> <alias>"
         return 0
     fi
 
@@ -699,6 +700,17 @@ git_users_main_command() {
         print_error "Command $command does not exist"
         git_users_main_command # Re-run for help command
     fi
+}
+
+find_git_user_by_alias() {
+    local alias=$1
+
+    if [[ -z $alias ]]; then
+        print_error "find_git_user_by_alias expects an argument for the alias to search"
+        return 1
+    fi
+
+    localsettings_eval "( .gitusers | to_entries | map(select(.value.aliases[] == \"$alias\")) )[0] | { \"identifier\": .key, \"fullname\": .value.fullname, \"aliases\": .value.aliases } "
 }
 
 set_git_user_alias() {
@@ -1851,8 +1863,8 @@ write_to_vimrc
 #################################
 # Start of LSR module #12       #
 # Injected LSR module: work.sh  #
-# Number of lines: 99           #
-# Filesize: 4.11 KB             #
+# Number of lines: 95           #
+# Filesize: 3.76 KB             #
 #################################
 # Command for seeing what people have done what work in my local repositories
 
@@ -1907,40 +1919,36 @@ work() {
                 # Loop through each commit to print the associated original branch name
                 while IFS='|' read -r commit_hash username email commit_message commit_date; do
                     # Check if the user matches the filter (if specified)
-                    local nickname="${user_map[$username]}"
+                    local gituser=$(find_git_user_by_alias $username)
+
+                    local gituser_identifier=$(echo "$gituser" | yq e '.identifier' -)
+
                     
-                    # Convert both the filter and the username/nickname to lowercase for case-insensitive comparison
+                    
+                    # Convert both the filter and the username/identifier to lowercase for case-insensitive comparison
                     local lower_username="$(echo "$username" | tr '[:upper:]' '[:lower:]')"
-                    local lower_nickname="$(echo "$nickname" | tr '[:upper:]' '[:lower:]')"
+                    local lower_identifier="$(echo "$gituser_identifier" | tr '[:upper:]' '[:lower:]')"
                     local lower_filter_user="$(echo "$filter_user" | tr '[:upper:]' '[:lower:]')"
 
-                    # Use nickname if it's set; otherwise, use the username
-                    if [[ -n "$filter_user" && "$lower_filter_user" != "$lower_nickname" && "$lower_username" != "$lower_filter_user" ]]; then
+                    # Use identifier if it's set; otherwise, use the username
+                    if [[ -n "$filter_user" && "$lower_filter_user" != "$lower_identifier" && "$lower_username" != "$lower_filter_user" ]]; then
                         continue
                     fi
                     
                     # Mark that we found a commit
                     found_commits=true
                     
-                    # Get the branches that contain the commit
-                    branches=$(git branch --contains "$commit_hash" | grep -v 'remotes/')
-                    
-                    # Get the first original branch (if available)
-                    original_branch=$(echo "$branches" | sed 's/^\* //; s/^ //; s/ *$//' | awk '{print $1}' | head -n 1)
-
-                    # If original_branch is empty, set it to "unknown"
-                    if [[ -z "$original_branch" ]]; then
-                        original_branch="unknown"
-                    fi
-
                     # Format the commit date into hours and minutes (HH:MM)
                     time=$(date -d "$commit_date" +%H:%M)
 
                     # Map username to custom name
-                    username="${user_map[$username]:-$username}"
+                    
+                    if [[ $gituser_identifier != "null" ]]; then
+                        username=$gituser_identifier
+                    fi
 
                     # Customize the output with colors
-                    echo -e "\033[32m$username\033[0m @ \033[33m$time\033[0m -> \033[35m$original_branch\033[0m: $commit_message"
+                    echo -e "\033[32m$username\033[0m @ \033[33m$time\033[0m \033[0m: $commit_message"
                 done <<< "$commits"
             fi
 

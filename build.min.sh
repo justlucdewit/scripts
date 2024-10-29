@@ -301,15 +301,6 @@ declare -gA projects=(
 )
 unset -v user_map
 declare -gA user_map=(
-    ["CK"]="Cem"
-    ["luc.dewit"]="Luc"
-    ["Luc de Wit"]="Luc"
-    ["justlucdewit"]="Luc"
-    ["Reinout Boelens"]="Reinout"
-    ["Eli"]="Eli"
-    ["Maurits van Mierlo"]="Maurits"
-    ["Bram Gubbels"]="Bram"
-    ["riyadbabouri"]="Riyad"
 )
 reload_bash() {
     source ~/.bashrc
@@ -460,7 +451,7 @@ git_users_main_command() {
         echo "  - gitusers new <identifier> <fullname>"
         echo "  - gitusers del <identifier>"
         echo "  - gitusers alias <identifier> <alias>"
-        echo "  - gitusers ualias <identifier> <alias>"
+        echo "  - gitusers unlias <identifier> <alias>"
         return 0
     fi
     local command=$1
@@ -481,6 +472,14 @@ git_users_main_command() {
         print_error "Command $command does not exist"
         git_users_main_command # Re-run for help command
     fi
+}
+find_git_user_by_alias() {
+    local alias=$1
+    if [[ -z $alias ]]; then
+        print_error "find_git_user_by_alias expects an argument for the alias to search"
+        return 1
+    fi
+    localsettings_eval "( .gitusers | to_entries | map(select(.value.aliases[] == \"$alias\")) )[0] | { \"identifier\": .key, \"fullname\": .value.fullname, \"aliases\": .value.aliases } "
 }
 set_git_user_alias() {
     local identifier=$(prompt_if_not_exists "Identifier" $1)
@@ -1300,26 +1299,25 @@ work() {
             local found_commits=false
             if [ -n "$commits" ]; then
                 while IFS='|' read -r commit_hash username email commit_message commit_date; do
-                    local nickname="${user_map[$username]}"
+                    local gituser=$(find_git_user_by_alias $username)
+                    local gituser_identifier=$(echo "$gituser" | yq e '.identifier' -)
+                    
                     
                     local lower_username="$(echo "$username" | tr '[:upper:]' '[:lower:]')"
-                    local lower_nickname="$(echo "$nickname" | tr '[:upper:]' '[:lower:]')"
+                    local lower_identifier="$(echo "$gituser_identifier" | tr '[:upper:]' '[:lower:]')"
                     local lower_filter_user="$(echo "$filter_user" | tr '[:upper:]' '[:lower:]')"
-                    if [[ -n "$filter_user" && "$lower_filter_user" != "$lower_nickname" && "$lower_username" != "$lower_filter_user" ]]; then
+                    if [[ -n "$filter_user" && "$lower_filter_user" != "$lower_identifier" && "$lower_username" != "$lower_filter_user" ]]; then
                         continue
                     fi
                     
                     found_commits=true
                     
-                    branches=$(git branch --contains "$commit_hash" | grep -v 'remotes/')
-                    
-                    original_branch=$(echo "$branches" | sed 's/^\* //; s/^ //; s/ *$//' | awk '{print $1}' | head -n 1)
-                    if [[ -z "$original_branch" ]]; then
-                        original_branch="unknown"
-                    fi
                     time=$(date -d "$commit_date" +%H:%M)
-                    username="${user_map[$username]:-$username}"
-                    echo -e "\033[32m$username\033[0m @ \033[33m$time\033[0m -> \033[35m$original_branch\033[0m: $commit_message"
+                    
+                    if [[ $gituser_identifier != "null" ]]; then
+                        username=$gituser_identifier
+                    fi
+                    echo -e "\033[32m$username\033[0m @ \033[33m$time\033[0m \033[0m: $commit_message"
                 done <<< "$commits"
             fi
             if [ "$found_commits" = false ]; then
