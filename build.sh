@@ -1,5 +1,5 @@
 # LSR v1.1
-# Local build (11:19 29/10/2024)
+# Local build (15:05 29/10/2024)
 # Includes LSR modules:
 # - /home/luc/scripts/inject/proj.sh
 # - /home/luc/scripts/inject/compile.sh
@@ -661,10 +661,139 @@ dockrestart() {
 ########################################
 # Start of LSR module #6               #
 # Injected LSR module: git_helpers.sh  #
-# Number of lines: 27                  #
-# Filesize: 895 B                      #
+# Number of lines: 156                 #
+# Filesize: 4.82 KB                    #
 ########################################
 # Define a function to check if you're in a Git repo and show the current branch
+alias gitusers="git_users_main_command"
+
+git_users_main_command() {
+    # Help command
+    if [ ! "$#" -gt 0 ]; then
+        echo "usage: "
+        echo "  - gitusers list"
+        echo "  - gitusers get <identifier>"
+        echo "  - gitusers new <identifier> <fullname>"
+        echo "  - gitusers del <identifier>"
+        echo "  - gitusers alias <identifier> <alias>"
+        echo "  - gitusers ualias <identifier> <alias>"
+        return 0
+    fi
+
+    local command=$1
+    shift
+
+    if is_in_list "$command" "list,all"; then
+        list_git_users $@
+    elif is_in_list "$command" "get"; then
+        get_git_user $@
+    elif is_in_list "$command" "new,create,add"; then
+        new_git_user $@
+    elif is_in_list "$command" "del,delete,rem,remove"; then
+        delete_git_user $@
+    elif is_in_list "$command" "add-alias,new-alias,create-alias,alias,"; then
+        set_git_user_alias $@
+    elif is_in_list "$command" "del-alias,rem-alias,delete-alias,remove-alias,unalias"; then
+        unset_git_user_alias $@
+    else
+        print_error "Command $command does not exist"
+        git_users_main_command # Re-run for help command
+    fi
+}
+
+set_git_user_alias() {
+    local identifier=$(prompt_if_not_exists "Identifier" $1)
+
+    # Attempt get, if already exists, error
+    local getResult=$(localsettings_eval ".gitusers.\"$identifier\"")
+    if [[ "$getResult" == "null" ]]; then
+        print_error "Git user with identifier $identifier does not exist"
+        return 1
+    fi
+
+    local alias=$(prompt_if_not_exists "Alias" $2)
+
+    localsettings_eval_with_save ".gitusers.\"$identifier\".aliases += [ \"$alias\" ]"
+
+    print_success "Added alias '$alias' to gituser '$identifier'"
+
+    localsettings_reformat
+}
+
+unset_git_user_alias() {
+    local identifier=$(prompt_if_not_exists "Identifier" $1)
+
+    # Attempt get, if already exists, error
+    local getResult=$(localsettings_eval ".gitusers.\"$identifier\"")
+    if [[ "$getResult" == "null" ]]; then
+        print_error "Git user with identifier $identifier does not exist"
+        return 1
+    fi
+
+    local alias=$(prompt_if_not_exists "Alias" $2)
+
+    localsettings_eval_with_save "del(.gitusers.\"$identifier\".aliases[] | select(. == \"$alias\"))"
+
+    print_success "Deleted alias '$alias' to gituser '$identifier'"
+
+    localsettings_reformat
+}
+
+get_git_user() {
+    # Get the needed values
+    local identifier=$(prompt_if_not_exists "Identifier" $1)
+    
+    localsettings_reformat
+
+    # Attempt get, if already exists, error
+    local getResult=$(localsettings_eval ".gitusers.\"$identifier\"")
+    if [[ "$getResult" == "null" ]]; then
+        print_error "Git user with identifier $identifier does not exist"
+        return 1
+    fi
+
+    localsettings_eval ".gitusers.\"$identifier\""
+}
+
+list_git_users() {
+    localsettings_reformat
+    localsettings_get .gitusers
+}
+
+delete_git_user() {
+    # Get the needed values
+    local identifier=$(prompt_if_not_exists "Identifier" $1)
+
+    # Attempt get, if not exists, error
+    local getResult=$(localsettings_eval ".gitusers.\"$identifier\"")
+    if [[ "$getResult" == "null" ]]; then
+        print_error "Git user with identifier $identifier does not exists"
+        return 1
+    fi
+
+    localsettings_delete ".gitusers.\"$identifier\""
+    print_success "Deleted gituser \"$identifier\""
+}
+
+new_git_user() {
+    local identifier=$(prompt_if_not_exists "Identifier" $1)
+
+    # Attempt get, if already exists, error
+    local getResult=$(localsettings_eval ".gitusers.\\\"$identifier\\\"")
+    if [[ ! "$getResult" == "null" ]]; then
+        print_error "Git user with identifier $identifier already exists"
+        return 1
+    fi
+
+    local fullname=$(prompt_if_not_exists "Fullname" $2)
+
+    # Set the values to the local settings
+    localsettings_eval_with_save ".gitusers.\"$identifier\".fullname = \"$fullname\"" > /dev/null
+    localsettings_eval_with_save ".gitusers.\"$identifier\".aliases = [ \"$fullname\" ]" > /dev/null
+    localsettings_reformat
+    print_success "Created gituser \"$identifier\""
+}
+
 parse_git_branch() {
     local branch
     branch=$(git branch --show-current 2>/dev/null)
@@ -917,8 +1046,8 @@ fresh_install_sail() {
 ###########################################
 # Start of LSR module #8                  #
 # Injected LSR module: local_settings.sh  #
-# Number of lines: 182                    #
-# Filesize: 5.14 KB                       #
+# Number of lines: 224                    #
+# Filesize: 6.06 KB                       #
 ###########################################
 local_settings_file="$HOME/scripts/local_data/local_settings.yml"
 local_settings_dir="$(dirname "$local_settings_file")"
@@ -926,6 +1055,9 @@ local_settings_dir="$(dirname "$local_settings_file")"
 alias lsget="localsettings_get"
 alias lsset="localsettings_set"
 alias lseval="localsettings_eval"
+alias lsdel="localsettings_delete"
+alias lssort="localsettings_sort"
+alias lsformat="localsettings_reformat"
 
 localsettings_ensureexists() {
     local field="$1"
@@ -942,6 +1074,43 @@ localsettings_ensureexists() {
         yq e -i "$field = null" "$local_settings_file"
         localsettings_reformat
     fi
+}
+
+localsettings_sort() {
+    local field=$1
+
+    if [ "$#" -ne 1 ]; then
+        echo "Usage: lssort <path>"
+        return 1  # Return an error code
+    fi
+
+    # Validate the field before proceeding
+    if ! yq_validate_only_lookup "$field"; then
+        return 1  # Exit if validation fails
+    fi
+
+    localsettings_eval_with_save "$field = ($field | to_entries | sort_by(.key) | from_entries)"
+}
+
+localsettings_delete() {
+    local field=$1
+
+    if [ "$#" -ne 1 ]; then
+        echo "Usage: lsdel <path>"
+        return 1  # Return an error code
+    fi
+
+    localsettings_eval_with_save "del($field)"
+}
+
+localsettings_eval_with_save() {
+    local command="."
+
+    if [[ -n $1 ]]; then
+        command="$1"
+    fi
+
+    yq e -iP "$command" "$local_settings_file"
 }
 
 localsettings_eval() {
@@ -1102,6 +1271,8 @@ yq_validate_only_lookup() {
 
 localsettings_reformat() {
     yq e -P '.' -i "$local_settings_file"
+    localsettings_sort .projects
+    localsettings_sort .gitusers
 }
 #########################################
 # Start of LSR module #9                #
