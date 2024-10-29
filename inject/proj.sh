@@ -1,9 +1,3 @@
-# TODO: when deleting a proj that is defined in definitions.sh, notify that
-# It is impossible to delete that one
-
-# Declare the array that will hold the merged projects
-declare -gA combined_projects
-
 alias cproj=current_project
 alias proj=project
 alias p=project
@@ -120,7 +114,7 @@ remove_project() {
 }
 
 project() {
-    sync_projects  # Sync the combined projects array
+    load_yaml_projects
 
     local show_dirs=false
 
@@ -141,11 +135,11 @@ project() {
     # Check if a project name was provided
     if [[ -n "$1" ]]; then
         # Check if the provided project exists in the combined projects array
-        if [[ -n "${combined_projects[$1]}" ]]; then
-            if [[ -d "${combined_projects[$1]}" ]]; then
-                cd "${combined_projects[$1]}" || echo "Failed to navigate to ${combined_projects[$1]}"
+        if [[ -n "${yaml_projects[$1]}" ]]; then
+            if [[ -d "${yaml_projects[$1]}" ]]; then
+                cd "${yaml_projects[$1]}" || echo "Failed to navigate to ${yaml_projects[$1]}"
             else
-                echo "Directory does not exist: ${combined_projects[$1]}"
+                echo "Directory does not exist: ${yaml_projects[$1]}"
             fi
         else
             echo "Project not found. Available projects:"
@@ -209,48 +203,29 @@ load_yaml_projects() {
 
 # Function to list all available projects, highlighting the current project in green
 list_projects() {
-    sync_projects  # Sync the combined projects array
+    load_yaml_projects
     local current_dir=$(pwd)
     local green='\033[0;32m'
     local reset='\033[0m'
 
     echo "Available projects:"
     local show_dirs="$1"
-    for key in "${!combined_projects[@]}"; do
+    for key in "${!yaml_projects[@]}"; do
         # Determine if the current project is the active one
-        if [[ "${combined_projects[$key]}" == "$current_dir" ]]; then
+        if [[ "${yaml_projects[$key]}" == "$current_dir" ]]; then
             # Highlight the current project in green
             if [[ "$show_dirs" == true ]]; then
-                echo -e "${green} - $key: ${combined_projects[$key]}${reset}"
+                echo -e "${green} - $key: ${yaml_projects[$key]}${reset}"
             else
                 echo -e "${green} - $key${reset}"  # Green highlight for the project name
             fi
         else
             # Regular output for other projects
             if [[ "$show_dirs" == true ]]; then
-                echo " - $key: ${combined_projects[$key]}"
+                echo " - $key: ${yaml_projects[$key]}"
             else
                 echo " - $key"
             fi
         fi
-    done
-}
-
-# Function to sync the original projects with the YAML projects into combined_projects
-sync_projects() {
-    # Load projects from YAML
-    load_yaml_projects
-
-    # Reset the combined_projects array
-    combined_projects=()
-
-    # Add all original projects to the combined_projects array
-    for key in "${!projects[@]}"; do
-        combined_projects["$key"]="${projects[$key]}"
-    done
-
-    # Add or override with projects from the yaml_projects array
-    for key in "${!yaml_projects[@]}"; do
-        combined_projects["$key"]="${yaml_projects[$key]}"
     done
 }

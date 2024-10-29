@@ -1,11 +1,10 @@
 # Command for seeing what people have done what work in my local repositories
-
 work() {
     # Default values
     local date="$(date --date='yesterday' +%Y-%m-%d)"
     local filter_user=""
+    local filter_project=""
     local original_pwd=$(pwd)
-    local work_git_dir=~/projects
 
     # Parse command line options
     while [[ $# -gt 0 ]]; do
@@ -18,6 +17,10 @@ work() {
                 filter_user="${1#*=}"
                 shift
                 ;;
+            --project=*)
+                filter_project="${1#*=}"
+                shift
+                ;;
             *)
                 echo "Unknown option: $1"
                 return 1
@@ -28,15 +31,21 @@ work() {
     # Convert the specified date into the appropriate format
     date=$(date --date="$date" +%Y-%m-%d)
 
-    echo -e "\n\033[34mSearching for commits on $date in all repositories under $work_git_dir...\033[0m"
+    echo -e "\n\033[34mSearching for commits on $date in all projects"
 
     # Loop through all subdirectories (assuming they are Git repositories)
-    for repo in "$work_git_dir"/*; do # Go through all of the projects
+    for repo in $(localsettings_eval ".projects[] | .dir"); do # Go through all of the projects
         if [ -d "$repo/.git" ]; then # If they are git repos
             # Change into the repository's directory, fetch all
             cd "$repo" || continue
             
-            echo -e "\n\033[36m=== $(basename "$repo") ===\033[0m"
+            local projectlabel=$(localsettings_eval "(.projects | to_entries | map(select(.value.dir == \"$repo\")))[0].key")
+
+            if [[ -n "$filter_project" && "$filter_project" != "$projectlabel" ]]; then
+                continue;
+            fi
+
+            echo -e "\n\033[36m=== $projectlabel ===\033[0m"
             
             git fetch --all >/dev/null 2>&1
 
@@ -51,7 +60,7 @@ work() {
                 # Loop through each commit to print the associated original branch name
                 while IFS='|' read -r commit_hash username email commit_message commit_date; do
                     # Check if the user matches the filter (if specified)
-                    local gituser=$(find_git_user_by_alias $username)
+                    local gituser=$(find_git_user_by_alias "$username")
                     local gituser_identifier=$(echo "$gituser" | yq e '.identifier' -)
                     
                     # Convert both the filter and the username/identifier to lowercase for case-insensitive comparison
@@ -76,7 +85,7 @@ work() {
                     fi
 
                     # Customize the output with colors
-                    echo -e "\033[32m$username\033[0m @ \033[33m$time\033[0m \033[0m: $commit_message"
+                    echo -e "\033[32m$username\033[0m@\033[33m$time\033[0m\033[0m: $commit_message"
                 done <<< "$commits"
             fi
 

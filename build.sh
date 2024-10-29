@@ -1,9 +1,8 @@
 # LSR v1.1
-# Local build (15:52 29/10/2024)
+# Local build (16:34 29/10/2024)
 # Includes LSR modules:
 # - /home/luc/scripts/inject/proj.sh
 # - /home/luc/scripts/inject/compile.sh
-# - /home/luc/scripts/inject/definitions.sh
 # - /home/luc/scripts/inject/aliases.sh
 # - /home/luc/scripts/inject/docker_helpers.sh
 # - /home/luc/scripts/inject/git_helpers.sh
@@ -19,15 +18,9 @@
 #################################
 # Start of LSR module #1        #
 # Injected LSR module: proj.sh  #
-# Number of lines: 256          #
-# Filesize: 7.94 KB             #
+# Number of lines: 230          #
+# Filesize: 7.09 KB             #
 #################################
-# TODO: when deleting a proj that is defined in definitions.sh, notify that
-# It is impossible to delete that one
-
-# Declare the array that will hold the merged projects
-declare -gA combined_projects
-
 alias cproj=current_project
 alias proj=project
 alias p=project
@@ -144,7 +137,7 @@ remove_project() {
 }
 
 project() {
-    sync_projects  # Sync the combined projects array
+    load_yaml_projects
 
     local show_dirs=false
 
@@ -165,11 +158,11 @@ project() {
     # Check if a project name was provided
     if [[ -n "$1" ]]; then
         # Check if the provided project exists in the combined projects array
-        if [[ -n "${combined_projects[$1]}" ]]; then
-            if [[ -d "${combined_projects[$1]}" ]]; then
-                cd "${combined_projects[$1]}" || echo "Failed to navigate to ${combined_projects[$1]}"
+        if [[ -n "${yaml_projects[$1]}" ]]; then
+            if [[ -d "${yaml_projects[$1]}" ]]; then
+                cd "${yaml_projects[$1]}" || echo "Failed to navigate to ${yaml_projects[$1]}"
             else
-                echo "Directory does not exist: ${combined_projects[$1]}"
+                echo "Directory does not exist: ${yaml_projects[$1]}"
             fi
         else
             echo "Project not found. Available projects:"
@@ -233,57 +226,37 @@ load_yaml_projects() {
 
 # Function to list all available projects, highlighting the current project in green
 list_projects() {
-    sync_projects  # Sync the combined projects array
+    load_yaml_projects
     local current_dir=$(pwd)
     local green='\033[0;32m'
     local reset='\033[0m'
 
     echo "Available projects:"
     local show_dirs="$1"
-    for key in "${!combined_projects[@]}"; do
+    for key in "${!yaml_projects[@]}"; do
         # Determine if the current project is the active one
-        if [[ "${combined_projects[$key]}" == "$current_dir" ]]; then
+        if [[ "${yaml_projects[$key]}" == "$current_dir" ]]; then
             # Highlight the current project in green
             if [[ "$show_dirs" == true ]]; then
-                echo -e "${green} - $key: ${combined_projects[$key]}${reset}"
+                echo -e "${green} - $key: ${yaml_projects[$key]}${reset}"
             else
                 echo -e "${green} - $key${reset}"  # Green highlight for the project name
             fi
         else
             # Regular output for other projects
             if [[ "$show_dirs" == true ]]; then
-                echo " - $key: ${combined_projects[$key]}"
+                echo " - $key: ${yaml_projects[$key]}"
             else
                 echo " - $key"
             fi
         fi
     done
 }
-
-# Function to sync the original projects with the YAML projects into combined_projects
-sync_projects() {
-    # Load projects from YAML
-    load_yaml_projects
-
-    # Reset the combined_projects array
-    combined_projects=()
-
-    # Add all original projects to the combined_projects array
-    for key in "${!projects[@]}"; do
-        combined_projects["$key"]="${projects[$key]}"
-    done
-
-    # Add or override with projects from the yaml_projects array
-    for key in "${!yaml_projects[@]}"; do
-        combined_projects["$key"]="${yaml_projects[$key]}"
-    done
-}
-
 ####################################
 # Start of LSR module #2           #
 # Injected LSR module: compile.sh  #
-# Number of lines: 147             #
-# Filesize: 5.12 KB                #
+# Number of lines: 146             #
+# Filesize: 5.11 KB                #
 ####################################
 source "$HOME/scripts/helpers.sh"
 
@@ -291,7 +264,6 @@ source "$HOME/scripts/helpers.sh"
 scripts_to_compile=(
     "proj"
     "compile"
-    "definitions"
     "aliases"
     "docker_helpers"
     "git_helpers"
@@ -433,33 +405,8 @@ lsr_compile() {
     reload_bash
 }
 
-########################################
-# Start of LSR module #3               #
-# Injected LSR module: definitions.sh  #
-# Number of lines: 18                  #
-# Filesize: 508 B                      #
-########################################
-# Harcoded projects that are available for all
-# Systems with Lukes Script Repository Installed
-unset -v projects
-declare -gA projects=(
-    ["scripts"]="$HOME/scripts" # Add scripts as a hardcoded project
-)
-
-unset -v user_map
-declare -gA user_map=(
-    # ["CK"]="Cem"
-    # ["luc.dewit"]="Luc"
-    # ["Luc de Wit"]="Luc"
-    # ["justlucdewit"]="Luc"
-    # ["Reinout Boelens"]="Reinout"
-    # ["Eli"]="Eli"
-    # ["Maurits van Mierlo"]="Maurits"
-    # ["Bram Gubbels"]="Bram"
-    # ["riyadbabouri"]="Riyad"
-)
 ####################################
-# Start of LSR module #4           #
+# Start of LSR module #3           #
 # Injected LSR module: aliases.sh  #
 # Number of lines: 28              #
 # Filesize: 793 B                  #
@@ -494,7 +441,7 @@ joke() {
 }
 
 ###########################################
-# Start of LSR module #5                  #
+# Start of LSR module #4                  #
 # Injected LSR module: docker_helpers.sh  #
 # Number of lines: 158                    #
 # Filesize: 5.45 KB                       #
@@ -659,7 +606,7 @@ dockrestart() {
     fi
 }
 ########################################
-# Start of LSR module #6               #
+# Start of LSR module #5               #
 # Injected LSR module: git_helpers.sh  #
 # Number of lines: 168                 #
 # Filesize: 5.22 KB                    #
@@ -834,7 +781,7 @@ alias st='git stash'
 alias delete='git branch -d'
 alias d="!f() { git branch -d $1 && git push origin --delete $1; }; f"
 ####################################
-# Start of LSR module #7           #
+# Start of LSR module #6           #
 # Injected LSR module: laravel.sh  #
 # Number of lines: 215             #
 # Filesize: 5.81 KB                #
@@ -1056,7 +1003,7 @@ fresh_install_sail() {
     fi
 }
 ###########################################
-# Start of LSR module #8                  #
+# Start of LSR module #7                  #
 # Injected LSR module: local_settings.sh  #
 # Number of lines: 224                    #
 # Filesize: 6.06 KB                       #
@@ -1287,7 +1234,7 @@ localsettings_reformat() {
     localsettings_sort .gitusers
 }
 #########################################
-# Start of LSR module #9                #
+# Start of LSR module #8                #
 # Injected LSR module: tmux_helpers.sh  #
 # Number of lines: 429                  #
 # Filesize: 13.34 KB                    #
@@ -1723,7 +1670,7 @@ alias ripuf="run_in_pane_until_finished"
 alias tc="tclose"
 
 ###############################################
-# Start of LSR module #10                     #
+# Start of LSR module #9                      #
 # Injected LSR module: version_management.sh  #
 # Number of lines: 88                         #
 # Filesize: 2.55 KB                           #
@@ -1818,7 +1765,7 @@ lsr_uninstall() {
     reload_bash
 }
 ################################
-# Start of LSR module #11      #
+# Start of LSR module #10      #
 # Injected LSR module: vim.sh  #
 # Number of lines: 36          #
 # Filesize: 1004 B             #
@@ -1861,19 +1808,18 @@ source ~/scripts/extra_config_files/LukesVimConfig.vim
 
 write_to_vimrc
 #################################
-# Start of LSR module #12       #
+# Start of LSR module #11       #
 # Injected LSR module: work.sh  #
-# Number of lines: 95           #
-# Filesize: 3.76 KB             #
+# Number of lines: 100          #
+# Filesize: 4.05 KB             #
 #################################
 # Command for seeing what people have done what work in my local repositories
-
 work() {
     # Default values
     local date="$(date --date='yesterday' +%Y-%m-%d)"
     local filter_user=""
+    local filter_project=""
     local original_pwd=$(pwd)
-    local work_git_dir=~/projects
 
     # Parse command line options
     while [[ $# -gt 0 ]]; do
@@ -1886,6 +1832,10 @@ work() {
                 filter_user="${1#*=}"
                 shift
                 ;;
+            --project=*)
+                filter_project="${1#*=}"
+                shift
+                ;;
             *)
                 echo "Unknown option: $1"
                 return 1
@@ -1896,15 +1846,21 @@ work() {
     # Convert the specified date into the appropriate format
     date=$(date --date="$date" +%Y-%m-%d)
 
-    echo -e "\n\033[34mSearching for commits on $date in all repositories under $work_git_dir...\033[0m"
+    echo -e "\n\033[34mSearching for commits on $date in all projects"
 
     # Loop through all subdirectories (assuming they are Git repositories)
-    for repo in "$work_git_dir"/*; do # Go through all of the projects
+    for repo in $(localsettings_eval ".projects[] | .dir"); do # Go through all of the projects
         if [ -d "$repo/.git" ]; then # If they are git repos
             # Change into the repository's directory, fetch all
             cd "$repo" || continue
             
-            echo -e "\n\033[36m=== $(basename "$repo") ===\033[0m"
+            local projectlabel=$(localsettings_eval "(.projects | to_entries | map(select(.value.dir == \"$repo\")))[0].key")
+
+            if [[ -n "$filter_project" && "$filter_project" != "$projectlabel" ]]; then
+                continue;
+            fi
+
+            echo -e "\n\033[36m=== $projectlabel ===\033[0m"
             
             git fetch --all >/dev/null 2>&1
 
@@ -1919,11 +1875,8 @@ work() {
                 # Loop through each commit to print the associated original branch name
                 while IFS='|' read -r commit_hash username email commit_message commit_date; do
                     # Check if the user matches the filter (if specified)
-                    local gituser=$(find_git_user_by_alias $username)
-
+                    local gituser=$(find_git_user_by_alias "$username")
                     local gituser_identifier=$(echo "$gituser" | yq e '.identifier' -)
-
-                    
                     
                     # Convert both the filter and the username/identifier to lowercase for case-insensitive comparison
                     local lower_username="$(echo "$username" | tr '[:upper:]' '[:lower:]')"
@@ -1942,13 +1895,12 @@ work() {
                     time=$(date -d "$commit_date" +%H:%M)
 
                     # Map username to custom name
-                    
                     if [[ $gituser_identifier != "null" ]]; then
                         username=$gituser_identifier
                     fi
 
                     # Customize the output with colors
-                    echo -e "\033[32m$username\033[0m @ \033[33m$time\033[0m \033[0m: $commit_message"
+                    echo -e "\033[32m$username\033[0m@\033[33m$time\033[0m\033[0m: $commit_message"
                 done <<< "$commits"
             fi
 
@@ -1963,7 +1915,7 @@ work() {
     cd "$original_pwd"
 }
 ##################################
-# Start of LSR module #13        #
+# Start of LSR module #12        #
 # Injected LSR module: other.sh  #
 # Number of lines: 288           #
 # Filesize: 9.46 KB              #
@@ -2258,7 +2210,7 @@ if [ -z "$TMUX" ]; then
     tmux
 fi
 ##################################
-# Start of LSR module #14        #
+# Start of LSR module #13        #
 # Injected LSR module: cfind.sh  #
 # Number of lines: 58            #
 # Filesize: 1.63 KB              #

@@ -1,4 +1,3 @@
-declare -gA combined_projects
 alias cproj=current_project
 alias proj=project
 alias p=project
@@ -87,7 +86,7 @@ remove_project() {
     fi
 }
 project() {
-    sync_projects  # Sync the combined projects array
+    load_yaml_projects
     local show_dirs=false
     while [[ "$1" == -* ]]; do
         case "$1" in
@@ -102,11 +101,11 @@ project() {
         esac
     done
     if [[ -n "$1" ]]; then
-        if [[ -n "${combined_projects[$1]}" ]]; then
-            if [[ -d "${combined_projects[$1]}" ]]; then
-                cd "${combined_projects[$1]}" || echo "Failed to navigate to ${combined_projects[$1]}"
+        if [[ -n "${yaml_projects[$1]}" ]]; then
+            if [[ -d "${yaml_projects[$1]}" ]]; then
+                cd "${yaml_projects[$1]}" || echo "Failed to navigate to ${yaml_projects[$1]}"
             else
-                echo "Directory does not exist: ${combined_projects[$1]}"
+                echo "Directory does not exist: ${yaml_projects[$1]}"
             fi
         else
             echo "Project not found. Available projects:"
@@ -152,43 +151,32 @@ load_yaml_projects() {
     fi
 }
 list_projects() {
-    sync_projects  # Sync the combined projects array
+    load_yaml_projects
     local current_dir=$(pwd)
     local green='\033[0;32m'
     local reset='\033[0m'
     echo "Available projects:"
     local show_dirs="$1"
-    for key in "${!combined_projects[@]}"; do
-        if [[ "${combined_projects[$key]}" == "$current_dir" ]]; then
+    for key in "${!yaml_projects[@]}"; do
+        if [[ "${yaml_projects[$key]}" == "$current_dir" ]]; then
             if [[ "$show_dirs" == true ]]; then
-                echo -e "${green} - $key: ${combined_projects[$key]}${reset}"
+                echo -e "${green} - $key: ${yaml_projects[$key]}${reset}"
             else
                 echo -e "${green} - $key${reset}"  # Green highlight for the project name
             fi
         else
             if [[ "$show_dirs" == true ]]; then
-                echo " - $key: ${combined_projects[$key]}"
+                echo " - $key: ${yaml_projects[$key]}"
             else
                 echo " - $key"
             fi
         fi
     done
 }
-sync_projects() {
-    load_yaml_projects
-    combined_projects=()
-    for key in "${!projects[@]}"; do
-        combined_projects["$key"]="${projects[$key]}"
-    done
-    for key in "${!yaml_projects[@]}"; do
-        combined_projects["$key"]="${yaml_projects[$key]}"
-    done
-}
 source "$HOME/scripts/helpers.sh"
 scripts_to_compile=(
     "proj"
     "compile"
-    "definitions"
     "aliases"
     "docker_helpers"
     "git_helpers"
@@ -295,13 +283,6 @@ lsr_compile() {
     print_info "Total final build.min.sh lines: $(get_line_count "$minimized_build_file")"
     reload_bash
 }
-unset -v projects
-declare -gA projects=(
-    ["scripts"]="$HOME/scripts" # Add scripts as a hardcoded project
-)
-unset -v user_map
-declare -gA user_map=(
-)
 reload_bash() {
     source ~/.bashrc
     print_success '~/.bashrc reloaded!'
@@ -1268,8 +1249,8 @@ write_to_vimrc
 work() {
     local date="$(date --date='yesterday' +%Y-%m-%d)"
     local filter_user=""
+    local filter_project=""
     local original_pwd=$(pwd)
-    local work_git_dir=~/projects
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --date=*)
@@ -1280,6 +1261,10 @@ work() {
                 filter_user="${1#*=}"
                 shift
                 ;;
+            --project=*)
+                filter_project="${1#*=}"
+                shift
+                ;;
             *)
                 echo "Unknown option: $1"
                 return 1
@@ -1287,21 +1272,24 @@ work() {
         esac
     done
     date=$(date --date="$date" +%Y-%m-%d)
-    echo -e "\n\033[34mSearching for commits on $date in all repositories under $work_git_dir...\033[0m"
-    for repo in "$work_git_dir"/*; do # Go through all of the projects
+    echo -e "\n\033[34mSearching for commits on $date in all projects"
+    for repo in $(localsettings_eval ".projects[] | .dir"); do # Go through all of the projects
         if [ -d "$repo/.git" ]; then # If they are git repos
             cd "$repo" || continue
             
-            echo -e "\n\033[36m=== $(basename "$repo") ===\033[0m"
+            local projectlabel=$(localsettings_eval "(.projects | to_entries | map(select(.value.dir == \"$repo\")))[0].key")
+            if [[ -n "$filter_project" && "$filter_project" != "$projectlabel" ]]; then
+                continue;
+            fi
+            echo -e "\n\033[36m=== $projectlabel ===\033[0m"
             
             git fetch --all >/dev/null 2>&1
             commits=$(git log --all --remotes --branches --since="$date 00:00" --until="$date 23:59" --pretty=format:"%H|%an|%ae|%s|%ad" --date=iso --reverse)
             local found_commits=false
             if [ -n "$commits" ]; then
                 while IFS='|' read -r commit_hash username email commit_message commit_date; do
-                    local gituser=$(find_git_user_by_alias $username)
+                    local gituser=$(find_git_user_by_alias "$username")
                     local gituser_identifier=$(echo "$gituser" | yq e '.identifier' -)
-                    
                     
                     local lower_username="$(echo "$username" | tr '[:upper:]' '[:lower:]')"
                     local lower_identifier="$(echo "$gituser_identifier" | tr '[:upper:]' '[:lower:]')"
@@ -1313,11 +1301,10 @@ work() {
                     found_commits=true
                     
                     time=$(date -d "$commit_date" +%H:%M)
-                    
                     if [[ $gituser_identifier != "null" ]]; then
                         username=$gituser_identifier
                     fi
-                    echo -e "\033[32m$username\033[0m @ \033[33m$time\033[0m \033[0m: $commit_message"
+                    echo -e "\033[32m$username\033[0m@\033[33m$time\033[0m\033[0m: $commit_message"
                 done <<< "$commits"
             fi
             if [ "$found_commits" = false ]; then

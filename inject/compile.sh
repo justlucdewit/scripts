@@ -4,7 +4,6 @@ source "$HOME/scripts/helpers.sh"
 scripts_to_compile=(
     "proj"
     "compile"
-    "definitions"
     "aliases"
     "docker_helpers"
     "git_helpers"
