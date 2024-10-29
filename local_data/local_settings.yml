@@ -1,22 +1,6 @@
 projects:
-  cca:
-    dir: /home/lucdewit/projects/cca
-    url: null
-  ccvm:
-    dir: /home/lucdewit/projects/ccvm
-    url: null
-  tta:
-    dir: /home/lucdewit/projects/tta-onepager
-    url: null
 gitusers:
-  CK:
-    fullname: Cem Kuruc
-    shortname: Cem
-  luc.dewit:
-    fullname: Luc de wit
-    shortname: Luc
 weatherapi:
-  api_key: 31d5d7acf95f3d816daf14d05c9cc267
-  lat: 51.7
-  lon: 5.3
-  city: "3"
+  api_key: null
+  lat: null
+  lon: null
