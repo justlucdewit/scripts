@@ -1,3 +1,26 @@
+is_in_list() {
+    local value="$1"
+    local list="$2"
+
+    if [[ ",$list," =~ ",$value," ]]; then
+        return 0  # Found
+    else
+        return 1  # Not found
+    fi
+}
+
+prompt_if_not_exists() {
+    local prompt_message="$1"  # The prompt message
+    local value="$2"            # The value to check (passed as the second argument)
+
+    if [ -z "$value" ]; then  # Check if the value is empty
+        read -p "$prompt_message: " user_input
+        echo "$user_input"     # Return the user input
+    else
+        echo "$value"          # Return the existing value
+    fi
+}
+
 get_filesize() {
     local file="$1"
 
