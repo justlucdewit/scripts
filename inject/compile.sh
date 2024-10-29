@@ -15,7 +15,7 @@ scripts_to_compile=(
     "vim"
     "work"
     "other"
-    # "cfind" # WIP
+    "cfind"
 )
 
 alias lcompile=lsr_compile
