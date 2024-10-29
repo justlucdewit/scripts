@@ -1,6 +1,7 @@
 # Define a function to check if you're in a Git repo and show the current branch
 alias gitusers="git_users_main_command"
 
+# Composite command
 git_users_main_command() {
     # Help command
     if [ ! "$#" -gt 0 ]; then
@@ -33,6 +34,17 @@ git_users_main_command() {
         print_error "Command $command does not exist"
         git_users_main_command # Re-run for help command
     fi
+}
+
+find_git_user_by_alias() {
+    local alias=$1
+
+    if [[ -z $alias ]]; then
+        print_error "find_git_user_by_alias expects an argument for the alias to search"
+        return 1
+    fi
+
+    localsettings_eval "( .gitusers | to_entries | map(select(.value.aliases[] == \"$alias\")) )[0] | { \"identifier\": .key, \"fullname\": .value.fullname, \"aliases\": .value.aliases } "
 }
 
 set_git_user_alias() {

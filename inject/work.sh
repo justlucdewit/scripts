@@ -51,40 +51,32 @@ work() {
                 # Loop through each commit to print the associated original branch name
                 while IFS='|' read -r commit_hash username email commit_message commit_date; do
                     # Check if the user matches the filter (if specified)
-                    local nickname="${user_map[$username]}"
+                    local gituser=$(find_git_user_by_alias $username)
+                    local gituser_identifier=$(echo "$gituser" | yq e '.identifier' -)
                     
-                    # Convert both the filter and the username/nickname to lowercase for case-insensitive comparison
+                    # Convert both the filter and the username/identifier to lowercase for case-insensitive comparison
                     local lower_username="$(echo "$username" | tr '[:upper:]' '[:lower:]')"
-                    local lower_nickname="$(echo "$nickname" | tr '[:upper:]' '[:lower:]')"
+                    local lower_identifier="$(echo "$gituser_identifier" | tr '[:upper:]' '[:lower:]')"
                     local lower_filter_user="$(echo "$filter_user" | tr '[:upper:]' '[:lower:]')"
 
-                    # Use nickname if it's set; otherwise, use the username
-                    if [[ -n "$filter_user" && "$lower_filter_user" != "$lower_nickname" && "$lower_username" != "$lower_filter_user" ]]; then
+                    # Use identifier if it's set; otherwise, use the username
+                    if [[ -n "$filter_user" && "$lower_filter_user" != "$lower_identifier" && "$lower_username" != "$lower_filter_user" ]]; then
                         continue
                     fi
                     
                     # Mark that we found a commit
                     found_commits=true
                     
-                    # Get the branches that contain the commit
-                    branches=$(git branch --contains "$commit_hash" | grep -v 'remotes/')
-                    
-                    # Get the first original branch (if available)
-                    original_branch=$(echo "$branches" | sed 's/^\* //; s/^ //; s/ *$//' | awk '{print $1}' | head -n 1)
-
-                    # If original_branch is empty, set it to "unknown"
-                    if [[ -z "$original_branch" ]]; then
-                        original_branch="unknown"
-                    fi
-
                     # Format the commit date into hours and minutes (HH:MM)
                     time=$(date -d "$commit_date" +%H:%M)
 
                     # Map username to custom name
-                    username="${user_map[$username]:-$username}"
+                    if [[ $gituser_identifier != "null" ]]; then
+                        username=$gituser_identifier
+                    fi
 
                     # Customize the output with colors
-                    echo -e "\033[32m$username\033[0m @ \033[33m$time\033[0m -> \033[35m$original_branch\033[0m: $commit_message"
+                    echo -e "\033[32m$username\033[0m @ \033[33m$time\033[0m \033[0m: $commit_message"
                 done <<< "$commits"
             fi
 
