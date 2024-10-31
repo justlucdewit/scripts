@@ -1,5 +1,5 @@
 # LSR v1.1
-# Local build (16:34 29/10/2024)
+# Local build (13:30 31/10/2024)
 # Includes LSR modules:
 # - /home/luc/scripts/inject/proj.sh
 # - /home/luc/scripts/inject/compile.sh
@@ -443,8 +443,8 @@ joke() {
 ###########################################
 # Start of LSR module #4                  #
 # Injected LSR module: docker_helpers.sh  #
-# Number of lines: 158                    #
-# Filesize: 5.45 KB                       #
+# Number of lines: 195                    #
+# Filesize: 6.54 KB                       #
 ###########################################
 # Define color codes
 LIGHT_GREEN='\033[1;32m'
@@ -454,7 +454,44 @@ YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
 RESET='\033[0m'
 
-docklist() {
+alias dock="dock_main_command"
+
+# Composite command
+dock_main_command() {
+    # Help command
+    if [ ! "$#" -gt 0 ]; then
+        echo "usage: "
+        echo "  - dock list"
+        echo "  - dock restart <index>"
+        echo "  - gitusers new <identifier> <fullname>"
+        echo "  - gitusers del <identifier>"
+        echo "  - gitusers alias <identifier> <alias>"
+        echo "  - gitusers unlias <identifier> <alias>"
+        return 0
+    fi
+
+    local command=$1
+    shift
+
+    if is_in_list "$command" "list,all"; then
+        dock_list $@
+    elif is_in_list "$command" "get"; then
+        dock_list $@
+    elif is_in_list "$command" "new,create,add"; then
+        dock_list $@
+    elif is_in_list "$command" "del,delete,rem,remove"; then
+        dock_list $@
+    elif is_in_list "$command" "add-alias,new-alias,create-alias,alias,"; then
+        dock_list $@
+    elif is_in_list "$command" "del-alias,rem-alias,delete-alias,remove-alias,unalias"; then
+        dock_list $@
+    else
+        print_error "Command $command does not exist"
+        git_users_main_command # Re-run for help command
+    fi
+}
+
+dock_list() {
     echo -e "${BLUE}Container Overview:${RESET}"
     
     # Temporary associative array to store the first container status for each project
@@ -1236,8 +1273,8 @@ localsettings_reformat() {
 #########################################
 # Start of LSR module #8                #
 # Injected LSR module: tmux_helpers.sh  #
-# Number of lines: 429                  #
-# Filesize: 13.34 KB                    #
+# Number of lines: 437                  #
+# Filesize: 13.52 KB                    #
 #########################################
 # TODO: Fix bug where when pane 1 is closed, pane 2 will become 1 and thus take its name
 
@@ -1664,6 +1701,14 @@ tcloseall() {
     tclose # Close the last pane
 }
 
+# Setting settings of vim
+setup_tmux_config() {
+    local tmuxconfig_file="$HOME/.tmux.conf"
+
+    # Copy the config file
+    cp ~/scripts/extra_config_files/.tmux.conf ~/.tmux.conf
+}
+
 alias tca="tcloseall"
 alias rip="run_in_pane"
 alias ripuf="run_in_pane_until_finished"
@@ -1917,8 +1962,8 @@ work() {
 ##################################
 # Start of LSR module #12        #
 # Injected LSR module: other.sh  #
-# Number of lines: 288           #
-# Filesize: 9.46 KB              #
+# Number of lines: 377           #
+# Filesize: 12.07 KB             #
 ##################################
 LIGHT_GREEN='\033[1;32m'
 RED='\033[0;31m'
@@ -2206,9 +2251,98 @@ lhelp() {
 }
 
 # Ensure tmux is running
+setup_tmux_config
+tmux source-file ~/.tmux.conf
 if [ -z "$TMUX" ]; then
     tmux
 fi
+
+alias tu="time_until"
+alias tul="time_until_live"
+
+time_until() {
+    # Define target times
+    target1="12:30:00"
+    target2="17:00:00"
+    
+    # Get the current time in seconds since midnight
+    now=$(date +%s)
+    
+    # Get today's date and convert target times to seconds since midnight
+    today=$(date +%Y-%m-%d)
+    target1_sec=$(date -d "$today $target1" +%s)
+    target2_sec=$(date -d "$today $target2" +%s)
+
+    # Calculate seconds remaining for each target
+    remaining1=$((target1_sec - now))
+    remaining2=$((target2_sec - now))
+
+    # Function to convert seconds to hh:mm:ss
+    format_time() {
+        local seconds=$1
+        printf "%02d:%02d:%02d\n" $((seconds/3600)) $(( (seconds%3600)/60 )) $((seconds%60))
+    }
+
+    # Display results for both target times
+    if [ $remaining1 -gt 0 ]; then
+        echo "Time left until break: $(format_time $remaining1)"
+    else
+        echo "Break time has already passed."
+    fi
+    
+    if [ $remaining2 -gt 0 ]; then
+        echo "Time left until End of day: $(format_time $remaining2)"
+    else
+        echo "End of day has already passed today."
+    fi
+}
+
+time_until_live() {
+    # Define target times
+    target1="12:30:00"
+    target2="17:00:00"
+    
+    # Get today's date and convert target times to seconds since midnight
+    today=$(date +%Y-%m-%d)
+    target1_sec=$(date -d "$today $target1" +%s)
+    target2_sec=$(date -d "$today $target2" +%s)
+    
+    # Function to convert seconds to hh:mm:ss format
+    format_time() {
+        local seconds=$1
+        printf "%02d:%02d:%02d" $((seconds / 3600)) $(((seconds % 3600) / 60)) $((seconds % 60))
+    }
+
+    # Continuous loop to update the remaining time every second
+    while true; do
+        # Get the current time in seconds since midnight
+        now=$(date +%s)
+        
+        # Calculate seconds remaining for each target
+        remaining1=$((target1_sec - now))
+        remaining2=$((target2_sec - now))
+
+        # Prepare the output strings for each target time
+        if [ $remaining1 -gt 0 ]; then
+            time_left_1230=$(format_time $remaining1)
+        else
+            time_left_1230="Already passed"
+        fi
+        
+        if [ $remaining2 -gt 0 ]; then
+            time_left_1700=$(format_time $remaining2)
+        else
+            time_left_1700="Already passed"
+        fi
+
+        # Display the remaining time in a single line, overwriting the line each second
+        printf "\rTime left until Break: %s | Time left until End of Day: %s" "$time_left_1230" "$time_left_1700"
+        
+        # Wait for 1 second before updating
+        sleep 1
+    done
+}
+
 ##################################
 # Start of LSR module #13        #
 # Injected LSR module: cfind.sh  #

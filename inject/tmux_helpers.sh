@@ -423,6 +423,14 @@ tcloseall() {
     tclose # Close the last pane
 }
 
+# Setting settings of vim
+setup_tmux_config() {
+    local tmuxconfig_file="$HOME/.tmux.conf"
+
+    # Copy the config file
+    cp ~/scripts/extra_config_files/.tmux.conf ~/.tmux.conf
+}
+
 alias tca="tcloseall"
 alias rip="run_in_pane"
 alias ripuf="run_in_pane_until_finished"

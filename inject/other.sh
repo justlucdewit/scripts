@@ -284,6 +284,94 @@ lhelp() {
 }
 
 # Ensure tmux is running
+setup_tmux_config
+tmux source-file ~/.tmux.conf
 if [ -z "$TMUX" ]; then
     tmux
 fi
+
+alias tu="time_until"
+alias tul="time_until_live"
+
+time_until() {
+    # Define target times
+    target1="12:30:00"
+    target2="17:00:00"
+    
+    # Get the current time in seconds since midnight
+    now=$(date +%s)
+    
+    # Get today's date and convert target times to seconds since midnight
+    today=$(date +%Y-%m-%d)
+    target1_sec=$(date -d "$today $target1" +%s)
+    target2_sec=$(date -d "$today $target2" +%s)
+
+    # Calculate seconds remaining for each target
+    remaining1=$((target1_sec - now))
+    remaining2=$((target2_sec - now))
+
+    # Function to convert seconds to hh:mm:ss
+    format_time() {
+        local seconds=$1
+        printf "%02d:%02d:%02d\n" $((seconds/3600)) $(( (seconds%3600)/60 )) $((seconds%60))
+    }
+
+    # Display results for both target times
+    if [ $remaining1 -gt 0 ]; then
+        echo "Time left until break: $(format_time $remaining1)"
+    else
+        echo "Break time has already passed."
+    fi
+    
+    if [ $remaining2 -gt 0 ]; then
+        echo "Time left until End of day: $(format_time $remaining2)"
+    else
+        echo "End of day has already passed today."
+    fi
+}
+
+time_until_live() {
+    # Define target times
+    target1="12:30:00"
+    target2="17:00:00"
+    
+    # Get today's date and convert target times to seconds since midnight
+    today=$(date +%Y-%m-%d)
+    target1_sec=$(date -d "$today $target1" +%s)
+    target2_sec=$(date -d "$today $target2" +%s)
+    
+    # Function to convert seconds to hh:mm:ss format
+    format_time() {
+        local seconds=$1
+        printf "%02d:%02d:%02d" $((seconds / 3600)) $(((seconds % 3600) / 60)) $((seconds % 60))
+    }
+
+    # Continuous loop to update the remaining time every second
+    while true; do
+        # Get the current time in seconds since midnight
+        now=$(date +%s)
+        
+        # Calculate seconds remaining for each target
+        remaining1=$((target1_sec - now))
+        remaining2=$((target2_sec - now))
+
+        # Prepare the output strings for each target time
+        if [ $remaining1 -gt 0 ]; then
+            time_left_1230=$(format_time $remaining1)
+        else
+            time_left_1230="Already passed"
+        fi
+        
+        if [ $remaining2 -gt 0 ]; then
+            time_left_1700=$(format_time $remaining2)
+        else
+            time_left_1700="Already passed"
+        fi
+
+        # Display the remaining time in a single line, overwriting the line each second
+        printf "\rTime left until Break: %s | Time left until End of Day: %s" "$time_left_1230" "$time_left_1700"
+        
+        # Wait for 1 second before updating
+        sleep 1
+    done
+}

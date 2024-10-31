@@ -11,7 +11,7 @@ To install Lukes script repository. you need to run 2 simple commands.
 git clone https://github.com/justlucdewit/scripts ~/scripts
 
 # Execute the install script
-~/scripts/_install.sh
+sudo ~/scripts/_install.sh
 ```
 
 This should succesfully install Lukes Script Repository. No restart is needed.

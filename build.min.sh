@@ -312,7 +312,38 @@ GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
 RESET='\033[0m'
-docklist() {
+alias dock="dock_main_command"
+dock_main_command() {
+    if [ ! "$#" -gt 0 ]; then
+        echo "usage: "
+        echo "  - dock list"
+        echo "  - dock restart <index>"
+        echo "  - gitusers new <identifier> <fullname>"
+        echo "  - gitusers del <identifier>"
+        echo "  - gitusers alias <identifier> <alias>"
+        echo "  - gitusers unlias <identifier> <alias>"
+        return 0
+    fi
+    local command=$1
+    shift
+    if is_in_list "$command" "list,all"; then
+        dock_list $@
+    elif is_in_list "$command" "get"; then
+        dock_list $@
+    elif is_in_list "$command" "new,create,add"; then
+        dock_list $@
+    elif is_in_list "$command" "del,delete,rem,remove"; then
+        dock_list $@
+    elif is_in_list "$command" "add-alias,new-alias,create-alias,alias,"; then
+        dock_list $@
+    elif is_in_list "$command" "del-alias,rem-alias,delete-alias,remove-alias,unalias"; then
+        dock_list $@
+    else
+        print_error "Command $command does not exist"
+        git_users_main_command # Re-run for help command
+    fi
+}
+dock_list() {
     echo -e "${BLUE}Container Overview:${RESET}"
     
     declare -A projects
@@ -1154,6 +1185,10 @@ tcloseall() {
     echo "All panes in the current window killed."
     tclose # Close the last pane
 }
+setup_tmux_config() {
+    local tmuxconfig_file="$HOME/.tmux.conf"
+    cp ~/scripts/extra_config_files/.tmux.conf ~/.tmux.conf
+}
 alias tca="tcloseall"
 alias rip="run_in_pane"
 alias ripuf="run_in_pane_until_finished"
@@ -1536,9 +1571,73 @@ lhelp() {
     done < "$lhelp_file"
     print_empty_line
 }
+setup_tmux_config
+tmux source-file ~/.tmux.conf
 if [ -z "$TMUX" ]; then
     tmux
 fi
+alias tu="time_until"
+alias tul="time_until_live"
+time_until() {
+    target1="12:30:00"
+    target2="17:00:00"
+    
+    now=$(date +%s)
+    
+    today=$(date +%Y-%m-%d)
+    target1_sec=$(date -d "$today $target1" +%s)
+    target2_sec=$(date -d "$today $target2" +%s)
+    remaining1=$((target1_sec - now))
+    remaining2=$((target2_sec - now))
+    format_time() {
+        local seconds=$1
+        printf "%02d:%02d:%02d\n" $((seconds/3600)) $(( (seconds%3600)/60 )) $((seconds%60))
+    }
+    if [ $remaining1 -gt 0 ]; then
+        echo "Time left until break: $(format_time $remaining1)"
+    else
+        echo "Break time has already passed."
+    fi
+    
+    if [ $remaining2 -gt 0 ]; then
+        echo "Time left until End of day: $(format_time $remaining2)"
+    else
+        echo "End of day has already passed today."
+    fi
+}
+time_until_live() {
+    target1="12:30:00"
+    target2="17:00:00"
+    
+    today=$(date +%Y-%m-%d)
+    target1_sec=$(date -d "$today $target1" +%s)
+    target2_sec=$(date -d "$today $target2" +%s)
+    
+    format_time() {
+        local seconds=$1
+        printf "%02d:%02d:%02d" $((seconds / 3600)) $(((seconds % 3600) / 60)) $((seconds % 60))
+    }
+    while true; do
+        now=$(date +%s)
+        
+        remaining1=$((target1_sec - now))
+        remaining2=$((target2_sec - now))
+        if [ $remaining1 -gt 0 ]; then
+            time_left_1230=$(format_time $remaining1)
+        else
+            time_left_1230="Already passed"
+        fi
+        
+        if [ $remaining2 -gt 0 ]; then
+            time_left_1700=$(format_time $remaining2)
+        else
+            time_left_1700="Already passed"
+        fi
+        printf "\rTime left until Break: %s | Time left until End of Day: %s" "$time_left_1230" "$time_left_1700"
+        
+        sleep 1
+    done
+}
 banned_patterns=(
     "*.exe"
     "*/node_modules/*"

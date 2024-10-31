@@ -6,7 +6,44 @@ YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
 RESET='\033[0m'
 
-docklist() {
+alias dock="dock_main_command"
+
+# Composite command
+dock_main_command() {
+    # Help command
+    if [ ! "$#" -gt 0 ]; then
+        echo "usage: "
+        echo "  - dock list"
+        echo "  - dock restart <index>"
+        echo "  - gitusers new <identifier> <fullname>"
+        echo "  - gitusers del <identifier>"
+        echo "  - gitusers alias <identifier> <alias>"
+        echo "  - gitusers unlias <identifier> <alias>"
+        return 0
+    fi
+
+    local command=$1
+    shift
+
+    if is_in_list "$command" "list,all"; then
+        dock_list $@
+    elif is_in_list "$command" "get"; then
+        dock_list $@
+    elif is_in_list "$command" "new,create,add"; then
+        dock_list $@
+    elif is_in_list "$command" "del,delete,rem,remove"; then
+        dock_list $@
+    elif is_in_list "$command" "add-alias,new-alias,create-alias,alias,"; then
+        dock_list $@
+    elif is_in_list "$command" "del-alias,rem-alias,delete-alias,remove-alias,unalias"; then
+        dock_list $@
+    else
+        print_error "Command $command does not exist"
+        git_users_main_command # Re-run for help command
+    fi
+}
+
+dock_list() {
     echo -e "${BLUE}Container Overview:${RESET}"
     
     # Temporary associative array to store the first container status for each project
