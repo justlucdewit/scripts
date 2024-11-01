@@ -1,5 +1,5 @@
 # LSR v1.1
-# Local build (13:30 31/10/2024)
+# Local build (16:06 01/11/2024)
 # Includes LSR modules:
 # - /home/luc/scripts/inject/proj.sh
 # - /home/luc/scripts/inject/compile.sh
@@ -443,8 +443,8 @@ joke() {
 ###########################################
 # Start of LSR module #4                  #
 # Injected LSR module: docker_helpers.sh  #
-# Number of lines: 195                    #
-# Filesize: 6.54 KB                       #
+# Number of lines: 192                    #
+# Filesize: 6.37 KB                       #
 ###########################################
 # Define color codes
 LIGHT_GREEN='\033[1;32m'
@@ -462,11 +462,10 @@ dock_main_command() {
     if [ ! "$#" -gt 0 ]; then
         echo "usage: "
         echo "  - dock list"
-        echo "  - dock restart <index>"
-        echo "  - gitusers new <identifier> <fullname>"
-        echo "  - gitusers del <identifier>"
-        echo "  - gitusers alias <identifier> <alias>"
-        echo "  - gitusers unlias <identifier> <alias>"
+        echo "  - dock start <index>"
+        echo "  - dock stop <index>"
+        echo "  - dock delete <index>"
+        echo "  - dock start"
         return 0
     fi
 
@@ -475,19 +474,17 @@ dock_main_command() {
 
     if is_in_list "$command" "list,all"; then
         dock_list $@
-    elif is_in_list "$command" "get"; then
-        dock_list $@
-    elif is_in_list "$command" "new,create,add"; then
-        dock_list $@
+    elif is_in_list "$command" "start,up,go"; then
+        dock_start_project $@
+    elif is_in_list "$command" "stop,down,halt"; then
+        dock_stop_project $@
     elif is_in_list "$command" "del,delete,rem,remove"; then
-        dock_list $@
-    elif is_in_list "$command" "add-alias,new-alias,create-alias,alias,"; then
-        dock_list $@
-    elif is_in_list "$command" "del-alias,rem-alias,delete-alias,remove-alias,unalias"; then
-        dock_list $@
+        dock_remove_project $@
+    elif is_in_list "$command" "restart,start,boot,reboot"; then
+        dock_restart $@
     else
         print_error "Command $command does not exist"
-        git_users_main_command # Re-run for help command
+        dock_main_command # Re-run for help command
     fi
 }
 
@@ -539,9 +536,9 @@ dock_list() {
     done
 }
 
-dockstart() {
+dock_start_project() {
     if [ -z "$1" ]; then
-        print_error "Usage: dockstart <number>"
+        print_error "Usage: dock start <number>"
         return 1
     fi
 
@@ -570,7 +567,7 @@ dockstart() {
 }
 
 # Stop a Docker container by its index (number)
-dockstop() {
+dock_stop_project() {
     if [ -z "$1" ]; then
         print_error "Usage: dockstop <number>"
         return 1
@@ -598,9 +595,9 @@ dockstop() {
 }
 
 # Remove a Docker container by its index (number)
-dockremove() {
+dock_remove_project() {
     if [ -z "$1" ]; then
-        print_error "Usage: dockremove <number>"
+        print_error "Usage: dock remove <number>"
         return 1
     fi
 
@@ -614,7 +611,7 @@ dockremove() {
     docker rm "$container_id"
 }
 
-dockrestart() {
+dock_restart() {
     # Check if Docker is running
     if docker info >/dev/null 2>&1; then
         print_info "Docker is currently running."
