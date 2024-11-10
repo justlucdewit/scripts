@@ -2,6 +2,7 @@ source "$HOME/scripts/helpers.sh"
 
 # Global list of scripts to compile
 scripts_to_compile=(
+    "utils"
     "proj"
     "compile"
     "aliases"

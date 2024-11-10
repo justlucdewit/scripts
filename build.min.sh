@@ -1,3 +1,41 @@
+table() {
+    local colCount=3
+    local colLengths=(2 3 4)
+    echo -n "┌"
+    local currentColIndex=1
+    for colLength in "${colLengths[@]}"; do
+        echo -n "$(printf '─%.0s' $(seq 1 $colLength))"
+        if [[ $currentColIndex != $colCount ]]; then
+            echo -n "┬"
+        fi
+        ((currentColIndex++))
+    done
+    echo -n "┐"
+    echo ""
+    echo -n "├"
+    local currentColIndex=1
+    for colLength in "${colLengths[@]}"; do
+        echo -n "$(printf '─%.0s' $(seq 1 $colLength))"
+        if [[ $currentColIndex != $colCount ]]; then
+            echo -n "┼"
+        fi
+        ((currentColIndex++))
+    done
+    echo -n "┤"
+    echo ""
+    echo -n "└"
+    local currentColIndex=1
+    for colLength in "${colLengths[@]}"; do
+        echo -n "$(printf '─%.0s' $(seq 1 $colLength))"
+        if [[ $currentColIndex != $colCount ]]; then
+            echo -n "┴"
+        fi
+        ((currentColIndex++))
+    done
+    echo -n "┘"
+    echo ""
+}
+table
 alias cproj=current_project
 alias proj=project
 alias p=project
@@ -175,6 +213,7 @@ list_projects() {
 }
 source "$HOME/scripts/helpers.sh"
 scripts_to_compile=(
+    "utils"
     "proj"
     "compile"
     "aliases"

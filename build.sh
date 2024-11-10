@@ -1,24 +1,87 @@
 # LSR v1.1
-# Local build (16:06 01/11/2024)
+# Local build (12:38 09/11/2024)
 # Includes LSR modules:
-# - /home/luc/scripts/inject/proj.sh
-# - /home/luc/scripts/inject/compile.sh
-# - /home/luc/scripts/inject/aliases.sh
-# - /home/luc/scripts/inject/docker_helpers.sh
-# - /home/luc/scripts/inject/git_helpers.sh
-# - /home/luc/scripts/inject/laravel.sh
-# - /home/luc/scripts/inject/local_settings.sh
-# - /home/luc/scripts/inject/tmux_helpers.sh
-# - /home/luc/scripts/inject/version_management.sh
-# - /home/luc/scripts/inject/vim.sh
-# - /home/luc/scripts/inject/work.sh
-# - /home/luc/scripts/inject/other.sh
-# - /home/luc/scripts/inject/cfind.sh
+# - /home/lucdewit/scripts/inject/utils.sh
+# - /home/lucdewit/scripts/inject/proj.sh
+# - /home/lucdewit/scripts/inject/compile.sh
+# - /home/lucdewit/scripts/inject/aliases.sh
+# - /home/lucdewit/scripts/inject/docker_helpers.sh
+# - /home/lucdewit/scripts/inject/git_helpers.sh
+# - /home/lucdewit/scripts/inject/laravel.sh
+# - /home/lucdewit/scripts/inject/local_settings.sh
+# - /home/lucdewit/scripts/inject/tmux_helpers.sh
+# - /home/lucdewit/scripts/inject/version_management.sh
+# - /home/lucdewit/scripts/inject/vim.sh
+# - /home/lucdewit/scripts/inject/work.sh
+# - /home/lucdewit/scripts/inject/other.sh
+# - /home/lucdewit/scripts/inject/cfind.sh
 
+##################################
+# Start of LSR module #1         #
+# Injected LSR module: utils.sh  #
+# Number of lines: 55            #
+# Filesize: 1.19 KB              #
+##################################
+# TODO:
+# - table command
+# - actionTable command
+# - select command
+# - list command
+# - confirm command
+# - progressbar command
+
+table() {
+    local colCount=3
+    local colLengths=(2 3 4)
+
+    # Print the top bar
+    echo -n "┌"
+    local currentColIndex=1
+    for colLength in "${colLengths[@]}"; do
+        echo -n "$(printf '─%.0s' $(seq 1 $colLength))"
+        if [[ $currentColIndex != $colCount ]]; then
+            echo -n "┬"
+        fi
+        ((currentColIndex++))
+    done
+    echo -n "┐"
+    echo ""
+
+    # Print header bar
+
+
+    # Print header bottom
+    echo -n "├"
+    local currentColIndex=1
+    for colLength in "${colLengths[@]}"; do
+        echo -n "$(printf '─%.0s' $(seq 1 $colLength))"
+        if [[ $currentColIndex != $colCount ]]; then
+            echo -n "┼"
+        fi
+        ((currentColIndex++))
+    done
+    echo -n "┤"
+    echo ""
+
+    # Print the bottom bar
+    echo -n "└"
+    local currentColIndex=1
+    for colLength in "${colLengths[@]}"; do
+        echo -n "$(printf '─%.0s' $(seq 1 $colLength))"
+        if [[ $currentColIndex != $colCount ]]; then
+            echo -n "┴"
+        fi
+        ((currentColIndex++))
+    done
+    echo -n "┘"
+    echo ""
+}
+
+table
 #################################
-# Start of LSR module #1        #
+# Start of LSR module #2        #
 # Injected LSR module: proj.sh  #
-# Number of lines: 230          #
+# Number of lines: 229          #
 # Filesize: 7.09 KB             #
 #################################
 alias cproj=current_project
@@ -29,7 +92,6 @@ alias nproj=new_project
 alias sprojurl=set_project_url
 alias gprojurl=get_project_url
 alias rprojurl=remove_project_url
-
 
 get_current_project_label() {
     echo "$(cproj)"
@@ -253,15 +315,16 @@ list_projects() {
     done
 }
 ####################################
-# Start of LSR module #2           #
+# Start of LSR module #3           #
 # Injected LSR module: compile.sh  #
-# Number of lines: 146             #
-# Filesize: 5.11 KB                #
+# Number of lines: 147             #
+# Filesize: 5.12 KB                #
 ####################################
 source "$HOME/scripts/helpers.sh"
 
 # Global list of scripts to compile
 scripts_to_compile=(
+    "utils"
     "proj"
     "compile"
     "aliases"
@@ -406,7 +469,7 @@ lsr_compile() {
 }
 
 ####################################
-# Start of LSR module #3           #
+# Start of LSR module #4           #
 # Injected LSR module: aliases.sh  #
 # Number of lines: 28              #
 # Filesize: 793 B                  #
@@ -441,7 +504,7 @@ joke() {
 }
 
 ###########################################
-# Start of LSR module #4                  #
+# Start of LSR module #5                  #
 # Injected LSR module: docker_helpers.sh  #
 # Number of lines: 192                    #
 # Filesize: 6.37 KB                       #
@@ -640,7 +703,7 @@ dock_restart() {
     fi
 }
 ########################################
-# Start of LSR module #5               #
+# Start of LSR module #6               #
 # Injected LSR module: git_helpers.sh  #
 # Number of lines: 168                 #
 # Filesize: 5.22 KB                    #
@@ -815,7 +878,7 @@ alias st='git stash'
 alias delete='git branch -d'
 alias d="!f() { git branch -d $1 && git push origin --delete $1; }; f"
 ####################################
-# Start of LSR module #6           #
+# Start of LSR module #7           #
 # Injected LSR module: laravel.sh  #
 # Number of lines: 215             #
 # Filesize: 5.81 KB                #
@@ -1037,7 +1100,7 @@ fresh_install_sail() {
     fi
 }
 ###########################################
-# Start of LSR module #7                  #
+# Start of LSR module #8                  #
 # Injected LSR module: local_settings.sh  #
 # Number of lines: 224                    #
 # Filesize: 6.06 KB                       #
@@ -1268,7 +1331,7 @@ localsettings_reformat() {
     localsettings_sort .gitusers
 }
 #########################################
-# Start of LSR module #8                #
+# Start of LSR module #9                #
 # Injected LSR module: tmux_helpers.sh  #
 # Number of lines: 437                  #
 # Filesize: 13.52 KB                    #
@@ -1712,7 +1775,7 @@ alias ripuf="run_in_pane_until_finished"
 alias tc="tclose"
 
 ###############################################
-# Start of LSR module #9                      #
+# Start of LSR module #10                     #
 # Injected LSR module: version_management.sh  #
 # Number of lines: 88                         #
 # Filesize: 2.55 KB                           #
@@ -1807,7 +1870,7 @@ lsr_uninstall() {
     reload_bash
 }
 ################################
-# Start of LSR module #10      #
+# Start of LSR module #11      #
 # Injected LSR module: vim.sh  #
 # Number of lines: 36          #
 # Filesize: 1004 B             #
@@ -1850,7 +1913,7 @@ source ~/scripts/extra_config_files/LukesVimConfig.vim
 
 write_to_vimrc
 #################################
-# Start of LSR module #11       #
+# Start of LSR module #12       #
 # Injected LSR module: work.sh  #
 # Number of lines: 100          #
 # Filesize: 4.05 KB             #
@@ -1957,7 +2020,7 @@ work() {
     cd "$original_pwd"
 }
 ##################################
-# Start of LSR module #12        #
+# Start of LSR module #13        #
 # Injected LSR module: other.sh  #
 # Number of lines: 377           #
 # Filesize: 12.07 KB             #
@@ -2341,7 +2404,7 @@ time_until_live() {
 }
 
 ##################################
-# Start of LSR module #13        #
+# Start of LSR module #14        #
 # Injected LSR module: cfind.sh  #
 # Number of lines: 58            #
 # Filesize: 1.63 KB              #
