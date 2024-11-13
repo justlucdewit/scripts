@@ -1,749 +1,505 @@
 # LSR v1.1
-# Local build (12:38 09/11/2024)
+# Local build (16:05 13/11/2024)
 # Includes LSR modules:
-# - /home/lucdewit/scripts/inject/utils.sh
-# - /home/lucdewit/scripts/inject/proj.sh
-# - /home/lucdewit/scripts/inject/compile.sh
-# - /home/lucdewit/scripts/inject/aliases.sh
-# - /home/lucdewit/scripts/inject/docker_helpers.sh
-# - /home/lucdewit/scripts/inject/git_helpers.sh
-# - /home/lucdewit/scripts/inject/laravel.sh
-# - /home/lucdewit/scripts/inject/local_settings.sh
-# - /home/lucdewit/scripts/inject/tmux_helpers.sh
-# - /home/lucdewit/scripts/inject/version_management.sh
-# - /home/lucdewit/scripts/inject/vim.sh
-# - /home/lucdewit/scripts/inject/work.sh
-# - /home/lucdewit/scripts/inject/other.sh
-# - /home/lucdewit/scripts/inject/cfind.sh
+# - /home/luc/scripts/inject/../helpers.sh
+# - /home/luc/scripts/inject/requirementCheck.sh
+# - /home/luc/scripts/inject/composites/helpers.sh
+# - /home/luc/scripts/inject/git_helpers.sh
+# - /home/luc/scripts/inject/tmux_helpers.sh
+# - /home/luc/scripts/inject/utils.sh
+# - /home/luc/scripts/inject/proj.sh
+# - /home/luc/scripts/inject/aliases.sh
+# - /home/luc/scripts/inject/laravel.sh
+# - /home/luc/scripts/inject/local_settings.sh
+# - /home/luc/scripts/inject/version_management.sh
+# - /home/luc/scripts/inject/vim.sh
+# - /home/luc/scripts/inject/work.sh
+# - /home/luc/scripts/inject/other.sh
+# - /home/luc/scripts/inject/cfind.sh
+# - /home/luc/scripts/inject/compile.sh
+# - /home/luc/scripts/inject/remotelog.sh
+# - /home/luc/scripts/inject/composites/docker/dock.sh
+# - /home/luc/scripts/inject/composites/git/gitusers.sh
+# - /home/luc/scripts/inject/composites/git/branches.sh
+# - /home/luc/scripts/inject/composites/settings/profile.sh
 
-##################################
-# Start of LSR module #1         #
-# Injected LSR module: utils.sh  #
-# Number of lines: 55            #
-# Filesize: 1.19 KB              #
-##################################
-# TODO:
-# - table command
-# - actionTable command
-# - select command
-# - list command
-# - confirm command
-# - progressbar command
+#######################################
+# Start of LSR module #1              #
+# Injected LSR module: ../helpers.sh  #
+# Number of lines: 312                #
+# Filesize: 8.86 KB                   #
+#######################################
+is_in_list() {
+    local value="$1"
+    local list="$2"
 
-table() {
-    local colCount=3
-    local colLengths=(2 3 4)
-
-    # Print the top bar
-    echo -n "┌"
-    local currentColIndex=1
-    for colLength in "${colLengths[@]}"; do
-        echo -n "$(printf '─%.0s' $(seq 1 $colLength))"
-        if [[ $currentColIndex != $colCount ]]; then
-            echo -n "┬"
-        fi
-        ((currentColIndex++))
-    done
-    echo -n "┐"
-    echo ""
-
-    # Print header bar
-
-
-    # Print header bottom
-    echo -n "├"
-    local currentColIndex=1
-    for colLength in "${colLengths[@]}"; do
-        echo -n "$(printf '─%.0s' $(seq 1 $colLength))"
-        if [[ $currentColIndex != $colCount ]]; then
-            echo -n "┼"
-        fi
-        ((currentColIndex++))
-    done
-    echo -n "┤"
-    echo ""
-
-    # Print the bottom bar
-    echo -n "└"
-    local currentColIndex=1
-    for colLength in "${colLengths[@]}"; do
-        echo -n "$(printf '─%.0s' $(seq 1 $colLength))"
-        if [[ $currentColIndex != $colCount ]]; then
-            echo -n "┴"
-        fi
-        ((currentColIndex++))
-    done
-    echo -n "┘"
-    echo ""
-}
-
-table
-#################################
-# Start of LSR module #2        #
-# Injected LSR module: proj.sh  #
-# Number of lines: 229          #
-# Filesize: 7.09 KB             #
-#################################
-alias cproj=current_project
-alias proj=project
-alias p=project
-alias rproj=remove_project
-alias nproj=new_project
-alias sprojurl=set_project_url
-alias gprojurl=get_project_url
-alias rprojurl=remove_project_url
-
-get_current_project_label() {
-    echo "$(cproj)"
-}
-
-set_project_url() {
-    local yaml_file="$HOME/scripts/local_data/local_settings.yml"
-    local url="$1"
-
-    if [[ -z "$url" ]]; then
-        echo "Usage: proj_url <Url>"
-        return 1
-    fi
-
-    local project_name=$(cproj)
-    if [[ -z "$project_name" ]]; then
-        echo "Current directory is not a defined project"
-        return 1
-    fi
-
-    yq eval -i ".projects.$project_name.url = \"$url\"" "$yaml_file"
-}
-
-remove_project_url() {
-    local yaml_file="$HOME/scripts/local_data/local_settings.yml"
-    
-    local project_name=$(cproj)
-    if [[ -z "$project_name" ]]; then
-        echo "Current directory is not a defined project"
-        return 1
-    fi
-
-    yq eval -i ".projects.$project_name.url = null" "$yaml_file"
-}
-
-get_project_url() {
-    local yaml_file="$HOME/scripts/local_data/local_settings.yml"
-    
-    local project_name=$(cproj)
-    if [[ -z "$project_name" ]]; then
-        echo "Current directory is not a defined project"
-        return 1
-    fi
-
-    localsettings_get ".projects.$project_name.url"
-}
-
-# Function to add a new project to local_settings.yml
-new_project() {
-    local project_name="$1"
-    local project_dir="$2"
-    local yaml_file="$HOME/scripts/local_data/local_settings.yml"
-
-    if [[ -z "$project_name" ]]; then
-        echo "Usage: nproject <project_name> [project_directory]"
-        return 1
-    fi
-
-    if [[ -z "$project_dir" ]]; then
-        # If no directory is provided, set a default directory (or handle accordingly)
-        project_dir="."  # Convert to lowercase and set a default directory
-    fi
-
-    # Expand the project dir if it is relative
-    project_dir=$(realpath -m "$project_dir" 2>/dev/null) || project_dir="$(cd "$project_dir" && pwd)"
-
-    if [[ -f "$yaml_file" ]]; then
-        # Check if the project already exists
-        if [[ $(yq eval ".projects | has(\"$project_name\")" "$yaml_file") == "true" ]]; then
-            echo "Project '$project_name' already exists in local_settings."
-        else
-            # Add the new project entry
-            yq eval -i ".projects.$project_name = {\"dir\": \"$project_dir\", \"url\": null}" "$yaml_file"
-            echo "Added project '$project_name' to local_settings."
-        fi
-
-        localsettings_reformat
+    if [[ ",$list," =~ ",$value," ]]; then
+        return 0  # Found
     else
-        echo "YAML file not found: $yaml_file"
+        return 1  # Not found
     fi
 }
 
-# Function to remove a project from local_settings.yml
-remove_project() {
-    local project_name="$1"
-    local yaml_file="$HOME/scripts/local_data/local_settings.yml"
+prompt_if_not_exists() {
+    local prompt_message="$1"  # The prompt message
+    local value="$2"            # The value to check (passed as the second argument)
 
-    if [[ -z "$project_name" ]]; then
-        echo "Usage: premove <project_name>"
-        return 1
+    if [ -z "$value" ]; then  # Check if the value is empty
+        read -p "$prompt_message: " user_input
+        echo "$user_input"     # Return the user input
+    else
+        echo "$value"          # Return the existing value
     fi
+}
 
-    if [[ -f "$yaml_file" ]]; then
-        # Check if the project exists in the YAML file
-        if [[ $(yq eval ".projects | has(\"$project_name\")" "$yaml_file") == "true" ]]; then
-            # Remove the project entry
-            yq eval "del(.projects[\"$project_name\"]) " "$yaml_file" -i
-            echo "Removed project '$project_name' from local_settings."
+get_filesize() {
+    local file="$1"
+
+    if [[ -f "$file" ]]; then
+        local size_bytes=$(stat --format="%s" "$file")
+
+        if [[ $size_bytes -lt 1024 ]]; then
+            echo "${size_bytes} B"
+        elif [[ $size_bytes -lt 1048576 ]]; then
+            echo "$(bc <<< "scale=2; $size_bytes/1024") KB"
+        elif [[ $size_bytes -lt 1073741824 ]]; then
+            echo "$(bc <<< "scale=2; $size_bytes/1048576") MB"
         else
-            echo "Project '$project_name' not found in local_settings."
+            echo "$(bc <<< "scale=2; $size_bytes/1073741824") GB"
         fi
     else
-        echo "YAML file not found: $yaml_file"
+        echo "File does not exist."
     fi
 }
 
-project() {
-    load_yaml_projects
+get_line_count() {
+    local file="$1"
 
-    local show_dirs=false
-
-    # Parse options
-    while [[ "$1" == -* ]]; do
-        case "$1" in
-            --dirs)
-                show_dirs=true
-                shift
-                ;;
-            *)
-                echo "Usage: proj [project_name] [--dirs]"
-                return 1
-                ;;
-        esac
-    done
-
-    # Check if a project name was provided
-    if [[ -n "$1" ]]; then
-        # Check if the provided project exists in the combined projects array
-        if [[ -n "${yaml_projects[$1]}" ]]; then
-            if [[ -d "${yaml_projects[$1]}" ]]; then
-                cd "${yaml_projects[$1]}" || echo "Failed to navigate to ${yaml_projects[$1]}"
-            else
-                echo "Directory does not exist: ${yaml_projects[$1]}"
-            fi
-        else
-            echo "Project not found. Available projects:"
-            list_projects "$show_dirs"  # Pass the option to list_projects
-        fi
+    if [[ -f "$file" ]]; then
+        wc -l < "$file"
     else
-        # No project name provided, just list all projects
-        list_projects "$show_dirs"  # Pass the option to list_projects
+        echo "File does not exist."
     fi
 }
 
-current_project() {
-    local cwd
-    cwd=$(pwd | xargs)  # Get the current working directory
-
-    # Get the list of projects silently
-    local project_list
-    project_list=$(proj --dirs 2>/dev/null | sed '1d')  # Suppress errors and output
-
-    # Parse the project list
-    while IFS= read -r line; do
-        # Extract project name and directory path
-        local project_name
-        local project_path
-        project_name=$(echo "$line" | awk -F ': ' '{print $1}' | sed 's/\x1B\[[0-9;]*m//g')
-        project_path=$(echo "$line" | awk -F ': ' '{print $2}' | sed 's/\x1B\[[0-9;]*m//g')
-        project_path=$(echo "$project_path" | xargs)
-
-        # Compare the project path with the current working directory
-        if [[ "$cwd" == "$project_path" ]]; then
-            echo "$project_name" | awk -F ' - ' '{print $2}'  # Return the project name if it matches
-            return 0
-        fi
-    done <<< "$project_list"
-    return 1
-}
-
-# Function to load additional projects from local_settings.yml
-load_yaml_projects() {
-    local yaml_file="$HOME/scripts/local_data/local_settings.yml"
-    declare -gA yaml_projects=()  # Temporary array to store YAML projects
-
-    if [[ -f "$yaml_file" ]]; then
-        
-        
-        # Parse YAML and add entries to the yaml_projects array using yq
-        while IFS="=" read -r key value; do
-            
-            key=$(echo "$key" | xargs)    # Trim whitespace
-            value=$(echo "$value" | xargs) # Trim whitespace
-
-            # Expand ~ to $HOME if it's present
-            if [[ "$value" == "~"* ]]; then
-                value="${HOME}${value:1}"  # Replace ~ with $HOME
-            fi
-
-            yaml_projects["$key"]="$value"
-        done < <(lseval ".projects | to_entries | .[] | .key + \"=\" + .value.dir")
-    fi
-}
-
-# Function to list all available projects, highlighting the current project in green
-list_projects() {
-    load_yaml_projects
-    local current_dir=$(pwd)
-    local green='\033[0;32m'
-    local reset='\033[0m'
-
-    echo "Available projects:"
-    local show_dirs="$1"
-    for key in "${!yaml_projects[@]}"; do
-        # Determine if the current project is the active one
-        if [[ "${yaml_projects[$key]}" == "$current_dir" ]]; then
-            # Highlight the current project in green
-            if [[ "$show_dirs" == true ]]; then
-                echo -e "${green} - $key: ${yaml_projects[$key]}${reset}"
-            else
-                echo -e "${green} - $key${reset}"  # Green highlight for the project name
-            fi
-        else
-            # Regular output for other projects
-            if [[ "$show_dirs" == true ]]; then
-                echo " - $key: ${yaml_projects[$key]}"
-            else
-                echo " - $key"
-            fi
-        fi
-    done
-}
-####################################
-# Start of LSR module #3           #
-# Injected LSR module: compile.sh  #
-# Number of lines: 147             #
-# Filesize: 5.12 KB                #
-####################################
-source "$HOME/scripts/helpers.sh"
-
-# Global list of scripts to compile
-scripts_to_compile=(
-    "utils"
-    "proj"
-    "compile"
-    "aliases"
-    "docker_helpers"
-    "git_helpers"
-    "laravel"
-    "local_settings"
-    "tmux_helpers"
-    "version_management"
-    "vim"
-    "work"
-    "other"
-    "cfind"
-)
-
-alias lcompile=lsr_compile
-
-print_info "LSR has been loaded in current session"
-
-lsr_compile() {
-    print_info "Starting re-compilation of LSR"
-    local build_file="$HOME/scripts/build.sh"
-    local minimized_build_file="$HOME/scripts/build.min.sh"
-    local SETTINGS_FILE=~/scripts/_settings.yml
-    local NAME=$(yq e '.name' "$SETTINGS_FILE")
-    local MAJOR_VERSION=$(yq e '.version.major' "$SETTINGS_FILE")
-    local MINOR_VERSION=$(yq e '.version.minor' "$SETTINGS_FILE")
-    local FULL_VERSION=v$MAJOR_VERSION.$MINOR_VERSION
-    local SCRIPT_PREFIX="$HOME/scripts/inject/"
-
-    # Make buildfile if it doesn't exist, else clear it
-    if [[ -f "$build_file" ]]; then
-        > "$build_file"
-    else
-        touch "$build_file"
-    fi
-
-    {
-        echo "# LSR $FULL_VERSION"
-        echo "# Local build ($(date +'%H:%M %d/%m/%Y'))"
-        echo "# Includes LSR modules:"
-    } >> "$build_file"
-
-    for script in "${scripts_to_compile[@]}"; do
-        if [[ -f "$SCRIPT_PREFIX$script.sh" ]]; then
-            echo "# - $SCRIPT_PREFIX$script.sh" >> "$build_file"  # Add a newline for separation
-        else
-            print_info "Warning: $script does not exist, skipping."
-        fi
-    done
-
-    echo "" >> "$build_file"  # Add a newline for separation
-
-    local i=1
-
-    # Loop through the global array and compile the scripts
-    for script in "${scripts_to_compile[@]}"; do
-        if [[ -f "$SCRIPT_PREFIX$script.sh" ]]; then
-            local script_line_count=$(get_line_count "$SCRIPT_PREFIX$script.sh")
-            local script_filesize=$(get_filesize "$SCRIPT_PREFIX$script.sh")
-            print_info " - Compiling $script.sh ($script_filesize/$script_line_count lines)"
-            
-            local module_index_line="# Start of LSR module #${i} "
-            ((i++))
-            local module_name_line="# Injected LSR module: $script.sh "
-            
-            local line_count_line="# Number of lines: $script_line_count "
-            local filesize_line="# Filesize: $script_filesize "
-            
-            # Function to calculate the length of a string
-            get_length() {
-                echo "${#1}"
-            }
-
-            # Determine the maximum length of the content (excluding hashtags)
-            max_content_length=$(get_length "$module_index_line")
-            for line in "$module_name_line" "$line_count_line" "$filesize_line"; do
-                line_length=$(get_length "$line")
-                if [[ $line_length -gt $max_content_length ]]; then
-                    max_content_length=$line_length
-                fi
-            done
-
-            # Add space for the right-side hashtag
-            max_line_length=$((max_content_length + 2)) # +2 for the hashtags on each side
-
-            # Make a horizontal line exactly long enough
-            horizontal_line=$(printf "#%0.s" $(seq 1 $max_line_length))
-
-            # Function to pad the lines with spaces and add the right border hashtag
-            pad_line() {
-                local content="$1"
-                local padding_needed=$((max_line_length - $(get_length "$content") - 1)) # -1 for the ending hashtag
-                printf "%s%${padding_needed}s#" "$content" ""
-            }
-
-            {
-                echo "$horizontal_line"
-                echo "$(pad_line "$module_index_line")"
-                echo "$(pad_line "$module_name_line")"
-                echo "$(pad_line "$line_count_line")"
-                echo "$(pad_line "$filesize_line")"
-                echo "$horizontal_line"
-            } >> "$build_file"
-
-            cat "$SCRIPT_PREFIX$script.sh" >> "$build_file"
-            echo "" >> "$build_file"  # Add a newline for separation
-        fi
-    done
-
-    $build_file_size
-
-    print_info "Finished recompiling LSR at $build_file"
-    print_info "Total final build.sh size: $(get_filesize "$build_file")"
-    print_info "Total final build.sh lines: $(get_line_count "$build_file")"
-
-    # Minimization
-    print_empty_line
-    print_info "Generating minimized build file"
-
-    local remove_comment_lines='^\s*#'  # Matches lines that are just comments
-    local trim_whitespace='^\s*|\s*$'   # Matches leading and trailing whitespace on each line
-    local remove_empty_lines='^$'       # Matches empty lines
-    
-    # Check if minified file exists, if not, create it
-    if [[ ! -f $minimized_build_file ]]; then
-        touch "$minimized_build_file"
-    fi
-
-    # Copy original script to the minified script file
-    cp "$build_file" "$minimized_build_file"
-
-    # Apply regex transformations one by one
-    sed -i "/$remove_comment_lines/d" "$minimized_build_file"
-    sed -i "s/$trim_whitespace//g" "$minimized_build_file"
-    sed -i "/$remove_empty_lines/d" "$minimized_build_file"
-
-    print_info "Total final build.min.sh size: $(get_filesize "$minimized_build_file")"
-    print_info "Total final build.min.sh lines: $(get_line_count "$minimized_build_file")"
-
-    reload_bash
-}
-
-####################################
-# Start of LSR module #4           #
-# Injected LSR module: aliases.sh  #
-# Number of lines: 28              #
-# Filesize: 793 B                  #
-####################################
-# LSR Module that contains standalone aliases
-
-reload_bash() {
-    source ~/.bashrc
-    print_success '~/.bashrc reloaded!'
-}
-
-backup() {
-    local backup_location="$1-backup"
-    cp $1 $backup_location -r
-}
-
-alias hosts='powershell.exe -Command "Start-Process \"C:\Program Files\Sublime Text\sublime_text.exe\" -ArgumentList \"C:\Windows\System32\Drivers\etc\hosts\" -Verb RunAs"'
-alias refreshdns='powershell.exe -Command "ipconfig /flushdns"'
-alias c='clear'
-alias cf='cfind'
-alias today='work --date=today'
-alias yesterday='work --date=yesterday'
-alias l="ls -la"
-alias rb="reload_bash"
-alias files="explorer.exe ."
-alias subl='"/mnt/c/Program Files/Sublime Text/sublime_text.exe"'
-
-unalias joke 2>/dev/null
-joke() {
-    curl -H "Accept: text/plain" https://icanhazdadjoke.com/
-    echo
-}
-
-###########################################
-# Start of LSR module #5                  #
-# Injected LSR module: docker_helpers.sh  #
-# Number of lines: 192                    #
-# Filesize: 6.37 KB                       #
-###########################################
-# Define color codes
-LIGHT_GREEN='\033[1;32m'
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-RESET='\033[0m'
-
-alias dock="dock_main_command"
-
-# Composite command
-dock_main_command() {
-    # Help command
-    if [ ! "$#" -gt 0 ]; then
-        echo "usage: "
-        echo "  - dock list"
-        echo "  - dock start <index>"
-        echo "  - dock stop <index>"
-        echo "  - dock delete <index>"
-        echo "  - dock start"
+# Formating functions for neatly printing info/error/debug messages
+print_info() {
+    SETTINGS_FILE=~/scripts/_settings.yml
+    SILENT=$(yq e '.silent' "$SETTINGS_FILE")
+    if [[ $SILENT == true ]]; then
         return 0
     fi
 
-    local command=$1
-    shift
+    echo -e "\e[34m[info] $1\e[0m"  # \e[34m is the color code for blue
+}
 
-    if is_in_list "$command" "list,all"; then
-        dock_list $@
-    elif is_in_list "$command" "start,up,go"; then
-        dock_start_project $@
-    elif is_in_list "$command" "stop,down,halt"; then
-        dock_stop_project $@
-    elif is_in_list "$command" "del,delete,rem,remove"; then
-        dock_remove_project $@
-    elif is_in_list "$command" "restart,start,boot,reboot"; then
-        dock_restart $@
-    else
-        print_error "Command $command does not exist"
-        dock_main_command # Re-run for help command
+print_warn() {
+    SETTINGS_FILE=~/scripts/_settings.yml
+    SILENT=$(yq e '.silent' "$SETTINGS_FILE")
+    if [[ $SILENT == true ]]; then
+        return 0
+    fi
+
+    echo -e "\e[33m[warn] $1\e[0m"  # \e[34m is the color code for blue
+}
+
+print_normal() {
+    SETTINGS_FILE=~/scripts/_settings.yml
+    SILENT=$(yq e '.silent' "$SETTINGS_FILE")
+    if [[ $SILENT == true ]]; then
+        return 0
+    fi
+
+    echo "$1"
+}
+
+print_empty_line() {
+    SETTINGS_FILE=~/scripts/_settings.yml
+    SILENT=$(yq e '.silent' "$SETTINGS_FILE")
+    if [[ $SILENT == true ]]; then
+        return 0
+    fi
+
+    echo ""
+}
+
+print_error() {
+    SETTINGS_FILE=~/scripts/_settings.yml
+    SILENT=$(yq e '.silent' "$SETTINGS_FILE")
+    if [[ $SILENT == true ]]; then
+        return 0
+    fi
+
+    echo -e "\e[31m[error] $1\e[0m"  # \e[31m is the color code for red
+}
+
+print_debug() {
+    SETTINGS_FILE=~/scripts/_settings.yml
+    DEBUG=$(yq e '.debug' "$SETTINGS_FILE")
+    SILENT=$(yq e '.silent' "$SETTINGS_FILE")
+    if [[ $DEBUG == true || $SILENT == true ]]; then
+        return 0
+    fi
+
+    echo -e "\e[33m[debug] $1\e[0m"  # \e[33m is the color code for yellow
+}
+
+print_success() {
+    SETTINGS_FILE=~/scripts/_settings.yml
+    SILENT=$(yq e '.silent' "$SETTINGS_FILE")
+    if [[ $SILENT == true ]]; then
+        return 0
+    fi
+
+    echo -e "\e[32m[success] $1\e[0m"  # \e[32m is the color code for green
+}
+
+read_info() {
+    SETTINGS_FILE=~/scripts/_settings.yml
+    SILENT=$(yq e '.silent' "$SETTINGS_FILE")
+    if [[ $SILENT == true ]]; then
+        return 0
+    fi
+
+    echo -ne "\e[34m[info] $1\e[0m"
+    read -r user_input
+    printf -v "$2" "%s" "$user_input"
+}
+
+read_normal() {
+    SETTINGS_FILE=~/scripts/_settings.yml
+    SILENT=$(yq e '.silent' "$SETTINGS_FILE")
+    if [[ $SILENT == true ]]; then
+        return 0
+    fi
+
+    echo -n "$1"
+    read -r user_input
+    printf -v "$2" "%s" "$user_input"
+}
+
+read_error() {
+    SETTINGS_FILE=~/scripts/_settings.yml
+    SILENT=$(yq e '.silent' "$SETTINGS_FILE")
+    if [[ $SILENT == true ]]; then
+        return 0
+    fi
+
+    echo -ne "\e[31m[error] $1\e[0m"
+    read -r user_input
+    printf -v "$2" "%s" "$user_input"
+}
+
+read_debug() {
+    SETTINGS_FILE=~/scripts/_settings.yml
+    DEBUG=$(yq e '.debug' "$SETTINGS_FILE")
+    SILENT=$(yq e '.silent' "$SETTINGS_FILE")
+    if [[ $DEBUG == true || $SILENT == true ]]; then
+        return 0
+    fi
+
+    echo -ne "\e[33m[debug] $1\e[0m"
+    read -r user_input
+    printf -v "$2" "%s" "$user_input"
+}
+
+read_success() {
+    SETTINGS_FILE=~/scripts/_settings.yml
+    SILENT=$(yq e '.silent' "$SETTINGS_FILE")
+    if [[ $SILENT == true ]]; then
+        return 0
+    fi
+
+    echo -ne "\e[32m[success] $1\e[0m"
+    read -r user_input
+    printf -v "$2" "%s" "$user_input"
+}
+
+# Function to ensure the user has sudo privileges
+# and prompts for password if needed
+ensure_sudo() {
+    # Check if the user can run sudo commands
+    if ! sudo -l &> /dev/null; then
+        print_info "Requesting sudo access..."
+        
+        # Prompt for password to obtain sudo access
+        sudo -v
+        if [ $? -ne 0 ]; then
+            print_error "This script requires sudo privileges. Please run with sudo."
+            exit 1  # Exit if the user does not have sudo privileges
+        fi
+
+        print_info "Sudo access granted."
     fi
 }
 
-dock_list() {
-    echo -e "${BLUE}Container Overview:${RESET}"
-    
-    # Temporary associative array to store the first container status for each project
-    declare -A projects
-    declare -A project_status
+# Function to install a command if it doesn't exist
+# Uses whatever package manager is available
+# suppresses package manager output
+# avoids confirmation prompts
+install_if_not_exist() {
+    local command_name=$1
+    local test_command_name=$2
 
-    # Collect container information and group by project label
-    while IFS= read -r container; do
-        container_id=$(echo "$container" | awk '{print $1}')
-        container_name=$(echo "$container" | awk '{print $2}')
-        project_name=$(docker inspect --format '{{ index .Config.Labels "com.docker.compose.project" }}' "$container_id")
-        status=$(docker inspect --format '{{.State.Status}}' "$container_id")
+    if [[ -z $test_command_name ]]; then
+        test_command_name=$command_name
+    fi
 
-        if [[ -n "$project_name" ]]; then
-            projects["$project_name"]+="$container_id:$container_name;"
-            # Store the status of the first container found for the project
-            if [[ -z "${project_status[$project_name]}" ]]; then
-                project_status["$project_name"]="$status"
+    if ! command -v "$test_command_name" &> /dev/null; then
+        print_info "$command_name is not installed. Attempting to install..."
+
+        # Detect package manager and install command
+        if command -v apt-get &> /dev/null; then
+            print_info "Attempting to install $command_name with apt-get..."
+            sudo add-apt-repository ppa:rmescandon/yq -y > /dev/null 2>&1
+            sudo apt-get update > /dev/null 2>&1
+            if [ $? -ne 0 ]; then
+                print_error "Failed to update package list with apt-get."
+                return 1  # Indicate failure
             fi
-        fi
-    done < <(docker ps -aq)  # Read all container IDs
+            sudo apt-get install -y "$command_name" > /dev/null 2>&1
+            if [ $? -ne 0 ]; then
+                print_error "Failed to install $command_name using apt-get."
+                return 1  # Indicate failure
+            fi
 
-    # Determine the longest project name
-    longest_name=0
-    for project in "${!projects[@]}"; do
-        length=${#project}
-        if (( length > longest_name )); then
-            longest_name=$length
-        fi
-    done
+        elif command -v yum &> /dev/null; then
+            print_info "Attempting to install $command_name with yum..."
+            sudo yum install -y "$command_name" > /dev/null 2>&1
+            if [ $? -ne 0 ]; then
+                print_error "Failed to install $command_name using yum."
+                return 1  # Indicate failure
+            fi
 
-    # Print the headers with dynamic width
-    printf "${YELLOW}%-5s\t%-${longest_name}s\t%s\n${RESET}" "Index" "Project Name" "Status"  # Fixed-width headers
+        elif command -v dnf &> /dev/null; then
+            print_info "Attempting to install $command_name with dnf..."
+            sudo dnf install -y "$command_name" > /dev/null 2>&1
+            if [ $? -ne 0 ]; then
+                print_error "Failed to install $command_name using dnf."
+                return 1  # Indicate failure
+            fi
 
-    # Print the grouped container information
-    local index=1
-    for project in "${!projects[@]}"; do
-        if [[ "${project_status[$project]}" = "running" ]]; then
-            printf "${GREEN}%-5s\t%-${longest_name}s${LIGHT_GREEN}\t%s\n${RESET}" "$index" "$project" "${project_status[$project]}"
+        elif command -v brew &> /dev/null; then
+            print_info "Attempting to install $command_name with brew..."
+            sudo brew install "$command_name" > /dev/null 2>&1
+            if [ $? -ne 0 ]; then
+                print_error "Failed to install $command_name using brew."
+                return 1  # Indicate failure
+            fi
+
+        elif command -v pacman &> /dev/null; then
+            print_info "Attempting to install $command_name with pacman..."
+            sudo pacman -S --noconfirm "$command_name" > /dev/null 2>&1
+            if [ $? -ne 0 ]; then
+                print_error "Failed to install $command_name using pacman."
+                return 1  # Indicate failure
+            fi
+
         else
-            printf "${GREEN}%-5s\t%-${longest_name}s${RED}\t%s\n${RESET}" "$index" "$project" "${project_status[$project]}"
+            print_info "No supported package manager found. Attempting to download $command_name directly..."
+            case "$command_name" in
+                yq)
+                    curl -L -o /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 > /dev/null 2>&1
+                    if [ $? -ne 0 ]; then
+                        print_error "Failed to download yq."
+                        return 1  # Indicate failure
+                    fi
+                    chmod +x /usr/local/bin/yq
+                    if [ $? -ne 0 ]; then
+                        print_error "Failed to set execute permissions for yq."
+                        return 1  # Indicate failure
+                    fi
+                    ;;
+                # Add more commands here if needed
+                *)
+                    print_info "Unsupported command: $command_name. Please install it manually."
+                    return 1  # Indicate failure
+                    ;;
+            esac
         fi
-        
-        ((index++))
+
+        print_info "$command_name has been installed successfully."
+        return 0  # Indicate success
+    else
+        return 0  # Indicate success (since the command is already installed)
+    fi
+}
+
+reset_ifs() {
+    IFS=$'\ \t\n'
+}
+
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+requires_package() {
+    local packageName=$1
+    local requireScope=$2
+
+    if ! command_exists "$packageName"; then
+        print_warn "Package '$packageName' is required in order to use $requireScope"
+    fi
+}
+
+#############################################
+# Start of LSR module #2                    #
+# Injected LSR module: requirementCheck.sh  #
+# Number of lines: 5                        #
+# Filesize: 278 B                           #
+#############################################
+# This file includes require package statements that makes sure that all packages needed for a basic LSR
+# installation are indeed correctly installed and callable
+requires_package "yq" "LSR"
+requires_package "jq" "LSR"
+requires_package "node" "LSR"
+requires_package "npm" "LSR"
+###############################################
+# Start of LSR module #3                      #
+# Injected LSR module: composites/helpers.sh  #
+# Number of lines: 112                        #
+# Filesize: 2.77 KB                           #
+###############################################
+composite_help_get_flags() {
+    reset_ifs
+    local flags=()
+
+    # Split the remaining arguments into flags (starts with --)
+    for arg in "$@"; do
+        if [[ "$arg" == *"="* ]]; then
+            flagName="${arg%%=*}"  # Everything before the first '='
+            value="${arg#*=}"      # Everything after the first '='
+            arg="$flagName=\"$value\""
+        fi
+
+        arg=$(echo "$arg" | sed "s/ /__LSR_SPACE_PLACEHOLDER__/g")
+
+        if [[ "$arg" =~ ^-- ]]; then
+            flags+=("$arg")
+        elif [[ "$arg" =~ ^- ]]; then
+            local splitCommand="$(echo "${arg:1}" | fold -w1 | tr '\n' ' ')"
+            for flag in $splitCommand; do
+                flags+=("--$flag")
+            done
+        fi
+    done
+
+    # Assign the flags to the reference array
+    echo "${flags[@]}"
+}
+
+# Function to check if a flag is in the flags array
+composite_help_contains_flag() {
+    flagName=$1
+    shift
+    flags=("$@")
+
+    echo "total => ${flags[@]}"
+
+    for flag in "${flags[@]}"; do
+
+        if [[ "$flag" == *"="* ]]; then
+            flag="${arg%%=*}"  # Everything before the first '='
+        fi
+
+        echo " comparing $flag with --$flagName"
+
+        if [[ "$flag" == "--$flagName" ]]; then
+            return 0  # Flag is found
+        fi
+    done
+
+    return 1  # Flag not found
+}
+
+# Function to get the value of a flag
+composite_help_flag_get_value() {
+    flagName=$1
+    shift
+    flags=("$@")
+
+    for flag in "${flags[@]}"; do
+        if [[ "$flag" == "$flagName"* ]]; then
+            # Extract the value after '='
+            value="${flag#*=}"
+            echo "$value"
+            return
+        fi
+    done
+
+    # Return an empty string if the flag doesn't have a value or isn't found
+    echo ""
+}
+
+composite_help_get_rest() {
+    reset_ifs
+    local non_flags=()
+
+    # Split the remaining arguments into non-flags (does not start with --)
+    for arg in "$@"; do
+        if [[ (! "$arg" =~ ^--) && (! "$arg" =~ ^-) ]]; then
+            non_flags+=("$arg")
+        fi
+    done
+
+    echo "${non_flags[@]}"
+}
+
+# Helper functions for creating composite commands
+composite_help_command() {
+    
+    # Arguments
+    local filter=$1               # Filter for what help commands to show
+    local argument_count=$2       # Number of arguments
+    shift 2
+    echo "$2"
+
+    return
+    local defined_commands=("$@")  # List of commands
+
+    # Dont do anything if any arguments were given to the main function
+    if [ "$argument_count" -gt 0 ]; then
+        return
+    fi
+
+    # lcompIterate over the commands and print only the ones that match the filter
+    echo "Usage: '${defined_commands[@]}' "
+    for cmd in "${defined_commands[@]}"; do
+        echo " - $cmd"
+
+        # if [[ "$filter" == "" || "$cmd" == "$filter"* ]]; then
+            
+        #     # echo " - "
+        # fi
     done
 }
-
-dock_start_project() {
-    if [ -z "$1" ]; then
-        print_error "Usage: dock start <number>"
-        return 1
-    fi
-
-    # Collect unique project names in an array
-    mapfile -t project_names < <(docker ps -aq --filter "label=com.docker.compose.project" | xargs docker inspect --format '{{ index .Config.Labels "com.docker.compose.project" }}' | sort -u)
-
-    # Get the project name based on the specified index
-    project_name="${project_names[$(( $1 - 1 ))]}"  # Convert to zero-based index
-
-    if [ -z "$project_name" ]; then
-        print_error "No project found at index $1."
-        return 1
-    fi
-
-    # Get the container IDs for the specified project
-    container_ids=$(docker ps -aq --filter "label=com.docker.compose.project=$project_name")
-
-    if [ -z "$container_ids" ]; then
-        print_error "No stopped containers found for project '$project_name'."
-        return 1
-    fi
-
-    # Start all containers belonging to the project
-    print_success "Starting containers for project: $project_name"
-    docker start $container_ids
-}
-
-# Stop a Docker container by its index (number)
-dock_stop_project() {
-    if [ -z "$1" ]; then
-        print_error "Usage: dockstop <number>"
-        return 1
-    fi
-
-    # Get the project name based on the index
-    project_name=$(docker ps --format '{{.ID}}' | xargs docker inspect --format '{{ index .Config.Labels "com.docker.compose.project" }}' | sort -u | sed -n "1p")
-    print_debug $project_name
-    if [ -z "$project_name" ]; then
-        print_error "No project found at index $1."
-        return 1
-    fi
-
-    # Get the container IDs for the specified project
-    container_ids=$(docker ps -q --filter "label=com.docker.compose.project=$project_name")
-
-    if [ -z "$container_ids" ]; then
-        print_error "No running containers found for project '$project_name'."
-        return 1
-    fi
-
-    # Stop all containers belonging to the project
-    print_success "Stopping containers for project: $project_name"
-    docker stop $container_ids
-}
-
-# Remove a Docker container by its index (number)
-dock_remove_project() {
-    if [ -z "$1" ]; then
-        print_error "Usage: dock remove <number>"
-        return 1
-    fi
-
-    container_id=$(docker ps -a --format '{{.ID}}' | sed -n "${1}p")  # Get the container ID at the specified index
-    if [ -z "$container_id" ]; then
-        print_error "No container found at index $1."
-        return 1
-    fi
-
-    print_success "Removing container: $container_id"
-    docker rm "$container_id"
-}
-
-dock_restart() {
-    # Check if Docker is running
-    if docker info >/dev/null 2>&1; then
-        print_info "Docker is currently running."
-        
-        running_containers=$(docker ps -q)
-        if [ -n "$running_containers" ]; then
-            print_info "Stopping all running containers..."
-            docker stop $running_containers
-        fi
-
-        print_info "Restarting Docker Desktop..."
-        powershell.exe -Command "Get-Process | Where-Object { \$_.Name -like \"*docker*\" } | Stop-Process -Force"
-        sleep 5  # Wait for a moment before starting it again
-        powershell.exe -Command "Start-Process 'C:\Program Files\Docker\Docker\Docker Desktop.exe'"
-    else
-        print_info "Docker is not running. Starting Docker Desktop..."
-        powershell.exe -Command "Start-Process 'C:\Program Files\Docker\Docker\Docker Desktop.exe'"
-        sleep 20
-    fi
-
-    # Confirm the action
-    if docker info >/dev/null 2>&1; then
-        print_success "Docker is now running."
-    else
-        print_error "Failed to start Docker."
-    fi
-}
 ########################################
-# Start of LSR module #6               #
+# Start of LSR module #4               #
 # Injected LSR module: git_helpers.sh  #
-# Number of lines: 168                 #
-# Filesize: 5.22 KB                    #
+# Number of lines: 60                  #
+# Filesize: 1.77 KB                    #
 ########################################
-# Define a function to check if you're in a Git repo and show the current branch
 alias gitusers="git_users_main_command"
 
-# Composite command
-git_users_main_command() {
-    # Help command
-    if [ ! "$#" -gt 0 ]; then
-        echo "usage: "
-        echo "  - gitusers list"
-        echo "  - gitusers get <identifier>"
-        echo "  - gitusers new <identifier> <fullname>"
-        echo "  - gitusers del <identifier>"
-        echo "  - gitusers alias <identifier> <alias>"
-        echo "  - gitusers unlias <identifier> <alias>"
-        return 0
+git_branch_exists() {
+    branchName="$1"
+
+    # Check if the branch exists locally
+    local localBranches
+    localBranches=$(git branch --list "$branchName")
+    if [[ -n "$localBranches" ]]; then
+        return 0  # Branch exists locally
     fi
 
-    local command=$1
-    shift
-
-    if is_in_list "$command" "list,all"; then
-        list_git_users $@
-    elif is_in_list "$command" "get"; then
-        get_git_user $@
-    elif is_in_list "$command" "new,create,add"; then
-        new_git_user $@
-    elif is_in_list "$command" "del,delete,rem,remove"; then
-        delete_git_user $@
-    elif is_in_list "$command" "add-alias,new-alias,create-alias,alias,"; then
-        set_git_user_alias $@
-    elif is_in_list "$command" "del-alias,rem-alias,delete-alias,remove-alias,unalias"; then
-        unset_git_user_alias $@
-    else
-        print_error "Command $command does not exist"
-        git_users_main_command # Re-run for help command
+    # Check if the branch exists remotely
+    local remoteBranches
+    remoteBranches=$(git branch --all | grep -w "remotes/origin/$branchName")
+    if [[ -n "$remoteBranches" ]]; then
+        return 0  # Branch exists remotely
     fi
+
+    # If branch doesn't exist locally or remotely
+    return 1  # Branch does not exist
 }
 
 find_git_user_by_alias() {
@@ -755,99 +511,6 @@ find_git_user_by_alias() {
     fi
 
     localsettings_eval "( .gitusers | to_entries | map(select(.value.aliases[] == \"$alias\")) )[0] | { \"identifier\": .key, \"fullname\": .value.fullname, \"aliases\": .value.aliases } "
-}
-
-set_git_user_alias() {
-    local identifier=$(prompt_if_not_exists "Identifier" $1)
-
-    # Attempt get, if already exists, error
-    local getResult=$(localsettings_eval ".gitusers.\"$identifier\"")
-    if [[ "$getResult" == "null" ]]; then
-        print_error "Git user with identifier $identifier does not exist"
-        return 1
-    fi
-
-    local alias=$(prompt_if_not_exists "Alias" $2)
-
-    localsettings_eval_with_save ".gitusers.\"$identifier\".aliases += [ \"$alias\" ]"
-
-    print_success "Added alias '$alias' to gituser '$identifier'"
-
-    localsettings_reformat
-}
-
-unset_git_user_alias() {
-    local identifier=$(prompt_if_not_exists "Identifier" $1)
-
-    # Attempt get, if already exists, error
-    local getResult=$(localsettings_eval ".gitusers.\"$identifier\"")
-    if [[ "$getResult" == "null" ]]; then
-        print_error "Git user with identifier $identifier does not exist"
-        return 1
-    fi
-
-    local alias=$(prompt_if_not_exists "Alias" $2)
-
-    localsettings_eval_with_save "del(.gitusers.\"$identifier\".aliases[] | select(. == \"$alias\"))"
-
-    print_success "Deleted alias '$alias' to gituser '$identifier'"
-
-    localsettings_reformat
-}
-
-get_git_user() {
-    # Get the needed values
-    local identifier=$(prompt_if_not_exists "Identifier" $1)
-    
-    localsettings_reformat
-
-    # Attempt get, if already exists, error
-    local getResult=$(localsettings_eval ".gitusers.\"$identifier\"")
-    if [[ "$getResult" == "null" ]]; then
-        print_error "Git user with identifier $identifier does not exist"
-        return 1
-    fi
-
-    localsettings_eval ".gitusers.\"$identifier\""
-}
-
-list_git_users() {
-    localsettings_reformat
-    localsettings_get .gitusers
-}
-
-delete_git_user() {
-    # Get the needed values
-    local identifier=$(prompt_if_not_exists "Identifier" $1)
-
-    # Attempt get, if not exists, error
-    local getResult=$(localsettings_eval ".gitusers.\"$identifier\"")
-    if [[ "$getResult" == "null" ]]; then
-        print_error "Git user with identifier $identifier does not exists"
-        return 1
-    fi
-
-    localsettings_delete ".gitusers.\"$identifier\""
-    print_success "Deleted gituser \"$identifier\""
-}
-
-new_git_user() {
-    local identifier=$(prompt_if_not_exists "Identifier" $1)
-
-    # Attempt get, if already exists, error
-    local getResult=$(localsettings_eval ".gitusers.\\\"$identifier\\\"")
-    if [[ ! "$getResult" == "null" ]]; then
-        print_error "Git user with identifier $identifier already exists"
-        return 1
-    fi
-
-    local fullname=$(prompt_if_not_exists "Fullname" $2)
-
-    # Set the values to the local settings
-    localsettings_eval_with_save ".gitusers.\"$identifier\".fullname = \"$fullname\"" > /dev/null
-    localsettings_eval_with_save ".gitusers.\"$identifier\".aliases = [ \"$fullname\" ]" > /dev/null
-    localsettings_reformat
-    print_success "Created gituser \"$identifier\""
 }
 
 parse_git_branch() {
@@ -877,461 +540,8 @@ alias st='git stash'
 # alias rbc='git rebase --continue'
 alias delete='git branch -d'
 alias d="!f() { git branch -d $1 && git push origin --delete $1; }; f"
-####################################
-# Start of LSR module #7           #
-# Injected LSR module: laravel.sh  #
-# Number of lines: 215             #
-# Filesize: 5.81 KB                #
-####################################
-alias fresh="fresh_install_sail"
-
-npmscripts() {
-    local path="package.json"
-    
-    if [ ! -f "$path" ]; then
-        echo "Error: $path not found."
-        return 1
-    fi
-
-    # Extract script names using jq
-    if command -v jq &> /dev/null; then
-        echo "Available npm scripts:"
-        jq -r '.scripts | keys[]' "$path"
-    else
-        echo "Error: jq is required to parse JSON. Please install jq."
-        return 1
-    fi
-}
-
-get_first_npm_script() {
-    if [ ! -f package.json ]; then
-        echo "package.json not found."
-        return 1  # Exit with error if package.json is missing
-    fi
-
-    # Hardcoded priority order: watch > dev > start
-    local priority_order=("watch" "dev" "start")
-
-    # Extract scripts using jq
-    local scripts
-    scripts=$(jq -r '.scripts | to_entries[] | .key' package.json)
-
-    # Check each script in the hardcoded priority order
-    for script in "${priority_order[@]}"; do
-        if echo "$scripts" | grep -q "^$script$"; then
-            # Return the first matching script based on priority
-            echo "$script"
-            return 0
-        fi
-    done
-
-    echo "No matching npm scripts found."
-    return 1  # Exit with error if no matching scripts are found
-}
-
-create_start_layout() {
-    # Rename the window to the current project
-    local current_project="$(cproj)"
-
-    if [[ $current_project == "" ]]; then
-        print_error "Cannot start project because current dir is not a laravel project configured in proj"
-        return 1
-    fi
-
-    # Create the pane layout
-    tmux split-window -h
-    tmux select-pane -L
-    tmux split-window -v
-    tmux select-pane -R
-
-    rename_window "$current_project"
-    rename_pane 0 "$current_project-sail"
-    rename_pane 1 "$current_project-npm"
-    rename_pane "$current_project-terminal"
-}
-
-switch() {
-    local project=$1
-
-    # Usage printing
-    if [[ -z $project ]]; then
-        echo "Usage: switch <projectname>"
-        return 0
-    fi
-
-    # Check if project exists
-    local failedSwitching=$(proj "$project" | grep -q "Project not found. Available projects:" && echo true || echo false)
-
-    # Print error
-    if [[ $failedSwitching == true ]]; then
-        print_error "Cannot switch to project '$project' because it does not exist"
-        proj
-        return 1
-    fi
-
-    stop
-    start $project
-}
-
-stop() {
-    # Close everything except the current terminal
-    print_info "Closing npm pane"
-    run_in_pane 1 C-c
-    sleep 1
-    tclose 1
-    print_info "Closing sail pane"
-    run_in_pane 0 C-c
-    sleep 3
-    tclose 0
-    cd ~
-}
-
-start() {
-    # If argument is given, go to that project
-    local project=$1
-    local failedSwitching=$(proj "$project" | grep -q "Project not found. Available projects:" && echo true || echo false)
-
-    # Failed switching to project
-    if [[ $failedSwitching == true ]]; then
-        print_error "Cannot start project '$project' because it does not exist"
-        proj
-        return 1
-    fi
-
-    # Jump to project if needed
-    if [[ -n "$project" ]]; then
-        proj "$project"
-    else # No project was given
-        # If current dir is not a project, dont continue
-        project=$(cproj)
-        if [[ -z "$project" ]]; then
-            print_error "Cant start because current dir is not a defined project"
-            return 1
-        fi
-    fi
-
-    clear
-
-    create_start_layout
-
-    run_in_pane 0 "clear"
-    run_in_pane 1 "clear"
-    run_in_pane 2 "clear"
-    
-    run_in_pane 2 el 20
-    run_in_pane 2 clear
-    run_in_pane 2 tls
-
-    # TODO: what if no package.json is available?
-    # TODO: what if no laravel available?
-    # TODO: open URL if available
-
-    # Get the first available npm script
-    npm_script=$(get_first_npm_script)
-
-    # Start npm, make sure no browsers get opened
-    if grep -q "\"$npm_script\": \"vite" package.json; then
-        print_info "starting npm with 'npm run $npm_script -- --no-open'"
-        run_in_pane 1 "npm run $npm_script -- --no-open"
-    else
-        print_info "starting npm with 'npm run $npm_script'"
-        run_in_pane 1 "npm run $npm_script"
-    fi
-
-    # Open URL if available
-    local projurl=$(get_project_url)
-    if [[ "$projurl" == "null" ]]; then
-        # Start sail
-        print_info "starting sail..."
-        run_in_pane 0 sail up
-    else
-        run_in_pane 2 "(sleep 5; explorer.exe $projurl) &" 
-        print_info "starting sail..."
-        run_in_pane 0 sail up
-    fi
-
-    return 0
-}
-
-# Command to freshly install all dependancies and containers
-fresh_install_sail() {
-    # Check if --remove-docker-image was provided
-    if [[ "$1" == "--remove-docker-image" ]]; then
-        # Remove the Docker container, image, and volumes if they exist
-        if [[ $(docker ps -aq -f "name=your_container_name") ]]; then
-            ./vendor/bin/sail down --rmi all --volumes
-            print_success "Docker containers, images, and volumes removed."
-        else
-            print_error "No Docker container found to remove."
-        fi
-    fi
-
-    # Remove vendor directory if it exists
-    if [ -d "vendor" ]; then
-        rm -rf vendor
-        print_success "Removed vendor directory."
-    else
-        print_info "No vendor directory found."
-    fi
-
-    # Remove node_modules directory if it exists
-    if [ -d "node_modules" ]; then
-        rm -rf node_modules
-        print_success "Removed node_modules directory."
-    else
-        print_info "No node_modules directory found."
-    fi
-
-    # Install PHP dependencies
-    composer install
-    print_success "PHP dependencies installed."
-
-    # Install JavaScript dependencies
-    npm install
-    print_success "JavaScript dependencies installed."
-
-    # Build the containers (create if remove image was used, else build)
-    if [[ "$1" == "--remove-docker-image" ]]; then
-        ./vendor/bin/sail create
-        print_success "Docker containers created."
-    else
-        ./vendor/bin/sail build
-        print_success "Docker containers built."
-    fi
-}
-###########################################
-# Start of LSR module #8                  #
-# Injected LSR module: local_settings.sh  #
-# Number of lines: 224                    #
-# Filesize: 6.06 KB                       #
-###########################################
-local_settings_file="$HOME/scripts/local_data/local_settings.yml"
-local_settings_dir="$(dirname "$local_settings_file")"
-
-alias lsget="localsettings_get"
-alias lsset="localsettings_set"
-alias lseval="localsettings_eval"
-alias lsdel="localsettings_delete"
-alias lssort="localsettings_sort"
-alias lsformat="localsettings_reformat"
-
-localsettings_ensureexists() {
-    local field="$1"
-
-    # Validate the field before proceeding
-    if ! yq_validate_only_lookup "$field"; then
-        return 1  # Exit if validation fails
-    fi
-
-    local value=$(yq e "$field // \"\"" "$local_settings_file")
-
-    # Create it if it does not exist
-    if [[ -z "$value" ]]; then
-        yq e -i "$field = null" "$local_settings_file"
-        localsettings_reformat
-    fi
-}
-
-localsettings_sort() {
-    local field=$1
-
-    if [ "$#" -ne 1 ]; then
-        echo "Usage: lssort <path>"
-        return 1  # Return an error code
-    fi
-
-    # Validate the field before proceeding
-    if ! yq_validate_only_lookup "$field"; then
-        return 1  # Exit if validation fails
-    fi
-
-    localsettings_eval_with_save "$field = ($field | to_entries | sort_by(.key) | from_entries)"
-}
-
-localsettings_delete() {
-    local field=$1
-
-    if [ "$#" -ne 1 ]; then
-        echo "Usage: lsdel <path>"
-        return 1  # Return an error code
-    fi
-
-    localsettings_eval_with_save "del($field)"
-}
-
-localsettings_eval_with_save() {
-    local command="."
-
-    if [[ -n $1 ]]; then
-        command="$1"
-    fi
-
-    yq e -iP "$command" "$local_settings_file"
-}
-
-localsettings_eval() {
-    local command="."
-
-    if [[ -n $1 ]]; then
-        command="$1"
-    fi
-
-    yq e -P "$command" "$local_settings_file"
-}
-
-localsettings_get() {
-    local allow_create=false
-    local field="."
-
-    # Parse arguments
-    while [[ $# -gt 0 ]]; do
-        case "$1" in
-            --allow-create)
-                allow_create=true
-                shift
-                ;;
-            *)
-                field="$1"
-                shift
-                ;;
-        esac
-    done
-
-    # Validate the field before proceeding
-    if ! yq_validate_only_lookup "$field"; then
-        return 1  # Exit if validation fails
-    fi
-
-    if $allow_create; then
-        localsettings_ensureexists "$field"
-    fi
-    
-    yq e -P "$field" "$local_settings_file"
-}
-
-localsettings_set() {
-    local allow_create=false
-    local field=""
-    local value=""
-    local unquoted=false
-
-    # Display help message
-    show_help() {
-        print_normal "Usage: localsettings_set [OPTIONS] FIELD VALUE"
-        print_normal "Set a value in the local settings file."
-        print_normal ""
-        print_normal "Options:"
-        print_normal "  -a, --allow-create   Create the field if it doesn't exist."
-        print_normal "  -u, --unquoted       Set the value without quotes."
-        print_normal "  -h, --help           Display this help message."
-        print_normal ""
-        print_normal "Examples:"
-        print_normal "  localsettings_set --allow-create .projects.aa '5'  # Set with quotes"
-        print_normal "  localsettings_set --unquoted .projects.aa 5        # Set without quotes"
-        print_normal "  localsettings_set .projects.aa '5'                  # Set with quotes"
-        print_normal "  localsettings_set --help                             # Display help"
-    }
-
-    # Parse options using getopts
-    while getopts "auh" opt; do
-        case "$opt" in
-            a) allow_create=true ;;
-            u) unquoted=true ;;
-            h) show_help; return 0 ;;
-            \?) print_normal "Invalid option: -$OPTARG" >&2; return 1 ;;
-            :) print_normal "Option -$OPTARG requires an argument." >&2; return 1 ;;
-        esac
-    done
-
-    # Shift off the options processed by getopts
-    shift $((OPTIND - 1))
-
-    # Now handle long options manually
-    for arg in "$@"; do
-        case "$arg" in
-            --allow-create)
-                allow_create=true
-                ;;
-            --unquoted)
-                unquoted=true
-                ;;
-            --help)
-                show_help
-                return 0
-                ;;
-            *)
-                # Capture field and value
-                if [[ -z "$field" ]]; then
-                    field="$arg"  # First non-flag argument is the field
-                elif [[ -z "$value" ]]; then
-                    value="$arg"  # Second non-flag argument is the value
-                else
-                    print_normal "Error: Too many arguments." >&2
-                    return 1
-                fi
-                ;;
-        esac
-    done
-
-    # Check that both field and value are provided
-    if [[ -z "$field" || -z "$value" ]]; then
-        print_normal "Error: FIELD and VALUE are required." >&2
-        return 1
-    fi
-
-    # Ensure field starts with a dot
-    if [[ "$field" != .* ]]; then
-        field=".$field"
-    fi
-
-    # Validate the field before proceeding
-    if ! yq_validate_only_lookup "$field"; then
-        return 1  # Exit if validation fails
-    fi
-
-    # Ensure the field exists, conditionally
-    if $allow_create; then
-        localsettings_ensureexists "$field"
-    fi
-
-    print_normal "$unquoted"
-
-    # Set the value
-    if [[ $unquoted == "true" ]]; then
-        # Set without quotes
-        print_normal "YEEE"
-        print_normal "yq e -i \"$field=$value\" \"$local_settings_file\""
-        yq e -i "$field=$value" "$local_settings_file"
-    else
-        # Set with quotes
-        yq e -i "$field=\"$value\"" "$local_settings_file"
-    fi
-}
-
-yq_validate_only_lookup() {
-    local field="$1"
-
-    # Allow just a dot to return the entire structure
-    if [[ "$field" == "." ]]; then
-        return 0  # Valid case for root access
-    fi
-
-    # Regular expression to match valid field patterns
-    if [[ ! "$field" =~ ^\.[a-zA-Z_-][a-zA-Z0-9_.-]*(\[[0-9]+\])?(\.[a-zA-Z_-][a-zA-Z0-9_.-]*(\[[0-9]+\])?)*$ ]]; then
-        print_error "Invalid field format '${field}'. Only lookup notation is allowed (e.g., .projects or .projects.test-example).\n"
-        return 1  # Exit with an error
-    fi
-
-    return 0
-}
-
-localsettings_reformat() {
-    yq e -P '.' -i "$local_settings_file"
-    localsettings_sort .projects
-    localsettings_sort .gitusers
-}
 #########################################
-# Start of LSR module #9                #
+# Start of LSR module #5                #
 # Injected LSR module: tmux_helpers.sh  #
 # Number of lines: 437                  #
 # Filesize: 13.52 KB                    #
@@ -1774,8 +984,877 @@ alias rip="run_in_pane"
 alias ripuf="run_in_pane_until_finished"
 alias tc="tclose"
 
+##################################
+# Start of LSR module #6         #
+# Injected LSR module: utils.sh  #
+# Number of lines: 137           #
+# Filesize: 3.71 KB              #
+##################################
+# TODO:
+# - scrollTable command
+# - actionTable command
+# - select command
+# - list command
+# - confirm command
+# - progressbar command
+
+table() {
+    local header_csv="$1"
+    IFS=',' read -r -a headers <<< "$header_csv"
+
+    # Parse the headers and save the lengths
+    local colCount="${#headers[@]}"
+    local colLengths=()
+    for header in "${headers[@]}"; do
+        local headerLength="${#header}"
+        colLengths+=("$headerLength")
+    done
+
+    shift
+
+    # Loop trough the body, looking if we need to extend the col width
+    for row in "${@:1}"; do
+
+        # Replace escaped commas with a placeholder
+        row=$(echo "$row" | sed 's/\\,/__ESCAPED_COMMA__/g')
+
+        IFS=',' read -r -a rowValues <<< "$row"
+        for ((i = 0; i < ${#rowValues[@]}; i++)); do
+            local value=$(echo "${rowValues[i]}" | sed 's/__ESCAPED_COMMA__/,/g')
+            local valueLength="${#value}"
+            local currColWidth="${colLengths[i]}"
+
+            if [[ $valueLength -gt $currColWidth ]]; then
+                colLengths[$i]="$valueLength"
+            fi
+
+        done
+    done
+
+    # Print the top bar
+    echo -n "┌"
+    local currentColIndex=1
+    for colLength in "${colLengths[@]}"; do
+        echo -n "$(printf '─%.0s' $(seq 1 $((colLength + 2))))"
+        if [[ $currentColIndex != $colCount ]]; then
+            echo -n "┬"
+        fi
+        ((currentColIndex++))
+    done
+    echo -n "┐"
+    echo ""
+
+    # Print header bar
+    for ((i = 0; i < ${#headers[@]}; i++)); do
+        local header="${headers[i]}"
+        local headerLength="${colLengths[i]}"
+        local currHeaderLength="${#header}"
+
+        echo -n "│ $header"
+        echo -n "$(printf ' %.0s' $(seq 1 $(( headerLength - currHeaderLength + 1 ))))"
+    done
+    echo "│"
+
+    # Print header bottom
+    echo -n "├"
+    local currentColIndex=1
+    for colLength in "${colLengths[@]}"; do
+        echo -n "$(printf '─%.0s' $(seq 1 $((colLength + 2))))"
+        if [[ $currentColIndex != $colCount ]]; then
+            echo -n "┼"
+        fi
+        ((currentColIndex++))
+    done
+    echo -n "┤"
+    echo ""
+
+    # Print the table body
+    for row in "${@:1}"; do
+        
+        # Replace escaped commas with a placeholder
+        row=$(echo "$row" | sed 's/\\,/__ESCAPED_COMMA__/g')
+
+        IFS=',' read -r -a rowValues <<< "$row"
+        for ((i = 0; i < ${#rowValues[@]}; i++)); do
+            local value=$(echo "${rowValues[i]}" | sed 's/__ESCAPED_COMMA__/,/g')
+            local currColLength="${colLengths[i]}"
+            local currValuelength="${#value}"
+            local numberOfSpacesNeeded="$((currColLength - currValuelength + 1))"
+
+            echo -n "│ $value"
+            echo -n "$(printf ' %.0s' $(seq 1 $numberOfSpacesNeeded))"
+        done
+        echo "│"
+    done
+
+    # Print the bottom bar
+    echo -n "└"
+    local currentColIndex=1
+    for colLength in "${colLengths[@]}"; do
+        echo -n "$(printf '─%.0s' $(seq 1 $((colLength + 2))))"
+        if [[ $currentColIndex != $colCount ]]; then
+            echo -n "┴"
+        fi
+        ((currentColIndex++))
+    done
+    echo -n "┘"
+    echo ""
+}
+
+list() {
+    # Get the flags and arguments
+    read -r -a flags <<< "$(composite_help_get_flags "$@")"
+    read -r -a args <<< "$(composite_help_get_rest "$@")"
+
+    if composite_help_contains_flag style-numeric "${flags[@]}"; then
+        echo "Does contain it"
+    else
+        echo "Does not contain it"
+    fi
+
+    return
+    set -- "${args[@]}"
+
+    local listName=$1
+    local listItems=$2
+
+    echo "$listName:"
+
+    IFS=',' # Set the Internal Field Separator to comma
+    for listItem in $listItems; do
+        echo " - $listItem"
+    done
+    reset_ifs
+}
+
+# list "names" "A,B,C,D" --style-numeric="this is a test" --eep=helloworld -abd --ree
+#################################
+# Start of LSR module #7        #
+# Injected LSR module: proj.sh  #
+# Number of lines: 230          #
+# Filesize: 7.09 KB             #
+#################################
+alias cproj=current_project
+alias proj=project
+alias p=project
+alias rproj=remove_project
+alias nproj=new_project
+alias sprojurl=set_project_url
+alias gprojurl=get_project_url
+alias rprojurl=remove_project_url
+
+
+get_current_project_label() {
+    echo "$(cproj)"
+}
+
+set_project_url() {
+    local yaml_file="$HOME/scripts/local_data/local_settings.yml"
+    local url="$1"
+
+    if [[ -z "$url" ]]; then
+        echo "Usage: proj_url <Url>"
+        return 1
+    fi
+
+    local project_name=$(cproj)
+    if [[ -z "$project_name" ]]; then
+        echo "Current directory is not a defined project"
+        return 1
+    fi
+
+    yq eval -i ".projects.$project_name.url = \"$url\"" "$yaml_file"
+}
+
+remove_project_url() {
+    local yaml_file="$HOME/scripts/local_data/local_settings.yml"
+    
+    local project_name=$(cproj)
+    if [[ -z "$project_name" ]]; then
+        echo "Current directory is not a defined project"
+        return 1
+    fi
+
+    yq eval -i ".projects.$project_name.url = null" "$yaml_file"
+}
+
+get_project_url() {
+    local yaml_file="$HOME/scripts/local_data/local_settings.yml"
+    
+    local project_name=$(cproj)
+    if [[ -z "$project_name" ]]; then
+        echo "Current directory is not a defined project"
+        return 1
+    fi
+
+    localsettings_get ".projects.$project_name.url"
+}
+
+# Function to add a new project to local_settings.yml
+new_project() {
+    local project_name="$1"
+    local project_dir="$2"
+    local yaml_file="$HOME/scripts/local_data/local_settings.yml"
+
+    if [[ -z "$project_name" ]]; then
+        echo "Usage: nproject <project_name> [project_directory]"
+        return 1
+    fi
+
+    if [[ -z "$project_dir" ]]; then
+        # If no directory is provided, set a default directory (or handle accordingly)
+        project_dir="."  # Convert to lowercase and set a default directory
+    fi
+
+    # Expand the project dir if it is relative
+    project_dir=$(realpath -m "$project_dir" 2>/dev/null) || project_dir="$(cd "$project_dir" && pwd)"
+
+    if [[ -f "$yaml_file" ]]; then
+        # Check if the project already exists
+        if [[ $(yq eval ".projects | has(\"$project_name\")" "$yaml_file") == "true" ]]; then
+            echo "Project '$project_name' already exists in local_settings."
+        else
+            # Add the new project entry
+            yq eval -i ".projects.$project_name = {\"dir\": \"$project_dir\", \"url\": null}" "$yaml_file"
+            echo "Added project '$project_name' to local_settings."
+        fi
+
+        localsettings_reformat
+    else
+        echo "YAML file not found: $yaml_file"
+    fi
+}
+
+# Function to remove a project from local_settings.yml
+remove_project() {
+    local project_name="$1"
+    local yaml_file="$HOME/scripts/local_data/local_settings.yml"
+
+    if [[ -z "$project_name" ]]; then
+        echo "Usage: premove <project_name>"
+        return 1
+    fi
+
+    if [[ -f "$yaml_file" ]]; then
+        # Check if the project exists in the YAML file
+        if [[ $(yq eval ".projects | has(\"$project_name\")" "$yaml_file") == "true" ]]; then
+            # Remove the project entry
+            yq eval "del(.projects[\"$project_name\"]) " "$yaml_file" -i
+            echo "Removed project '$project_name' from local_settings."
+        else
+            echo "Project '$project_name' not found in local_settings."
+        fi
+    else
+        echo "YAML file not found: $yaml_file"
+    fi
+}
+
+project() {
+    load_yaml_projects
+
+    local show_dirs=false
+
+    # Parse options
+    while [[ "$1" == -* ]]; do
+        case "$1" in
+            --dirs)
+                show_dirs=true
+                shift
+                ;;
+            *)
+                echo "Usage: proj [project_name] [--dirs]"
+                return 1
+                ;;
+        esac
+    done
+
+    # Check if a project name was provided
+    if [[ -n "$1" ]]; then
+        # Check if the provided project exists in the combined projects array
+        if [[ -n "${yaml_projects[$1]}" ]]; then
+            if [[ -d "${yaml_projects[$1]}" ]]; then
+                cd "${yaml_projects[$1]}" || echo "Failed to navigate to ${yaml_projects[$1]}"
+            else
+                echo "Directory does not exist: ${yaml_projects[$1]}"
+            fi
+        else
+            echo "Project not found. Available projects:"
+            list_projects "$show_dirs"  # Pass the option to list_projects
+        fi
+    else
+        # No project name provided, just list all projects
+        list_projects "$show_dirs"  # Pass the option to list_projects
+    fi
+}
+
+current_project() {
+    local cwd
+    cwd=$(pwd | xargs)  # Get the current working directory
+
+    # Get the list of projects silently
+    local project_list
+    project_list=$(proj --dirs 2>/dev/null | sed '1d')  # Suppress errors and output
+
+    # Parse the project list
+    while IFS= read -r line; do
+        # Extract project name and directory path
+        local project_name
+        local project_path
+        project_name=$(echo "$line" | awk -F ': ' '{print $1}' | sed 's/\x1B\[[0-9;]*m//g')
+        project_path=$(echo "$line" | awk -F ': ' '{print $2}' | sed 's/\x1B\[[0-9;]*m//g')
+        project_path=$(echo "$project_path" | xargs)
+
+        # Compare the project path with the current working directory
+        if [[ "$cwd" == "$project_path" ]]; then
+            echo "$project_name" | awk -F ' - ' '{print $2}'  # Return the project name if it matches
+            return 0
+        fi
+    done <<< "$project_list"
+    return 1
+}
+
+# Function to load additional projects from local_settings.yml
+load_yaml_projects() {
+    local yaml_file="$HOME/scripts/local_data/local_settings.yml"
+    declare -gA yaml_projects=()  # Temporary array to store YAML projects
+
+    if [[ -f "$yaml_file" ]]; then
+        
+        
+        # Parse YAML and add entries to the yaml_projects array using yq
+        while IFS="=" read -r key value; do
+            
+            key=$(echo "$key" | xargs)    # Trim whitespace
+            value=$(echo "$value" | xargs) # Trim whitespace
+
+            # Expand ~ to $HOME if it's present
+            if [[ "$value" == "~"* ]]; then
+                value="${HOME}${value:1}"  # Replace ~ with $HOME
+            fi
+
+            yaml_projects["$key"]="$value"
+        done < <(lseval ".projects | to_entries | .[] | .key + \"=\" + .value.dir")
+    fi
+}
+
+# Function to list all available projects, highlighting the current project in green
+list_projects() {
+    load_yaml_projects
+    local current_dir=$(pwd)
+    local green='\033[0;32m'
+    local reset='\033[0m'
+
+    echo "Available projects:"
+    local show_dirs="$1"
+    for key in "${!yaml_projects[@]}"; do
+        # Determine if the current project is the active one
+        if [[ "${yaml_projects[$key]}" == "$current_dir" ]]; then
+            # Highlight the current project in green
+            if [[ "$show_dirs" == true ]]; then
+                echo -e "${green} - $key: ${yaml_projects[$key]}${reset}"
+            else
+                echo -e "${green} - $key${reset}"  # Green highlight for the project name
+            fi
+        else
+            # Regular output for other projects
+            if [[ "$show_dirs" == true ]]; then
+                echo " - $key: ${yaml_projects[$key]}"
+            else
+                echo " - $key"
+            fi
+        fi
+    done
+}
+####################################
+# Start of LSR module #8           #
+# Injected LSR module: aliases.sh  #
+# Number of lines: 28              #
+# Filesize: 793 B                  #
+####################################
+# LSR Module that contains standalone aliases
+
+reload_bash() {
+    source ~/.bashrc
+    print_success '~/.bashrc reloaded!'
+}
+
+backup() {
+    local backup_location="$1-backup"
+    cp $1 $backup_location -r
+}
+
+alias hosts='powershell.exe -Command "Start-Process \"C:\Program Files\Sublime Text\sublime_text.exe\" -ArgumentList \"C:\Windows\System32\Drivers\etc\hosts\" -Verb RunAs"'
+alias refreshdns='powershell.exe -Command "ipconfig /flushdns"'
+alias c='clear'
+alias cf='cfind'
+alias today='work --date=today'
+alias yesterday='work --date=yesterday'
+alias l="ls -la"
+alias rb="reload_bash"
+alias files="explorer.exe ."
+alias subl='"/mnt/c/Program Files/Sublime Text/sublime_text.exe"'
+
+unalias joke 2>/dev/null
+joke() {
+    curl -H "Accept: text/plain" https://icanhazdadjoke.com/
+    echo
+}
+
+####################################
+# Start of LSR module #9           #
+# Injected LSR module: laravel.sh  #
+# Number of lines: 215             #
+# Filesize: 5.81 KB                #
+####################################
+alias fresh="fresh_install_sail"
+
+npmscripts() {
+    local path="package.json"
+    
+    if [ ! -f "$path" ]; then
+        echo "Error: $path not found."
+        return 1
+    fi
+
+    # Extract script names using jq
+    if command -v jq &> /dev/null; then
+        echo "Available npm scripts:"
+        jq -r '.scripts | keys[]' "$path"
+    else
+        echo "Error: jq is required to parse JSON. Please install jq."
+        return 1
+    fi
+}
+
+get_first_npm_script() {
+    if [ ! -f package.json ]; then
+        echo "package.json not found."
+        return 1  # Exit with error if package.json is missing
+    fi
+
+    # Hardcoded priority order: watch > dev > start
+    local priority_order=("watch" "dev" "start")
+
+    # Extract scripts using jq
+    local scripts
+    scripts=$(jq -r '.scripts | to_entries[] | .key' package.json)
+
+    # Check each script in the hardcoded priority order
+    for script in "${priority_order[@]}"; do
+        if echo "$scripts" | grep -q "^$script$"; then
+            # Return the first matching script based on priority
+            echo "$script"
+            return 0
+        fi
+    done
+
+    echo "No matching npm scripts found."
+    return 1  # Exit with error if no matching scripts are found
+}
+
+create_start_layout() {
+    # Rename the window to the current project
+    local current_project="$(cproj)"
+
+    if [[ $current_project == "" ]]; then
+        print_error "Cannot start project because current dir is not a laravel project configured in proj"
+        return 1
+    fi
+
+    # Create the pane layout
+    tmux split-window -h
+    tmux select-pane -L
+    tmux split-window -v
+    tmux select-pane -R
+
+    rename_window "$current_project"
+    rename_pane 0 "$current_project-sail"
+    rename_pane 1 "$current_project-npm"
+    rename_pane "$current_project-terminal"
+}
+
+switch() {
+    local project=$1
+
+    # Usage printing
+    if [[ -z $project ]]; then
+        echo "Usage: switch <projectname>"
+        return 0
+    fi
+
+    # Check if project exists
+    local failedSwitching=$(proj "$project" | grep -q "Project not found. Available projects:" && echo true || echo false)
+
+    # Print error
+    if [[ $failedSwitching == true ]]; then
+        print_error "Cannot switch to project '$project' because it does not exist"
+        proj
+        return 1
+    fi
+
+    stop
+    start $project
+}
+
+stop() {
+    # Close everything except the current terminal
+    print_info "Closing npm pane"
+    run_in_pane 1 C-c
+    sleep 1
+    tclose 1
+    print_info "Closing sail pane"
+    run_in_pane 0 C-c
+    sleep 3
+    tclose 0
+    cd ~
+}
+
+start() {
+    # If argument is given, go to that project
+    local project=$1
+    local failedSwitching=$(proj "$project" | grep -q "Project not found. Available projects:" && echo true || echo false)
+
+    # Failed switching to project
+    if [[ $failedSwitching == true ]]; then
+        print_error "Cannot start project '$project' because it does not exist"
+        proj
+        return 1
+    fi
+
+    # Jump to project if needed
+    if [[ -n "$project" ]]; then
+        proj "$project"
+    else # No project was given
+        # If current dir is not a project, dont continue
+        project=$(cproj)
+        if [[ -z "$project" ]]; then
+            print_error "Cant start because current dir is not a defined project"
+            return 1
+        fi
+    fi
+
+    clear
+
+    create_start_layout
+
+    run_in_pane 0 "clear"
+    run_in_pane 1 "clear"
+    run_in_pane 2 "clear"
+    
+    run_in_pane 2 el 20
+    run_in_pane 2 clear
+    run_in_pane 2 tls
+
+    # TODO: what if no package.json is available?
+    # TODO: what if no laravel available?
+    # TODO: open URL if available
+
+    # Get the first available npm script
+    npm_script=$(get_first_npm_script)
+
+    # Start npm, make sure no browsers get opened
+    if grep -q "\"$npm_script\": \"vite" package.json; then
+        print_info "starting npm with 'npm run $npm_script -- --no-open'"
+        run_in_pane 1 "npm run $npm_script -- --no-open"
+    else
+        print_info "starting npm with 'npm run $npm_script'"
+        run_in_pane 1 "npm run $npm_script"
+    fi
+
+    # Open URL if available
+    local projurl=$(get_project_url)
+    if [[ "$projurl" == "null" ]]; then
+        # Start sail
+        print_info "starting sail..."
+        run_in_pane 0 sail up
+    else
+        run_in_pane 2 "(sleep 5; explorer.exe $projurl) &" 
+        print_info "starting sail..."
+        run_in_pane 0 sail up
+    fi
+
+    return 0
+}
+
+# Command to freshly install all dependancies and containers
+fresh_install_sail() {
+    # Check if --remove-docker-image was provided
+    if [[ "$1" == "--remove-docker-image" ]]; then
+        # Remove the Docker container, image, and volumes if they exist
+        if [[ $(docker ps -aq -f "name=your_container_name") ]]; then
+            ./vendor/bin/sail down --rmi all --volumes
+            print_success "Docker containers, images, and volumes removed."
+        else
+            print_error "No Docker container found to remove."
+        fi
+    fi
+
+    # Remove vendor directory if it exists
+    if [ -d "vendor" ]; then
+        rm -rf vendor
+        print_success "Removed vendor directory."
+    else
+        print_info "No vendor directory found."
+    fi
+
+    # Remove node_modules directory if it exists
+    if [ -d "node_modules" ]; then
+        rm -rf node_modules
+        print_success "Removed node_modules directory."
+    else
+        print_info "No node_modules directory found."
+    fi
+
+    # Install PHP dependencies
+    composer install
+    print_success "PHP dependencies installed."
+
+    # Install JavaScript dependencies
+    npm install
+    print_success "JavaScript dependencies installed."
+
+    # Build the containers (create if remove image was used, else build)
+    if [[ "$1" == "--remove-docker-image" ]]; then
+        ./vendor/bin/sail create
+        print_success "Docker containers created."
+    else
+        ./vendor/bin/sail build
+        print_success "Docker containers built."
+    fi
+}
+###########################################
+# Start of LSR module #10                 #
+# Injected LSR module: local_settings.sh  #
+# Number of lines: 224                    #
+# Filesize: 6.03 KB                       #
+###########################################
+local_settings_file="$HOME/scripts/local_data/local_settings.yml"
+local_settings_dir="$(dirname "$local_settings_file")"
+
+alias lsget="localsettings_get"
+alias lsset="localsettings_set"
+alias lseval="localsettings_eval"
+alias lsdel="localsettings_delete"
+alias lssort="localsettings_sort"
+alias lsformat="localsettings_reformat"
+
+localsettings_ensureexists() {
+    local field="$1"
+
+    # Validate the field before proceeding
+    if ! yq_validate_only_lookup "$field"; then
+        return 1  # Exit if validation fails
+    fi
+
+    local value=$(yq e "$field // \"\"" "$local_settings_file")
+
+    # Create it if it does not exist
+    if [[ -z "$value" ]]; then
+        yq e -i "$field = null" "$local_settings_file"
+        localsettings_reformat
+    fi
+}
+
+localsettings_sort() {
+    local field=$1
+
+    if [ "$#" -ne 1 ]; then
+        field="."
+    fi
+
+    # Validate the field before proceeding
+    if ! yq_validate_only_lookup "$field"; then
+        return 1  # Exit if validation fails
+    fi
+
+    localsettings_eval_with_save "$field = ($field | to_entries | sort_by(.key) | from_entries)"
+}
+
+localsettings_delete() {
+    local field=$1
+
+    if [ "$#" -ne 1 ]; then
+        echo "Usage: lsdel <path>"
+        return 1  # Return an error code
+    fi
+
+    localsettings_eval_with_save "del($field)"
+}
+
+localsettings_eval_with_save() {
+    local command="."
+
+    if [[ -n $1 ]]; then
+        command="$1"
+    fi
+
+    yq e -iP "$command" "$local_settings_file"
+}
+
+localsettings_eval() {
+    local command="."
+
+    if [[ -n $1 ]]; then
+        command="$1"
+    fi
+
+    yq e -P "$command" "$local_settings_file"
+}
+
+localsettings_get() {
+    local allow_create=false
+    local field="."
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --allow-create)
+                allow_create=true
+                shift
+                ;;
+            *)
+                field="$1"
+                shift
+                ;;
+        esac
+    done
+
+    # Validate the field before proceeding
+    if ! yq_validate_only_lookup "$field"; then
+        return 1  # Exit if validation fails
+    fi
+
+    if $allow_create; then
+        localsettings_ensureexists "$field"
+    fi
+    
+    yq e -P "$field" "$local_settings_file"
+}
+
+localsettings_set() {
+    local allow_create=false
+    local field=""
+    local value=""
+    local unquoted=false
+
+    # Display help message
+    show_help() {
+        print_normal "Usage: localsettings_set [OPTIONS] FIELD VALUE"
+        print_normal "Set a value in the local settings file."
+        print_normal ""
+        print_normal "Options:"
+        print_normal "  -a, --allow-create   Create the field if it doesn't exist."
+        print_normal "  -u, --unquoted       Set the value without quotes."
+        print_normal "  -h, --help           Display this help message."
+        print_normal ""
+        print_normal "Examples:"
+        print_normal "  localsettings_set --allow-create .projects.aa '5'  # Set with quotes"
+        print_normal "  localsettings_set --unquoted .projects.aa 5        # Set without quotes"
+        print_normal "  localsettings_set .projects.aa '5'                  # Set with quotes"
+        print_normal "  localsettings_set --help                             # Display help"
+    }
+
+    # Parse options using getopts
+    while getopts "auh" opt; do
+        case "$opt" in
+            a) allow_create=true ;;
+            u) unquoted=true ;;
+            h) show_help; return 0 ;;
+            \?) print_normal "Invalid option: -$OPTARG" >&2; return 1 ;;
+            :) print_normal "Option -$OPTARG requires an argument." >&2; return 1 ;;
+        esac
+    done
+
+    # Shift off the options processed by getopts
+    shift $((OPTIND - 1))
+
+    # Now handle long options manually
+    for arg in "$@"; do
+        case "$arg" in
+            --allow-create)
+                allow_create=true
+                ;;
+            --unquoted)
+                unquoted=true
+                ;;
+            --help)
+                show_help
+                return 0
+                ;;
+            *)
+                # Capture field and value
+                if [[ -z "$field" ]]; then
+                    field="$arg"  # First non-flag argument is the field
+                elif [[ -z "$value" ]]; then
+                    value="$arg"  # Second non-flag argument is the value
+                else
+                    print_normal "Error: Too many arguments." >&2
+                    return 1
+                fi
+                ;;
+        esac
+    done
+
+    # Check that both field and value are provided
+    if [[ -z "$field" || -z "$value" ]]; then
+        print_normal "Error: FIELD and VALUE are required." >&2
+        return 1
+    fi
+
+    # Ensure field starts with a dot
+    if [[ "$field" != .* ]]; then
+        field=".$field"
+    fi
+
+    # Validate the field before proceeding
+    if ! yq_validate_only_lookup "$field"; then
+        return 1  # Exit if validation fails
+    fi
+
+    # Ensure the field exists, conditionally
+    if $allow_create; then
+        localsettings_ensureexists "$field"
+    fi
+
+    print_normal "$unquoted"
+
+    # Set the value
+    if [[ $unquoted == "true" ]]; then
+        # Set without quotes
+        print_normal "YEEE"
+        print_normal "yq e -i \"$field=$value\" \"$local_settings_file\""
+        yq e -i "$field=$value" "$local_settings_file"
+    else
+        # Set with quotes
+        yq e -i "$field=\"$value\"" "$local_settings_file"
+    fi
+}
+
+yq_validate_only_lookup() {
+    local field="$1"
+
+    # Allow just a dot to return the entire structure
+    if [[ "$field" == "." ]]; then
+        return 0  # Valid case for root access
+    fi
+
+    # Regular expression to match valid field patterns
+    if [[ ! "$field" =~ ^\.[a-zA-Z_-][a-zA-Z0-9_.-]*(\[[0-9]+\])?(\.[a-zA-Z_-][a-zA-Z0-9_.-]*(\[[0-9]+\])?)*$ ]]; then
+        print_error "Invalid field format '${field}'. Only lookup notation is allowed (e.g., .projects or .projects.test-example).\n"
+        return 1  # Exit with an error
+    fi
+
+    return 0
+}
+
+localsettings_reformat() {
+    yq e -P '.' -i "$local_settings_file"
+    localsettings_sort .projects
+    localsettings_sort .gitusers
+    localsettings_sort .
+}
 ###############################################
-# Start of LSR module #10                     #
+# Start of LSR module #11                     #
 # Injected LSR module: version_management.sh  #
 # Number of lines: 88                         #
 # Filesize: 2.55 KB                           #
@@ -1870,7 +1949,7 @@ lsr_uninstall() {
     reload_bash
 }
 ################################
-# Start of LSR module #11      #
+# Start of LSR module #12      #
 # Injected LSR module: vim.sh  #
 # Number of lines: 36          #
 # Filesize: 1004 B             #
@@ -1913,10 +1992,10 @@ source ~/scripts/extra_config_files/LukesVimConfig.vim
 
 write_to_vimrc
 #################################
-# Start of LSR module #12       #
+# Start of LSR module #13       #
 # Injected LSR module: work.sh  #
-# Number of lines: 100          #
-# Filesize: 4.05 KB             #
+# Number of lines: 101          #
+# Filesize: 4.07 KB             #
 #################################
 # Command for seeing what people have done what work in my local repositories
 work() {
@@ -1954,6 +2033,7 @@ work() {
     echo -e "\n\033[34mSearching for commits on $date in all projects"
 
     # Loop through all subdirectories (assuming they are Git repositories)
+    reset_ifs
     for repo in $(localsettings_eval ".projects[] | .dir"); do # Go through all of the projects
         if [ -d "$repo/.git" ]; then # If they are git repos
             # Change into the repository's directory, fetch all
@@ -2020,10 +2100,10 @@ work() {
     cd "$original_pwd"
 }
 ##################################
-# Start of LSR module #13        #
+# Start of LSR module #14        #
 # Injected LSR module: other.sh  #
-# Number of lines: 377           #
-# Filesize: 12.07 KB             #
+# Number of lines: 528           #
+# Filesize: 16.65 KB             #
 ##################################
 LIGHT_GREEN='\033[1;32m'
 RED='\033[0;31m'
@@ -2105,10 +2185,14 @@ set_powerline_ps1() {
     local white_fg="\[\033[38;2;${white}m\]" # White Text
     local black_fg="\[\033[38;2;${black}m\]"       # Black Text
 
+    if command_exists "profile"; then
+        local current_profile="$(profile current)"
+    fi
+
     if [[ $isRoot ]]; then
-        user_part="${blue_bg}${white_fg} \u@\h ${blue_fg}${yellow_bg}"  # Blue arrow with yellow background
+        user_part="${blue_bg}${white_fg} \u@\h - $current_profile ${blue_fg}${yellow_bg}"  # Blue arrow with yellow background
     else
-        user_part="${red_bg}${white_fg} \u@\h ${red_fg}${yellow_bg}"  # Red arrow with yellow background
+        user_part="${red_bg}${white_fg} \u@\h - $current_profile ${red_fg}${yellow_bg}"  # Red arrow with yellow background
     fi
 
     # Directory part with darker yellow background and black text
@@ -2125,8 +2209,146 @@ set_powerline_ps1() {
     fi
 }
 
+do_before_prompt() {
+    set_powerline_ps1
+    localsettings_reformat
+}
+
 set_powerline_ps1
-PROMPT_COMMAND=set_powerline_ps1
+localsettings_reformat
+PROMPT_COMMAND=do_before_prompt
+
+# When command is not found, fall back to a .sh file if possible
+command_not_found_handle() {
+    cmd="$1"
+
+    # Check if there is a .sh script in the current directory
+    # with the command name
+    
+    # Run the bash script if it exists
+    if [[ -f "./$cmd.sh" ]]; then # Run the script
+        print_info "Running script $cmd.sh"
+        bash "./$cmd.sh" "${@:2}"
+    
+    # Run the python script if it exists
+    elif [[ -f "./$cmd.sh" ]]; then # Run the script
+        print_info "Running script $cmd.py"
+        python3 "./$cmd.py" "${@:2}"
+
+    # Run the /scripts/ bash script if it exists
+    elif [[ -f "./scripts/$cmd.sh" ]]; then
+        print_info "Running script $cmd.sh"
+        bash "./scripts/$cmd.sh" "${@:2}"
+    
+    # Run the /scripts/ python script if it exists
+    elif [[ -f "./scripts/$cmd.py" ]]; then
+        print_info "Running script $cmd.py"
+        python3 "./scripts/$cmd.py" "${@:2}"
+
+    # Run the script from the npm folder if it exists
+    elif [[ -f "./package.json" && "$(grep \"$cmd\": package.json)" != "" ]]; then
+        print_info "Running NPM script '$cmd'"
+        npm run $cmd --silent
+
+    # Command was not found
+    else
+        suggestions=$(compgen -c "$cmd" | head -n 5)
+        if [[ -n "$suggestions" ]]; then
+            echo "bash: $cmd: command not found. Did you mean one of these?"
+            echo " - $suggestions" | while read -r suggestion; do echo "  $suggestion"; done
+        else
+            echo "bash: $cmd: command not found"
+        fi
+        return 127
+    fi
+}
+
+packages() {
+    if [[ -f "./package.json" ]]; then
+        dependencies=$(jq '.dependencies' package.json)
+        if [[ "$dependencies" != "null" && "$dependencies" != "{}" && -n "$dependencies" ]]; then
+            echo "Npm packages:"
+            jq -r '.dependencies | to_entries | .[] | " - " + .key + " -> " + .value' package.json
+            echo ""
+        fi
+    fi
+
+    if [[ -f "./composer.json" ]]; then
+        dependencies=$(jq '.require' composer.json)
+        if [[ "$dependencies" != "null" && "$dependencies" != "{}" && -n "$dependencies" ]]; then
+            echo "Composer packages:"
+            jq -r '.require | to_entries | .[] | " - " + .key + " -> " + .value' composer.json
+            echo ""
+        fi
+
+        # dev_dependencies=$(jq '.require-dev' composer.json)
+        # if [[ "$dev_dependencies" != "null" && "$dev_dependencies" != "{}" && -n "$dev_dependencies" ]]; then
+        #     echo "Composer packages (dev):"
+        #     jq -r '.require-dev | to_entries | .[] | " - " + .key + " -> " + .value' composer.json
+        #     echo ""
+        # fi
+    fi
+}
+
+scripts() {
+    if [[ $(find . -name "*.sh" -print -quit) ]]; then
+        echo "Bash scripts:"
+    fi
+
+    for file in ./*.sh; do
+        filename="${file##*/}"      # Remove the ./ prefix
+        basename="${filename%.sh}"  # Remove the .sh suffix
+
+        if [[ "$basename" != "*" ]]; then
+            echo " - $basename"
+        fi
+    done
+
+    for file in ./scripts/*.sh; do
+        filename="${file##*/}"      # Remove the ./ prefix
+        basename="${filename%.sh}"  # Remove the .sh suffix
+
+        if [[ "$basename" != "*" ]]; then
+            echo " - $basename"
+        fi
+    done
+
+    if [[ $(find . -name "*.sh" -print -quit) ]]; then
+        echo ""
+    fi
+
+    if [[ $(find . -name "*.py" -print -quit) ]]; then
+        echo "Python scripts:"
+    fi
+
+    for file in ./*.py; do
+        filename="${file##*/}"      # Remove the ./scripts/ prefix
+        basename="${filename%.py}"  # Remove the .py suffix
+
+        if [[ "$basename" != "*" ]]; then
+            echo "- $basename"
+        fi
+    done
+
+    for file in ./scripts/*.py; do
+        filename="${file##*/}"      # Remove the ./scripts/ prefix
+        basename="${filename%.py}"  # Remove the .py suffix
+
+        if [[ "$basename" != "*" ]]; then
+            echo " - $basename"
+        fi
+    done
+
+    if [[ $(find . -name "*.py" -print -quit) ]]; then
+        echo ""
+    fi
+
+    if [[ -f "./package.json" ]]; then
+        echo "Npm scripts:"
+        jq -r ".scripts | \" - \" + keys[]" ./package.json
+        echo ""
+    fi
+}
 
 lsrdebug() {
     local SETTINGS_FILE=~/scripts/_settings.yml
@@ -2322,18 +2544,21 @@ alias tul="time_until_live"
 
 time_until() {
     # Define target times
+    target0="8:30:00"
     target1="12:30:00"
     target2="17:00:00"
     
     # Get the current time in seconds since midnight
-    now=$(date +%s)
+    local now=$(date +%s)
     
     # Get today's date and convert target times to seconds since midnight
     today=$(date +%Y-%m-%d)
+    target0_sec=$(date -d "$today $target0" +%s)
     target1_sec=$(date -d "$today $target1" +%s)
     target2_sec=$(date -d "$today $target2" +%s)
 
     # Calculate seconds remaining for each target
+    passed0=$((now - target0_sec)) # TODO: base this on the first terminal login of the day
     remaining1=$((target1_sec - now))
     remaining2=$((target2_sec - now))
 
@@ -2342,6 +2567,12 @@ time_until() {
         local seconds=$1
         printf "%02d:%02d:%02d\n" $((seconds/3600)) $(( (seconds%3600)/60 )) $((seconds%60))
     }
+
+    if [ $passed0 -gt 0 ]; then
+        echo "Time passed at work: $(format_time $passed0)"
+    else
+        echo "Work has not started yet"
+    fi
 
     # Display results for both target times
     if [ $remaining1 -gt 0 ]; then
@@ -2404,7 +2635,7 @@ time_until_live() {
 }
 
 ##################################
-# Start of LSR module #14        #
+# Start of LSR module #15        #
 # Injected LSR module: cfind.sh  #
 # Number of lines: 58            #
 # Filesize: 1.63 KB              #
@@ -2468,3 +2699,910 @@ cfind() {
     done
 }
 
+####################################
+# Start of LSR module #16          #
+# Injected LSR module: compile.sh  #
+# Number of lines: 154             #
+# Filesize: 5.30 KB                #
+####################################
+source "$HOME/scripts/helpers.sh"
+
+# Global list of scripts to compile
+scripts_to_compile=(
+    "../helpers"
+    "requirementCheck"
+    "composites/helpers"
+    "git_helpers"
+    "tmux_helpers"
+    "utils"
+    "proj"
+    "aliases"
+    "laravel"
+    "local_settings"
+    "version_management"
+    "vim"
+    "work"
+    "other"
+    "cfind"
+    "compile"
+    "remotelog"
+    "composites/docker/dock"
+    "composites/git/gitusers"
+    "composites/git/branches"
+    "composites/settings/profile"
+)
+
+alias lcompile=lsr_compile
+
+print_info "LSR has been loaded in current session"
+
+lsr_compile() {
+    print_info "Starting re-compilation of LSR"
+    local build_file="$HOME/scripts/build.sh"
+    local minimized_build_file="$HOME/scripts/build.min.sh"
+    local SETTINGS_FILE=~/scripts/_settings.yml
+    local NAME=$(yq e '.name' "$SETTINGS_FILE")
+    local MAJOR_VERSION=$(yq e '.version.major' "$SETTINGS_FILE")
+    local MINOR_VERSION=$(yq e '.version.minor' "$SETTINGS_FILE")
+    local FULL_VERSION=v$MAJOR_VERSION.$MINOR_VERSION
+    local SCRIPT_PREFIX="$HOME/scripts/inject/"
+
+    # Make buildfile if it doesn't exist, else clear it
+    if [[ -f "$build_file" ]]; then
+        > "$build_file"
+    else
+        touch "$build_file"
+    fi
+
+    {
+        echo "# LSR $FULL_VERSION"
+        echo "# Local build ($(date +'%H:%M %d/%m/%Y'))"
+        echo "# Includes LSR modules:"
+    } >> "$build_file"
+
+    for script in "${scripts_to_compile[@]}"; do
+        if [[ -f "$SCRIPT_PREFIX$script.sh" ]]; then
+            echo "# - $SCRIPT_PREFIX$script.sh" >> "$build_file"  # Add a newline for separation
+        else
+            print_info "Warning: $script does not exist, skipping."
+        fi
+    done
+
+    echo "" >> "$build_file"  # Add a newline for separation
+
+    local i=1
+
+    # Loop through the global array and compile the scripts
+    for script in "${scripts_to_compile[@]}"; do
+        if [[ -f "$SCRIPT_PREFIX$script.sh" ]]; then
+            local script_line_count=$(get_line_count "$SCRIPT_PREFIX$script.sh")
+            local script_filesize=$(get_filesize "$SCRIPT_PREFIX$script.sh")
+            print_info " - Compiling $script.sh ($script_filesize/$script_line_count lines)"
+            
+            local module_index_line="# Start of LSR module #${i} "
+            ((i++))
+            local module_name_line="# Injected LSR module: $script.sh "
+            
+            local line_count_line="# Number of lines: $script_line_count "
+            local filesize_line="# Filesize: $script_filesize "
+            
+            # Function to calculate the length of a string
+            get_length() {
+                echo "${#1}"
+            }
+
+            # Determine the maximum length of the content (excluding hashtags)
+            max_content_length=$(get_length "$module_index_line")
+            for line in "$module_name_line" "$line_count_line" "$filesize_line"; do
+                line_length=$(get_length "$line")
+                if [[ $line_length -gt $max_content_length ]]; then
+                    max_content_length=$line_length
+                fi
+            done
+
+            # Add space for the right-side hashtag
+            max_line_length=$((max_content_length + 2)) # +2 for the hashtags on each side
+
+            # Make a horizontal line exactly long enough
+            horizontal_line=$(printf "#%0.s" $(seq 1 $max_line_length))
+
+            # Function to pad the lines with spaces and add the right border hashtag
+            pad_line() {
+                local content="$1"
+                local padding_needed=$((max_line_length - $(get_length "$content") - 1)) # -1 for the ending hashtag
+                printf "%s%${padding_needed}s#" "$content" ""
+            }
+
+            {
+                echo "$horizontal_line"
+                echo "$(pad_line "$module_index_line")"
+                echo "$(pad_line "$module_name_line")"
+                echo "$(pad_line "$line_count_line")"
+                echo "$(pad_line "$filesize_line")"
+                echo "$horizontal_line"
+            } >> "$build_file"
+
+            cat "$SCRIPT_PREFIX$script.sh" >> "$build_file"
+            echo "" >> "$build_file"  # Add a newline for separation
+        fi
+    done
+
+    $build_file_size
+
+    print_info "Finished recompiling LSR at $build_file"
+    print_info "Total final build.sh size: $(get_filesize "$build_file")"
+    print_info "Total final build.sh lines: $(get_line_count "$build_file")"
+
+    # Minimization
+    print_empty_line
+    print_info "Generating minimized build file"
+
+    local remove_comment_lines='^\s*#'  # Matches lines that are just comments
+    local trim_whitespace='^\s*|\s*$'   # Matches leading and trailing whitespace on each line
+    local remove_empty_lines='^$'       # Matches empty lines
+    
+    # Check if minified file exists, if not, create it
+    if [[ ! -f $minimized_build_file ]]; then
+        touch "$minimized_build_file"
+    fi
+
+    # Copy original script to the minified script file
+    cp "$build_file" "$minimized_build_file"
+
+    # Apply regex transformations one by one
+    sed -i "/$remove_comment_lines/d" "$minimized_build_file"
+    sed -i "s/$trim_whitespace//g" "$minimized_build_file"
+    sed -i "/$remove_empty_lines/d" "$minimized_build_file"
+
+    print_info "Total final build.min.sh size: $(get_filesize "$minimized_build_file")"
+    print_info "Total final build.min.sh lines: $(get_line_count "$minimized_build_file")"
+
+    reload_bash
+}
+
+######################################
+# Start of LSR module #17            #
+# Injected LSR module: remotelog.sh  #
+# Number of lines: 88                #
+# Filesize: 2.46 KB                  #
+######################################
+#!/bin/bash
+
+start_remote_log_catcher_server() {
+    PORT="$1"
+    URL="$2"
+    if [[ -z $1 ]]; then
+        PORT=43872
+    fi
+
+    # Start the server
+    echo "Server running on port $URL, waiting for requests..."
+
+    # Infinite loop to keep the server running
+    while true; do
+        # Use nc to listen and capture the output into a temporary file
+        request=$(nc -l -p "$PORT" -w 1)  # -w 5 means wait for up to 5 seconds for data
+
+        # If no data is received, continue to the next loop
+        if [ -z "$request" ]; then
+            continue
+        fi
+
+        # Extract the body of the request (everything after the blank line)
+        body=$(echo "$request" | sed -n '/^\r$/,$p' | tail -n +2)
+
+        # Log the raw body to the console
+        print_info "$request"
+    done
+}
+
+locallog() {
+    # Set default port if not provided
+    port="$1"
+    if [[ -z $1 ]]; then
+        port=58473
+    fi
+
+    # Start the remote log catcher server
+    start_remote_log_catcher_server $port "https://localhost:$port"
+}
+
+remotelog() {
+    > $LOG_FILE
+    local LOG_FILE='./ngrok.log'
+
+    for pid in $(pgrep ngrok); do
+        kill -9 $pid
+    done
+
+    if ! command -v "ngrok" &> /dev/null; then
+        print_error "ngrok must be installed for remotelog. Please install and run ngrok config add-authtoken <token>"
+    fi
+
+    # Check if ngrok is already running and kill it
+    pgrep ngrok > /dev/null
+    if [ $? -eq 0 ]; then
+        print_info "ngrok was already running, killing other instance... you can only have one ngrok/remotelog instance running."
+        pkill ngrok  # Kill any running ngrok processes
+        sleep 1  # Give a moment for the processes to terminate
+    fi
+
+    # Set default port if not provided
+    port="$1"
+    if [[ -z $1 ]]; then
+        port=58473
+    fi
+
+    print_info "Initializing server..."
+
+    # Start ngrok in the background and redirect both stdout and stderr to the log file
+    ngrok http $port --log $LOG_FILE &
+    NGROK_PID=$!
+
+    # Wait for ngrok to generate the URL by checking the log file
+    while ! grep -q 'https://[a-z0-9\-]*.ngrok-free.app' $LOG_FILE; do
+        sleep 1  # Wait until the URL is available in the log
+    done
+
+    # Extract the ngrok URL from the log file
+    NGROK_URL=$(grep 'https://[a-z0-9\-]*.ngrok-free.app' $LOG_FILE | awk -F"url=" '{print $2}' | awk '{print $1}')
+
+    # Print the ngrok URL
+    echo "Your ngrok URL is: $NGROK_URL"
+
+    # Start the remote log catcher server
+    start_remote_log_catcher_server $port $NGROK_URL
+}
+
+
+###################################################
+# Start of LSR module #18                         #
+# Injected LSR module: composites/docker/dock.sh  #
+# Number of lines: 194                            #
+# Filesize: 6.43 KB                               #
+###################################################
+# Define color codes
+LIGHT_GREEN='\033[1;32m'
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+RESET='\033[0m'
+
+alias dock="dock_main_command"
+
+# Composite command
+dock_main_command() {
+    # Help command
+    if [ ! "$#" -gt 0 ]; then
+        echo "usage: "
+        echo "  - dock list"
+        echo "  - dock start <index>"
+        echo "  - dock stop <index>"
+        echo "  - dock delete <index>"
+        echo "  - dock restart"
+        return 0
+    fi
+
+    local command=$1
+    shift
+
+    if is_in_list "$command" "list,all"; then
+        dock_list $@
+    elif is_in_list "$command" "start,up,go"; then
+        dock_start_project $@
+    elif is_in_list "$command" "stop,down,halt"; then
+        dock_stop_project $@
+    elif is_in_list "$command" "del,delete,rem,remove"; then
+        dock_remove_project $@
+    elif is_in_list "$command" "restart,start,boot,reboot"; then
+        dock_restart $@
+    else
+        print_error "Command $command does not exist"
+        dock_main_command # Re-run for help command
+    fi
+}
+
+dock_list() {
+    echo -e "${BLUE}Container Overview:${RESET}"
+    
+    # Temporary associative array to store the first container status for each project
+    declare -A projects
+    declare -A project_status
+
+    # Collect container information and group by project label
+    while IFS= read -r container; do
+        container_id=$(echo "$container" | awk '{print $1}')
+        container_name=$(echo "$container" | awk '{print $2}')
+        project_name=$(docker inspect --format '{{ index .Config.Labels "com.docker.compose.project" }}' "$container_id")
+        status=$(docker inspect --format '{{.State.Status}}' "$container_id")
+
+        if [[ -n "$project_name" ]]; then
+            projects["$project_name"]+="$container_id:$container_name;"
+            # Store the status of the first container found for the project
+            if [[ -z "${project_status[$project_name]}" ]]; then
+                project_status["$project_name"]="$status"
+            fi
+        fi
+    done < <(docker ps -aq)  # Read all container IDs
+
+    # Determine the longest project name
+    longest_name=0
+    for project in "${!projects[@]}"; do
+        length=${#project}
+        if (( length > longest_name )); then
+            longest_name=$length
+        fi
+    done
+
+    # Print the headers with dynamic width
+    printf "${YELLOW}%-5s\t%-${longest_name}s\t%s\n${RESET}" "Index" "Project Name" "Status"  # Fixed-width headers
+
+    # Print the grouped container information
+    local index=1
+    for project in "${!projects[@]}"; do
+        if [[ "${project_status[$project]}" = "running" ]]; then
+            printf "${GREEN}%-5s\t%-${longest_name}s${LIGHT_GREEN}\t%s\n${RESET}" "$index" "$project" "${project_status[$project]}"
+        else
+            printf "${GREEN}%-5s\t%-${longest_name}s${RED}\t%s\n${RESET}" "$index" "$project" "${project_status[$project]}"
+        fi
+        
+        ((index++))
+    done
+}
+
+dock_start_project() {
+    if [ -z "$1" ]; then
+        print_error "Usage: dock start <number>"
+        return 1
+    fi
+
+    # Collect unique project names in an array
+    mapfile -t project_names < <(docker ps -aq --filter "label=com.docker.compose.project" | xargs docker inspect --format '{{ index .Config.Labels "com.docker.compose.project" }}' | sort -u)
+
+    # Get the project name based on the specified index
+    project_name="${project_names[$(( $1 - 1 ))]}"  # Convert to zero-based index
+
+    if [ -z "$project_name" ]; then
+        print_error "No project found at index $1."
+        return 1
+    fi
+
+    # Get the container IDs for the specified project
+    container_ids=$(docker ps -aq --filter "label=com.docker.compose.project=$project_name")
+
+    if [ -z "$container_ids" ]; then
+        print_error "No stopped containers found for project '$project_name'."
+        return 1
+    fi
+
+    # Start all containers belonging to the project
+    print_success "Starting containers for project: $project_name"
+    docker start $container_ids
+}
+
+# Stop a Docker container by its index (number)
+dock_stop_project() {
+    if [ -z "$1" ]; then
+        print_error "Usage: dockstop <number>"
+        return 1
+    fi
+
+    # Get the project name based on the index
+    project_name=$(docker ps --format '{{.ID}}' | xargs docker inspect --format '{{ index .Config.Labels "com.docker.compose.project" }}' | sort -u | sed -n "1p")
+    print_debug $project_name
+    if [ -z "$project_name" ]; then
+        print_error "No project found at index $1."
+        return 1
+    fi
+
+    # Get the container IDs for the specified project
+    container_ids=$(docker ps -q --filter "label=com.docker.compose.project=$project_name")
+
+    if [ -z "$container_ids" ]; then
+        print_error "No running containers found for project '$project_name'."
+        return 1
+    fi
+
+    # Stop all containers belonging to the project
+    print_success "Stopping containers for project: $project_name"
+    docker stop $container_ids
+}
+
+# Remove a Docker container by its index (number)
+dock_remove_project() {
+    if [ -z "$1" ]; then
+        print_error "Usage: dock remove <number>"
+        return 1
+    fi
+
+    container_ids=$(docker ps -a --format '{{.ID}}' | sed -n "${1}p")  # Get the container ID at the specified index
+    if [ -z "$container_ids" ]; then
+        print_error "No container found at index $1."
+        return 1
+    fi
+
+    for container_id in $container_ids; do
+        print_success "Removing container: $container_id"
+        docker rm "$container_id"
+    done
+}
+
+dock_restart() {
+    # Check if Docker is running
+    if docker info >/dev/null 2>&1; then
+        print_info "Docker is currently running."
+        
+        running_containers=$(docker ps -q)
+        if [ -n "$running_containers" ]; then
+            print_info "Stopping all running containers..."
+            docker stop $running_containers
+        fi
+
+        print_info "Restarting Docker Desktop..."
+        powershell.exe -Command "Get-Process | Where-Object { \$_.Name -like \"*docker*\" } | Stop-Process -Force"
+        sleep 5  # Wait for a moment before starting it again
+        powershell.exe -Command "Start-Process 'C:\Program Files\Docker\Docker\Docker Desktop.exe'"
+    else
+        print_info "Docker is not running. Starting Docker Desktop..."
+        powershell.exe -Command "Start-Process 'C:\Program Files\Docker\Docker\Docker Desktop.exe'"
+        sleep 20
+    fi
+
+    # Confirm the action
+    if docker info >/dev/null 2>&1; then
+        print_success "Docker is now running."
+    else
+        print_error "Failed to start Docker."
+    fi
+}
+####################################################
+# Start of LSR module #19                          #
+# Injected LSR module: composites/git/gitusers.sh  #
+# Number of lines: 144                             #
+# Filesize: 4.44 KB                                #
+####################################################
+alias gitusers="git_users_main_command"
+
+# Composite command
+git_users_main_command() {
+    # Help command
+    if [ ! "$#" -gt 0 ]; then
+        echo "usage: "
+        echo "  - gitusers list"
+        echo "  - gitusers get <identifier>"
+        echo "  - gitusers new <identifier> <fullname>"
+        echo "  - gitusers del <identifier>"
+        echo "  - gitusers alias <identifier> <alias>"
+        echo "  - gitusers unlias <identifier> <alias>"
+        return 0
+    fi
+
+    local command=$1
+    shift
+
+    if is_in_list "$command" "list,all"; then
+        git_users_list $@
+    elif is_in_list "$command" "get"; then
+        git_users_get $@
+    elif is_in_list "$command" "new,create,add"; then
+        git_users_new $@
+    elif is_in_list "$command" "del,delete,rem,remove"; then
+        git_users_delete $@
+    elif is_in_list "$command" "add-alias,new-alias,create-alias,alias,"; then
+        git_users_set_alias $@
+    elif is_in_list "$command" "del-alias,rem-alias,delete-alias,remove-alias,unalias"; then
+        git_users_unset_alias $@
+    else
+        print_error "Command $command does not exist"
+        git_users_main_command # Re-run for help command
+    fi
+}
+
+git_users_list() {
+    # localsettings_reformat
+    # localsettings_get .gitusers
+
+    users=$(localsettings_get .gitusers)
+    headers='Index,Identifier,Full name,Aliases'
+    rows=()
+
+    index=0
+    while IFS= read -r user; do
+        fullname="$(lsget .gitusers.$user.fullname)"
+        aliases="$(lseval ".gitusers.$user.aliases | join(\"\\,\")")"
+
+        rows+=("$index,$user,$fullname,$aliases")
+        # # Increment the index
+        ((index++))
+    done <<< "$(lseval ".gitusers | to_entries | .[] | .key")"
+
+    table "$headers" "${rows[@]}"
+}
+
+git_users_get() {
+    # Get the needed values
+    local identifier=$(prompt_if_not_exists "Identifier" $1)
+    
+    localsettings_reformat
+
+    # Attempt get, if already exists, error
+    local getResult=$(localsettings_eval ".gitusers.\"$identifier\"")
+    if [[ "$getResult" == "null" ]]; then
+        print_error "Git user with identifier $identifier does not exist"
+        return 1
+    fi
+
+    localsettings_eval ".gitusers.\"$identifier\""
+}
+
+git_users_new() {
+    local identifier=$(prompt_if_not_exists "Identifier" $1)
+
+    # Attempt get, if already exists, error
+    local getResult=$(localsettings_eval ".gitusers.\\\"$identifier\\\"")
+    if [[ ! "$getResult" == "null" ]]; then
+        print_error "Git user with identifier $identifier already exists"
+        return 1
+    fi
+
+    local fullname=$(prompt_if_not_exists "Fullname" $2)
+
+    # Set the values to the local settings
+    localsettings_eval_with_save ".gitusers.\"$identifier\".fullname = \"$fullname\"" > /dev/null
+    localsettings_eval_with_save ".gitusers.\"$identifier\".aliases = [ \"$fullname\" ]" > /dev/null
+    localsettings_reformat
+    print_success "Created gituser \"$identifier\""
+}
+
+git_users_delete() {
+    # Get the needed values
+    local identifier=$(prompt_if_not_exists "Identifier" $1)
+
+    # Attempt get, if not exists, error
+    local getResult=$(localsettings_eval ".gitusers.\"$identifier\"")
+    if [[ "$getResult" == "null" ]]; then
+        print_error "Git user with identifier $identifier does not exists"
+        return 1
+    fi
+
+    localsettings_delete ".gitusers.\"$identifier\""
+    print_success "Deleted gituser \"$identifier\""
+}
+
+git_users_set_alias() {
+    local identifier=$(prompt_if_not_exists "Identifier" $1)
+
+    # Attempt get, if already exists, error
+    local getResult=$(localsettings_eval ".gitusers.\"$identifier\"")
+    if [[ "$getResult" == "null" ]]; then
+        print_error "Git user with identifier $identifier does not exist"
+        return 1
+    fi
+
+    local alias=$(prompt_if_not_exists "Alias" $2)
+
+    localsettings_eval_with_save ".gitusers.\"$identifier\".aliases += [ \"$alias\" ]"
+
+    print_success "Added alias '$alias' to gituser '$identifier'"
+
+    localsettings_reformat
+}
+
+git_users_unset_alias() {
+    local identifier=$(prompt_if_not_exists "Identifier" $1)
+
+    # Attempt get, if already exists, error
+    local getResult=$(localsettings_eval ".gitusers.\"$identifier\"")
+    if [[ "$getResult" == "null" ]]; then
+        print_error "Git user with identifier $identifier does not exist"
+        return 1
+    fi
+
+    local alias=$(prompt_if_not_exists "Alias" $2)
+
+    localsettings_eval_with_save "del(.gitusers.\"$identifier\".aliases[] | select(. == \"$alias\"))"
+
+    print_success "Deleted alias '$alias' to gituser '$identifier'"
+
+    localsettings_reformat
+}
+####################################################
+# Start of LSR module #20                          #
+# Injected LSR module: composites/git/branches.sh  #
+# Number of lines: 154                             #
+# Filesize: 4.51 KB                                #
+####################################################
+alias branches="git_branches_main_command"
+
+# Composite command
+git_branches_main_command() {
+    local filter=""
+    local argument_count=$#
+    local defined_commands=(
+        "branches list"
+        "branches list feature"
+        "branches go <branch-name>"
+        "branches feature new <feature-name>"
+        "branches feature delete <feature-name>"
+        "branches feature go <feature-name>"
+    )
+
+    # composite_help_command "$filter" $argument_count "${defined_commands[@]}"
+
+    # Help command
+    if [ ! "$#" -gt 0 ]; then
+        echo "usage: "
+        echo "  - branches list"
+        echo "  - branches list feature"
+        echo "  - branches go <branch-name>" # TODO
+
+        echo "  - branches feature new <feature-name>"
+        echo "  - branches feature delete <feature-name>"
+        echo "  - branches feature go <feature-name>" # TODO
+        return 0
+    fi
+
+    local command=$1
+    shift
+
+    if is_in_list "$command" "list"; then
+        local command=$1
+        shift
+
+        if [[ -z $command ]]; then
+            git_branches_list $@
+        elif is_in_list "$command" "feature"; then
+            git_branches_list_features $@
+        else
+            print_error "Command 'branches list $command' does not exist"
+            git_branches_main_command # Re-run for help command
+        fi
+    elif is_in_list "$command" "go"; then
+        git_branches_go $@
+    elif is_in_list "$command" "feature"; then
+        local command=$1
+        shift
+
+        if is_in_list "$command" "new"; then
+            git_branches_features_new $@
+        elif is_in_list "$command" "delete"; then
+            git_branches_features_delete $@
+        elif is_in_list "$command" "go"; then
+            git_branches_features_go $@
+        else
+            print_error "Command 'branches feature $command' does not exist"
+            git_branches_main_command # Re-run for help command
+        fi
+    else
+        print_error "Command 'branches $command' does not exist"
+        git_branches_main_command # Re-run for help command
+    fi
+}
+
+git_branches_features_go() {
+    local featureName=$1
+
+    if [[ -z $featureName ]]; then
+        print_error "'branches feature go' expects an argument for the feature-name\nUsage: branches feature go <feature-name>"
+        return 1
+    fi
+
+    local featureBranchName="feature/$featureName"
+
+    if ! git_branch_exists $featureBranchName; then
+        print_error "Branch $featureBranchName does not exist locally or remotely"
+        return
+    fi
+
+    git checkout $featureBranchName &>/dev/null
+    print_success "Switched to branch $featureBranchName"
+}
+
+git_branches_features_delete() {
+    local featureName=$1
+
+    if [[ -z $featureName ]]; then
+        print_error "'branches feature delete' expects an argument for the feature-name\nUsage: branches feature delete <feature-name>"
+        return 1
+    fi
+
+    local featureBranchName="feature/$featureName"
+
+    if ! git_branch_exists $featureBranchName; then
+        print_error "Branch $featureBranchName does not exist locally or remotely"
+        return
+    fi
+
+    read_info "Deleting branch $featureBranchName, are you sure? (y/n): " confirm
+
+    if [[ "$confirm" != [yY] && "$confirm" != [yY][eE][sS] ]]; then
+        print_info "Branch deletion cancled..."
+        return
+    fi
+
+    git checkout development &>/dev/null
+    git branch --delete $featureBranchName &>/dev/null
+    print_success "Deleted branch $featureBranchName"
+}
+
+git_branches_features_new() {
+    local featureName=$1
+
+    if [[ -z $featureName ]]; then
+        print_error "'branches feature new' expects an argument for the feature-name\nUsage: branches feature new <feature-name>"
+        return 1
+    fi
+
+    local featureBranchName="feature/$featureName"
+    print_info "Creating branch $featureBranchName..."
+
+    git checkout develop &>/dev/null
+    git branch $featureBranchName &>/dev/null
+    git checkout $featureBranchName &>/dev/null
+
+    print_success "Branch $featureBranchName was created succesfully"
+}
+
+git_branches_go() {
+    local branchName=$1
+
+    if [[ -z $branchName ]]; then
+        print_error "'branches go' expects an argument for the branch-name\nUsage: branches feature go <branch-name>"
+        return 1
+    fi
+
+    if ! git_branch_exists $branchName; then
+        print_error "Branch $branchName does not exist locally or remotely"
+        return
+    fi
+
+    git checkout $branchName &>/dev/null
+    print_success "Switched to branch $branchName"
+}
+
+git_branches_list_features() {
+    git branch --all | grep " feature/" --color=never
+}
+
+git_branches_list() {
+    git branch --all --no-color
+}
+########################################################
+# Start of LSR module #21                              #
+# Injected LSR module: composites/settings/profile.sh  #
+# Number of lines: 131                                 #
+# Filesize: 3.74 KB                                    #
+########################################################
+local_settings_file="$HOME/scripts/local_data/local_settings.yml"
+local_settings_dir="$(dirname "$local_settings_file")"
+
+alias profile="profile_main_command"
+
+# Composite command
+profile_main_command() {
+    reset_ifs
+
+    # Help command
+    if [ ! "$#" -gt 0 ]; then
+        echo "usage: "
+        echo "  - profile current"
+        echo "  - profile list"
+        echo "  - profile load <identifier>"
+        echo "  - profile save <identifier>"
+        echo "  - profile edit <identifier>"  # TODO
+        echo "  - profile rename <old identifier> <new identifier>"  # TODO
+        echo "  - profile delete <identifier>"  # TODO
+        return 0
+    fi
+
+    local command=$1
+    shift
+
+    if is_in_list "$command" "list"; then
+        profile_list $@
+    elif is_in_list "$command" "current"; then
+        profile_current $@
+    elif is_in_list "$command" "load"; then
+        profile_load $@
+    elif is_in_list "$command" "save"; then
+        profile_save $@
+    elif is_in_list "$command" "delete"; then
+        profile_delete $@
+    else
+        print_error "Command $command does not exist"
+        profile_main_command # Re-run for help command
+    fi
+}
+
+profile_delete() {
+    local current_profile="$(profile current)"
+
+    # Get the profile name
+    if [ "$#" -ne 1 ]; then
+        echo "Usage: profile delete <identifier>"
+        return 1  # Return an error code
+    fi
+    local profile=$1
+
+    if [[ "$current_profile" == "$profile" ]]; then
+        print_error "Cant delete current profile"
+        return 1
+    fi
+
+    # Make sure new profile exist
+    if [[ ! -f "$local_settings_dir/local_settings.$profile.yml" ]]; then
+        print_error "Profile '$profile' doesnt exist"
+    fi
+
+    rm "$local_settings_dir/local_settings.$profile.yml"
+}
+
+profile_load() {
+    # Get the profile name
+    if [ "$#" -ne 1 ]; then
+        echo "Usage: profile load <identifier>"
+        return 1  # Return an error code
+    fi
+    local profile=$1
+
+    # Make sure new profile exist
+    if [[ ! -f "$local_settings_dir/local_settings.$profile.yml" ]]; then
+        print_error "Profile '$profile' doesnt exist"
+    fi
+
+    # Load it
+    cp "$local_settings_dir/local_settings.$profile.yml" "$local_settings_dir/local_settings.yml"
+    print_success "Loaded profile local_settings.$profile.yml"
+}
+
+profile_save() {
+    # Get the profile name
+    if [ "$#" -ne 1 ]; then
+        echo "Usage: profile save <identifier>"
+        return 1  # Return an error code
+    fi
+    local profile=$1
+    local current_profile="$(profile_current)"
+
+    # Set current profile name
+    lsset profile $profile &> /dev/null
+
+    # If new profile already exists and is different from current profile,
+    # Dont allow, since this will overwrite an existing profile
+    if [[ -f "$local_settings_dir/local_settings.$profile.yml" && $profile != $current_profile ]]; then
+        print_error "Aborting since this will overwrite existing profile '$profile'"
+        return 1
+    fi
+
+    # Save it
+    cp "$local_settings_dir/local_settings.yml" "$local_settings_dir/local_settings.$profile.yml"
+    print_success "Saved current profile to local_settings.$profile.yml"
+}
+
+profile_list() {
+    echo "Profiles: "
+    for file in $local_settings_dir/local_settings*.yml; do
+        if [ -f "$file" ]; then
+            local file_name="$(basename "$file")"
+            local profile_name="$(echo "$file_name" | sed 's/^local_settings.\(.*\).yml$/\1/')"
+            
+            if [[ "$profile_name" == "local_settings.yml" ]]; then
+                continue
+            fi
+            
+            echo "   - $profile_name"
+        fi
+    done
+}
+
+profile_current() {
+    local profile="$(localsettings_get .profile)"
+
+    if [[ "$profile" == "null" ]]; then
+        profile="default"
+        lsset profile "$profile" &> /dev/null
+    fi
+
+    echo "$profile"
+}

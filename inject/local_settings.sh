@@ -29,8 +29,7 @@ localsettings_sort() {
     local field=$1
 
     if [ "$#" -ne 1 ]; then
-        echo "Usage: lssort <path>"
-        return 1  # Return an error code
+        field="."
     fi
 
     # Validate the field before proceeding
@@ -222,4 +221,5 @@ localsettings_reformat() {
     yq e -P '.' -i "$local_settings_file"
     localsettings_sort .projects
     localsettings_sort .gitusers
+    localsettings_sort .
 }

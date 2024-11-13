@@ -78,10 +78,14 @@ set_powerline_ps1() {
     local white_fg="\[\033[38;2;${white}m\]" # White Text
     local black_fg="\[\033[38;2;${black}m\]"       # Black Text
 
+    if command_exists "profile"; then
+        local current_profile="$(profile current)"
+    fi
+
     if [[ $isRoot ]]; then
-        user_part="${blue_bg}${white_fg} \u@\h ${blue_fg}${yellow_bg}"  # Blue arrow with yellow background
+        user_part="${blue_bg}${white_fg} \u@\h - $current_profile ${blue_fg}${yellow_bg}"  # Blue arrow with yellow background
     else
-        user_part="${red_bg}${white_fg} \u@\h ${red_fg}${yellow_bg}"  # Red arrow with yellow background
+        user_part="${red_bg}${white_fg} \u@\h - $current_profile ${red_fg}${yellow_bg}"  # Red arrow with yellow background
     fi
 
     # Directory part with darker yellow background and black text
@@ -98,8 +102,146 @@ set_powerline_ps1() {
     fi
 }
 
+do_before_prompt() {
+    set_powerline_ps1
+    localsettings_reformat
+}
+
 set_powerline_ps1
-PROMPT_COMMAND=set_powerline_ps1
+localsettings_reformat
+PROMPT_COMMAND=do_before_prompt
+
+# When command is not found, fall back to a .sh file if possible
+command_not_found_handle() {
+    cmd="$1"
+
+    # Check if there is a .sh script in the current directory
+    # with the command name
+    
+    # Run the bash script if it exists
+    if [[ -f "./$cmd.sh" ]]; then # Run the script
+        print_info "Running script $cmd.sh"
+        bash "./$cmd.sh" "${@:2}"
+    
+    # Run the python script if it exists
+    elif [[ -f "./$cmd.sh" ]]; then # Run the script
+        print_info "Running script $cmd.py"
+        python3 "./$cmd.py" "${@:2}"
+
+    # Run the /scripts/ bash script if it exists
+    elif [[ -f "./scripts/$cmd.sh" ]]; then
+        print_info "Running script $cmd.sh"
+        bash "./scripts/$cmd.sh" "${@:2}"
+    
+    # Run the /scripts/ python script if it exists
+    elif [[ -f "./scripts/$cmd.py" ]]; then
+        print_info "Running script $cmd.py"
+        python3 "./scripts/$cmd.py" "${@:2}"
+
+    # Run the script from the npm folder if it exists
+    elif [[ -f "./package.json" && "$(grep \"$cmd\": package.json)" != "" ]]; then
+        print_info "Running NPM script '$cmd'"
+        npm run $cmd --silent
+
+    # Command was not found
+    else
+        suggestions=$(compgen -c "$cmd" | head -n 5)
+        if [[ -n "$suggestions" ]]; then
+            echo "bash: $cmd: command not found. Did you mean one of these?"
+            echo " - $suggestions" | while read -r suggestion; do echo "  $suggestion"; done
+        else
+            echo "bash: $cmd: command not found"
+        fi
+        return 127
+    fi
+}
+
+packages() {
+    if [[ -f "./package.json" ]]; then
+        dependencies=$(jq '.dependencies' package.json)
+        if [[ "$dependencies" != "null" && "$dependencies" != "{}" && -n "$dependencies" ]]; then
+            echo "Npm packages:"
+            jq -r '.dependencies | to_entries | .[] | " - " + .key + " -> " + .value' package.json
+            echo ""
+        fi
+    fi
+
+    if [[ -f "./composer.json" ]]; then
+        dependencies=$(jq '.require' composer.json)
+        if [[ "$dependencies" != "null" && "$dependencies" != "{}" && -n "$dependencies" ]]; then
+            echo "Composer packages:"
+            jq -r '.require | to_entries | .[] | " - " + .key + " -> " + .value' composer.json
+            echo ""
+        fi
+
+        # dev_dependencies=$(jq '.require-dev' composer.json)
+        # if [[ "$dev_dependencies" != "null" && "$dev_dependencies" != "{}" && -n "$dev_dependencies" ]]; then
+        #     echo "Composer packages (dev):"
+        #     jq -r '.require-dev | to_entries | .[] | " - " + .key + " -> " + .value' composer.json
+        #     echo ""
+        # fi
+    fi
+}
+
+scripts() {
+    if [[ $(find . -name "*.sh" -print -quit) ]]; then
+        echo "Bash scripts:"
+    fi
+
+    for file in ./*.sh; do
+        filename="${file##*/}"      # Remove the ./ prefix
+        basename="${filename%.sh}"  # Remove the .sh suffix
+
+        if [[ "$basename" != "*" ]]; then
+            echo " - $basename"
+        fi
+    done
+
+    for file in ./scripts/*.sh; do
+        filename="${file##*/}"      # Remove the ./ prefix
+        basename="${filename%.sh}"  # Remove the .sh suffix
+
+        if [[ "$basename" != "*" ]]; then
+            echo " - $basename"
+        fi
+    done
+
+    if [[ $(find . -name "*.sh" -print -quit) ]]; then
+        echo ""
+    fi
+
+    if [[ $(find . -name "*.py" -print -quit) ]]; then
+        echo "Python scripts:"
+    fi
+
+    for file in ./*.py; do
+        filename="${file##*/}"      # Remove the ./scripts/ prefix
+        basename="${filename%.py}"  # Remove the .py suffix
+
+        if [[ "$basename" != "*" ]]; then
+            echo "- $basename"
+        fi
+    done
+
+    for file in ./scripts/*.py; do
+        filename="${file##*/}"      # Remove the ./scripts/ prefix
+        basename="${filename%.py}"  # Remove the .py suffix
+
+        if [[ "$basename" != "*" ]]; then
+            echo " - $basename"
+        fi
+    done
+
+    if [[ $(find . -name "*.py" -print -quit) ]]; then
+        echo ""
+    fi
+
+    if [[ -f "./package.json" ]]; then
+        echo "Npm scripts:"
+        jq -r ".scripts | \" - \" + keys[]" ./package.json
+        echo ""
+    fi
+}
 
 lsrdebug() {
     local SETTINGS_FILE=~/scripts/_settings.yml
@@ -295,18 +437,21 @@ alias tul="time_until_live"
 
 time_until() {
     # Define target times
+    target0="8:30:00"
     target1="12:30:00"
     target2="17:00:00"
     
     # Get the current time in seconds since midnight
-    now=$(date +%s)
+    local now=$(date +%s)
     
     # Get today's date and convert target times to seconds since midnight
     today=$(date +%Y-%m-%d)
+    target0_sec=$(date -d "$today $target0" +%s)
     target1_sec=$(date -d "$today $target1" +%s)
     target2_sec=$(date -d "$today $target2" +%s)
 
     # Calculate seconds remaining for each target
+    passed0=$((now - target0_sec)) # TODO: base this on the first terminal login of the day
     remaining1=$((target1_sec - now))
     remaining2=$((target2_sec - now))
 
@@ -315,6 +460,12 @@ time_until() {
         local seconds=$1
         printf "%02d:%02d:%02d\n" $((seconds/3600)) $(( (seconds%3600)/60 )) $((seconds%60))
     }
+
+    if [ $passed0 -gt 0 ]; then
+        echo "Time passed at work: $(format_time $passed0)"
+    else
+        echo "Work has not started yet"
+    fi
 
     # Display results for both target times
     if [ $remaining1 -gt 0 ]; then

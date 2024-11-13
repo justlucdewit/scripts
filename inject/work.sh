@@ -34,6 +34,7 @@ work() {
     echo -e "\n\033[34mSearching for commits on $date in all projects"
 
     # Loop through all subdirectories (assuming they are Git repositories)
+    reset_ifs
     for repo in $(localsettings_eval ".projects[] | .dir"); do # Go through all of the projects
         if [ -d "$repo/.git" ]; then # If they are git repos
             # Change into the repository's directory, fetch all
