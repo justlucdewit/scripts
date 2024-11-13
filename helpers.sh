@@ -62,6 +62,16 @@ print_info() {
     echo -e "\e[34m[info] $1\e[0m"  # \e[34m is the color code for blue
 }
 
+print_warn() {
+    SETTINGS_FILE=~/scripts/_settings.yml
+    SILENT=$(yq e '.silent' "$SETTINGS_FILE")
+    if [[ $SILENT == true ]]; then
+        return 0
+    fi
+
+    echo -e "\e[33m[warn] $1\e[0m"  # \e[34m is the color code for blue
+}
+
 print_normal() {
     SETTINGS_FILE=~/scripts/_settings.yml
     SILENT=$(yq e '.silent' "$SETTINGS_FILE")
@@ -111,6 +121,67 @@ print_success() {
     fi
 
     echo -e "\e[32m[success] $1\e[0m"  # \e[32m is the color code for green
+}
+
+read_info() {
+    SETTINGS_FILE=~/scripts/_settings.yml
+    SILENT=$(yq e '.silent' "$SETTINGS_FILE")
+    if [[ $SILENT == true ]]; then
+        return 0
+    fi
+
+    echo -ne "\e[34m[info] $1\e[0m"
+    read -r user_input
+    printf -v "$2" "%s" "$user_input"
+}
+
+read_normal() {
+    SETTINGS_FILE=~/scripts/_settings.yml
+    SILENT=$(yq e '.silent' "$SETTINGS_FILE")
+    if [[ $SILENT == true ]]; then
+        return 0
+    fi
+
+    echo -n "$1"
+    read -r user_input
+    printf -v "$2" "%s" "$user_input"
+}
+
+read_error() {
+    SETTINGS_FILE=~/scripts/_settings.yml
+    SILENT=$(yq e '.silent' "$SETTINGS_FILE")
+    if [[ $SILENT == true ]]; then
+        return 0
+    fi
+
+    echo -ne "\e[31m[error] $1\e[0m"
+    read -r user_input
+    printf -v "$2" "%s" "$user_input"
+}
+
+read_debug() {
+    SETTINGS_FILE=~/scripts/_settings.yml
+    DEBUG=$(yq e '.debug' "$SETTINGS_FILE")
+    SILENT=$(yq e '.silent' "$SETTINGS_FILE")
+    if [[ $DEBUG == true || $SILENT == true ]]; then
+        return 0
+    fi
+
+    echo -ne "\e[33m[debug] $1\e[0m"
+    read -r user_input
+    printf -v "$2" "%s" "$user_input"
+}
+
+read_success() {
+    SETTINGS_FILE=~/scripts/_settings.yml
+    SILENT=$(yq e '.silent' "$SETTINGS_FILE")
+    if [[ $SILENT == true ]]; then
+        return 0
+    fi
+
+    echo -ne "\e[32m[success] $1\e[0m"
+    read -r user_input
+    printf -v "$2" "%s" "$user_input"
 }
 
 # Function to ensure the user has sudo privileges
@@ -220,5 +291,22 @@ install_if_not_exist() {
         return 0  # Indicate success
     else
         return 0  # Indicate success (since the command is already installed)
+    fi
+}
+
+reset_ifs() {
+    IFS=$'\ \t\n'
+}
+
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+requires_package() {
+    local packageName=$1
+    local requireScope=$2
+
+    if ! command_exists "$packageName"; then
+        print_warn "Package '$packageName' is required in order to use $requireScope"
     fi
 }
