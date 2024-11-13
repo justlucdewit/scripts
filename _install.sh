@@ -77,6 +77,10 @@ echo "  - $CURRENT_VERSION" >> "$HISTORY_FILE"
 print_info "Added $CURRENT_VERSION to version history"
 
 # Compile the scripts
+if [ -f "$HOME/scripts/build.sh" ]; then
+    source "$HOME/scripts/build.sh"
+fi
+
 source "$HOME/scripts/inject/compile.sh"
 lsr_compile
 
