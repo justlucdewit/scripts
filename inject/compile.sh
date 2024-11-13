@@ -2,20 +2,27 @@ source "$HOME/scripts/helpers.sh"
 
 # Global list of scripts to compile
 scripts_to_compile=(
+    "../helpers"
+    "requirementCheck"
+    "composites/helpers"
+    "git_helpers"
+    "tmux_helpers"
     "utils"
     "proj"
-    "compile"
     "aliases"
-    "docker_helpers"
-    "git_helpers"
     "laravel"
     "local_settings"
-    "tmux_helpers"
     "version_management"
     "vim"
     "work"
     "other"
     "cfind"
+    "compile"
+    "remotelog"
+    "composites/docker/dock"
+    "composites/git/gitusers"
+    "composites/git/branches"
+    "composites/settings/profile"
 )
 
 alias lcompile=lsr_compile
