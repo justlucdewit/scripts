@@ -110,17 +110,27 @@ table() {
 }
 
 list() {
-    # Get the flags and arguments
-    read -r -a flags <<< "$(composite_help_get_flags "$@")"
-    read -r -a args <<< "$(composite_help_get_rest "$@")"
+    eval "flags=($(composite_help_get_flags "$@"))"
+    eval "args=($(composite_help_get_rest "$@"))"
 
-    if composite_help_contains_flag style-numeric "${flags[@]}"; then
-        echo "Does contain it"
-    else
-        echo "Does not contain it"
+    local selectable="false"
+    local prefix=" - "
+    local selected_prefix=" > "
+    local selected_value=""
+
+    if composite_help_contains_flag prefix "${flags[@]}"; then
+        prefix=$(composite_help_get_flag_value prefix "${flags[@]}")
+    fi
+    
+    if composite_help_contains_flag selected-prefix "${flags[@]}"; then
+        selected_prefix=$(composite_help_get_flag_value selected-prefix "${flags[@]}")
     fi
 
-    return
+    if composite_help_contains_flag selected "${flags[@]}"; then
+        selected_value=$(composite_help_get_flag_value selected "${flags[@]}")
+    fi
+
+
     set -- "${args[@]}"
 
     local listName=$1
@@ -130,9 +140,61 @@ list() {
 
     IFS=',' # Set the Internal Field Separator to comma
     for listItem in $listItems; do
-        echo " - $listItem"
+        if [[ "$listItem" == "$selected_value" ]]; then
+            echo -e "$selected_prefix$listItem"
+        else
+            echo -e "$prefix$listItem"
+        fi
     done
     reset_ifs
 }
 
-# list "names" "A,B,C,D" --style-numeric="this is a test" --eep=helloworld -abd --ree
+selectable_list() {
+    title=$1
+    selected=0
+    local -n return_ref=$2
+    options_list=$3
+    IFS=',' read -r -a options <<< "$options_list"
+    reset_ifs
+
+    # Function to display the menu
+    print_menu() {
+        clear
+        echo "Use Arrow Keys to navigate, Enter to select:"
+        list "$title" "$options_list" "--selected=${options[$selected]}" --selected-prefix="\e[1;32m => " --prefix="\e[0m  - "
+        echo -ne "\e[0m"
+    }
+
+    # Capture arrow keys and enter key
+    while true; do
+        print_menu
+
+        # Read one character at a time with `-s` (silent) and `-n` (character count)
+        read -rsn1 input
+
+        # Check for arrow keys or Enter
+        case "$input" in
+            $'\x1b')  # ESC sequence (for arrow keys)
+                read -rsn2 -t 0.1 input  # Read next two chars
+                case "$input" in
+                    '[A')  # Up arrow
+                        ((selected--))
+                        if [ $selected -lt 0 ]; then
+                            selected=$((${#options[@]} - 1))
+                        fi
+                        ;;
+                    '[B')  # Down arrow
+                        ((selected++))
+                        if [ $selected -ge ${#options[@]} ]; then
+                            selected=0
+                        fi
+                        ;;
+                esac
+                ;;
+            '')  # Enter key
+                return_ref="${options[$selected]}"
+                break
+                ;;
+        esac
+    done
+}
