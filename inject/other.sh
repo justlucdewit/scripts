@@ -184,6 +184,16 @@ packages() {
 }
 
 alias s=scripts
+alias ss="select_scripts"
+
+select_scripts() {
+    scripts_output=$(scripts)
+    scripts_list=$(echo "$scripts_output" | grep '^ - ' | awk '{sub(/^ - /, ""); if (NR > 1) printf ","; printf "%s", $0} END {print ""}')
+    
+    local value=""
+    selectable_list "Select a script" value "$scripts_list"
+    $value
+}
 
 scripts() {
     if [[ $(find . -name "*.sh" -print -quit) ]]; then
