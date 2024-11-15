@@ -183,6 +183,8 @@ packages() {
     fi
 }
 
+alias s=scripts
+
 scripts() {
     if [[ $(find . -name "*.sh" -print -quit) ]]; then
         echo "Bash scripts:"
@@ -237,9 +239,12 @@ scripts() {
     fi
 
     if [[ -f "./package.json" ]]; then
-        echo "Npm scripts:"
-        jq -r ".scripts | \" - \" + keys[]" ./package.json
-        echo ""
+        scripts=$(jq '.scripts' package.json)
+        if [[ "$scripts" != "null" && "$scripts" != "{}" && -n "$scripts" ]]; then
+            echo "Npm scripts:"
+            jq -r ".scripts | \" - \" + keys[]" ./package.json
+            echo ""
+        fi
     fi
 }
 

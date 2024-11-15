@@ -1,5 +1,5 @@
 # LSR v1.1
-# Local build (16:05 13/11/2024)
+# Local build (08:25 15/11/2024)
 # Includes LSR modules:
 # - /home/luc/scripts/inject/../helpers.sh
 # - /home/luc/scripts/inject/requirementCheck.sh
@@ -2102,8 +2102,8 @@ work() {
 ##################################
 # Start of LSR module #14        #
 # Injected LSR module: other.sh  #
-# Number of lines: 528           #
-# Filesize: 16.65 KB             #
+# Number of lines: 533           #
+# Filesize: 16.81 KB             #
 ##################################
 LIGHT_GREEN='\033[1;32m'
 RED='\033[0;31m'
@@ -2290,6 +2290,8 @@ packages() {
     fi
 }
 
+alias s=scripts
+
 scripts() {
     if [[ $(find . -name "*.sh" -print -quit) ]]; then
         echo "Bash scripts:"
@@ -2344,9 +2346,12 @@ scripts() {
     fi
 
     if [[ -f "./package.json" ]]; then
-        echo "Npm scripts:"
-        jq -r ".scripts | \" - \" + keys[]" ./package.json
-        echo ""
+        scripts=$(jq '.scripts' package.json)
+        if [[ "$scripts" != "null" && "$scripts" != "{}" && -n "$scripts" ]]; then
+            echo "Npm scripts:"
+            jq -r ".scripts | \" - \" + keys[]" ./package.json
+            echo ""
+        fi
     fi
 }
 
