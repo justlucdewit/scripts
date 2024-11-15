@@ -264,30 +264,54 @@ composite_help_get_flags() {
             value="${arg#*=}"      # Everything after the first '='
             arg="$flagName=\"$value\""
         fi
-        arg=$(echo "$arg" | sed "s/ /__LSR_SPACE_PLACEHOLDER__/g")
         if [[ "$arg" =~ ^-- ]]; then
             flags+=("$arg")
         elif [[ "$arg" =~ ^- ]]; then
-            local splitCommand="$(echo "${arg:1}" | fold -w1 | tr '\n' ' ')"
+            local splitCommand="$(echo t"${arg:1}" | fold -w1 | tr '\n' ' ')"
             for flag in $splitCommand; do
-                flags+=("--$flag")
+                flags+=("\"--$flag\"")
             done
         fi
     done
     echo "${flags[@]}"
 }
+composite_help_get_rest() {
+    reset_ifs
+    local non_flags=()
+    for arg in "$@"; do
+        if [[ (! "$arg" =~ ^--) && (! "$arg" =~ ^-) ]]; then
+            non_flags+=("\"$arg\"")
+        fi
+    done
+    echo "${non_flags[@]}"
+}
 composite_help_contains_flag() {
     flagName=$1
     shift
     flags=("$@")
-    echo "total => ${flags[@]}"
     for flag in "${flags[@]}"; do
         if [[ "$flag" == *"="* ]]; then
-            flag="${arg%%=*}"  # Everything before the first '='
+            flag="${flag%%=*}"  # Everything before the first '='
         fi
-        echo " comparing $flag with --$flagName"
         if [[ "$flag" == "--$flagName" ]]; then
             return 0  # Flag is found
+        fi
+    done
+    return 1  # Flag not found
+}
+composite_help_get_flag_value() {
+    flagName=$1
+    shift
+    flags=("$@")
+    for flag in "${flags[@]}"; do
+        if [[ "$flag" == "--$flagName="* ]]; then
+            value="${flag#*=}"  # Extract everything after the '='
+            echo "$value"        # Output the value to the caller
+            return 0             # Success
+        fi
+        if [[ "$flag" == "--$flagName" ]]; then
+            echo "true"          # For flags like --flag without a value
+            return 0             # Success
         fi
     done
     return 1  # Flag not found
@@ -304,16 +328,6 @@ composite_help_flag_get_value() {
         fi
     done
     echo ""
-}
-composite_help_get_rest() {
-    reset_ifs
-    local non_flags=()
-    for arg in "$@"; do
-        if [[ (! "$arg" =~ ^--) && (! "$arg" =~ ^-) ]]; then
-            non_flags+=("$arg")
-        fi
-    done
-    echo "${non_flags[@]}"
 }
 composite_help_command() {
     
@@ -752,32 +766,95 @@ table() {
     echo ""
 }
 list() {
-    read -r -a flags <<< "$(composite_help_get_flags "$@")"
-    read -r -a args <<< "$(composite_help_get_rest "$@")"
-    if composite_help_contains_flag style-numeric "${flags[@]}"; then
-        echo "Does contain it"
-    else
-        echo "Does not contain it"
+    eval "flags=($(composite_help_get_flags "$@"))"
+    eval "args=($(composite_help_get_rest "$@"))"
+    local selectable="false"
+    local prefix=" - "
+    local selected_prefix=" > "
+    local selected_value=""
+    if composite_help_contains_flag prefix "${flags[@]}"; then
+        prefix=$(composite_help_get_flag_value prefix "${flags[@]}")
     fi
-    return
+    
+    if composite_help_contains_flag selected-prefix "${flags[@]}"; then
+        selected_prefix=$(composite_help_get_flag_value selected-prefix "${flags[@]}")
+    fi
+    if composite_help_contains_flag selected "${flags[@]}"; then
+        selected_value=$(composite_help_get_flag_value selected "${flags[@]}")
+    fi
     set -- "${args[@]}"
     local listName=$1
     local listItems=$2
     echo "$listName:"
     IFS=',' # Set the Internal Field Separator to comma
     for listItem in $listItems; do
-        echo " - $listItem"
+        if [[ "$listItem" == "$selected_value" ]]; then
+            echo -e "$selected_prefix$listItem"
+        else
+            echo -e "$prefix$listItem"
+        fi
     done
     reset_ifs
+}
+selectable_list() {
+    title=$1
+    selected=0
+    local -n return_ref=$2
+    options_list=$3
+    IFS=',' read -r -a options <<< "$options_list"
+    reset_ifs
+    print_menu() {
+        clear
+        echo "Use Arrow Keys to navigate, Enter to select:"
+        list "$title" "$options_list" "--selected=${options[$selected]}" --selected-prefix="\e[1;32m => " --prefix="\e[0m  - "
+        echo -ne "\e[0m"
+    }
+    while true; do
+        print_menu
+        read -rsn1 input
+        case "$input" in
+            $'\x1b')  # ESC sequence (for arrow keys)
+                read -rsn2 -t 0.1 input  # Read next two chars
+                case "$input" in
+                    '[A')  # Up arrow
+                        ((selected--))
+                        if [ $selected -lt 0 ]; then
+                            selected=$((${#options[@]} - 1))
+                        fi
+                        ;;
+                    '[B')  # Down arrow
+                        ((selected++))
+                        if [ $selected -ge ${#options[@]} ]; then
+                            selected=0
+                        fi
+                        ;;
+                esac
+                ;;
+            '')  # Enter key
+                return_ref="${options[$selected]}"
+                break
+                ;;
+        esac
+    done
 }
 alias cproj=current_project
 alias proj=project
 alias p=project
+alias sproj="select_project"
+alias sp="select_project"
 alias rproj=remove_project
 alias nproj=new_project
 alias sprojurl=set_project_url
 alias gprojurl=get_project_url
 alias rprojurl=remove_project_url
+select_project() {
+    projects_output=$(project)
+    projects_list=$(echo "$projects_output" | grep '^ - ' | awk '{sub(/^ - /, ""); if (NR > 1) printf ","; printf "%s", $0} END {print ""}')
+    
+    local value=""
+    selectable_list "Select a project" value "$projects_list"
+    project $value
+}
 get_current_project_label() {
     echo "$(cproj)"
 }
@@ -1583,6 +1660,15 @@ packages() {
     fi
 }
 alias s=scripts
+alias ss="select_scripts"
+select_scripts() {
+    scripts_output=$(scripts)
+    scripts_list=$(echo "$scripts_output" | grep '^ - ' | awk '{sub(/^ - /, ""); if (NR > 1) printf ","; printf "%s", $0} END {print ""}')
+    
+    local value=""
+    selectable_list "Select a script" value "$scripts_list"
+    $value
+}
 scripts() {
     if [[ $(find . -name "*.sh" -print -quit) ]]; then
         echo "Bash scripts:"
@@ -2483,10 +2569,18 @@ profile_delete() {
     fi
     rm "$local_settings_dir/local_settings.$profile.yml"
 }
+profile_select() {
+    profile_output=$(profile_list)
+    profile_list=$(echo "$profile_output" | grep '^ - ' | awk '{sub(/^ - /, ""); if (NR > 1) printf ","; printf "%s", $0} END {print ""}')
+    
+    local value=""
+    selectable_list "Select a profile" value "$profile_list"
+    profile load $value
+}
 profile_load() {
     if [ "$#" -ne 1 ]; then
-        echo "Usage: profile load <identifier>"
-        return 1  # Return an error code
+        profile_select
+        return 0  # Return an error code
     fi
     local profile=$1
     if [[ ! -f "$local_settings_dir/local_settings.$profile.yml" ]]; then
@@ -2521,7 +2615,7 @@ profile_list() {
                 continue
             fi
             
-            echo "   - $profile_name"
+            echo " - $profile_name"
         fi
     done
 }
