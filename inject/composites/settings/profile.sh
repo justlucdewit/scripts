@@ -62,11 +62,20 @@ profile_delete() {
     rm "$local_settings_dir/local_settings.$profile.yml"
 }
 
+profile_select() {
+    profile_output=$(profile_list)
+    profile_list=$(echo "$profile_output" | grep '^ - ' | awk '{sub(/^ - /, ""); if (NR > 1) printf ","; printf "%s", $0} END {print ""}')
+    
+    local value=""
+    selectable_list "Select a profile" value "$profile_list"
+    profile load $value
+}
+
 profile_load() {
     # Get the profile name
     if [ "$#" -ne 1 ]; then
-        echo "Usage: profile load <identifier>"
-        return 1  # Return an error code
+        profile_select
+        return 0  # Return an error code
     fi
     local profile=$1
 
@@ -115,7 +124,7 @@ profile_list() {
                 continue
             fi
             
-            echo "   - $profile_name"
+            echo " - $profile_name"
         fi
     done
 }
