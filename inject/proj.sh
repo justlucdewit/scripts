@@ -1,12 +1,22 @@
 alias cproj=current_project
 alias proj=project
 alias p=project
+alias sproj="select_project"
+alias sp="select_project"
 alias rproj=remove_project
 alias nproj=new_project
 alias sprojurl=set_project_url
 alias gprojurl=get_project_url
 alias rprojurl=remove_project_url
 
+select_project() {
+    projects_output=$(project)
+    projects_list=$(echo "$projects_output" | grep '^ - ' | awk '{sub(/^ - /, ""); if (NR > 1) printf ","; printf "%s", $0} END {print ""}')
+    
+    local value=""
+    selectable_list "Select a project" value "$projects_list"
+    project $value
+}
 
 get_current_project_label() {
     echo "$(cproj)"
