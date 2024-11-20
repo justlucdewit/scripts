@@ -34,6 +34,10 @@ git_users_main_command() {
         git_users_unset_alias $@
     elif is_in_list "$command" "set-initials"; then
         git_users_set_initials $@
+    elif is_in_list "$command" "set-email"; then
+        git_users_set_email $@
+    elif is_in_list "$command" "set-phone"; then
+        git_users_set_phone $@
     else
         print_error "Command $command does not exist"
         git_users_main_command # Re-run for help command
@@ -41,20 +45,81 @@ git_users_main_command() {
 }
 
 git_users_list() {
-    # localsettings_reformat
-    # localsettings_get .gitusers
+    eval "flags=($(composite_help_get_flags "$@"))"
+
+    local INCLUDE_IDENTIFIER=true
+    local INCLUDE_FULLNAME=true
+    local INCLUDE_ALIASES=false
+    local INCLUDE_INITIALS=false
+    local INCLUDE_PHONE=false
+    local INCLUDE_EMAIL=false
+    
+    if composite_help_contains_flag aliases "${flags[@]}"; then
+        INCLUDE_ALIASES=true
+    fi
+    if composite_help_contains_flag initials "${flags[@]}"; then
+        INCLUDE_INITIALS=true
+    fi
+    if composite_help_contains_flag phone "${flags[@]}"; then
+        INCLUDE_PHONE=true
+    fi
+    if composite_help_contains_flag email "${flags[@]}"; then
+        INCLUDE_EMAIL=true
+    fi
+    
+    lsrlist create headers
+
+    if [[ $INCLUDE_IDENTIFIER == true ]]; then
+        lsrlist append headers "Identifier"
+    fi
+    if [[ $INCLUDE_FULLNAME == true ]]; then
+        lsrlist append headers "Full name"
+    fi
+    if [[ $INCLUDE_ALIASES == true ]]; then
+        lsrlist append headers "Aliases"
+    fi
+    if [[ $INCLUDE_INITIALS == true ]]; then
+        lsrlist append headers "Initials"
+    fi
+    if [[ $INCLUDE_PHONE == true ]]; then
+        lsrlist append headers "Phone"
+    fi
+    if [[ $INCLUDE_EMAIL == true ]]; then
+        lsrlist append headers "Email"
+    fi
 
     users=$(localsettings_get .gitusers)
-    headers='Index,Identifier,Full name,Aliases'
     rows=()
 
     index=0
     while IFS= read -r user; do
-        fullname="$(lsget .gitusers.$user.fullname)"
-        aliases="$(lseval ".gitusers.$user.aliases | join(\"\\,\")")"
+        lsrlist create newRow
 
-        rows+=("$index,$user,$fullname,$aliases")
-        # # Increment the index
+        if [[ $INCLUDE_IDENTIFIER == true ]]; then
+            lsrlist append newRow "$user"
+        fi
+        if [[ $INCLUDE_FULLNAME == true ]]; then
+            local fullname="$(lsget .gitusers.$user.fullname)"
+            lsrlist append newRow "$fullname"
+        fi
+        if [[ $INCLUDE_ALIASES == true ]]; then
+            local aliases="$(lseval ".gitusers.$user.aliases | join(\"\\,\")")"
+            lsrlist append newRow "$aliases"
+        fi
+        if [[ $INCLUDE_INITIALS == true ]]; then
+            local initials="$(lseval ".gitusers.$user.initials // \" \"")"
+            lsrlist append newRow "$initials"
+        fi
+        if [[ $INCLUDE_PHONE == true ]]; then
+            local phone="$(lseval ".gitusers.$user.phone // \" \"")"
+            lsrlist append newRow "$phone"
+        fi
+        if [[ $INCLUDE_EMAIL == true ]]; then
+            local email="$(lseval ".gitusers.$user.email // \" \"")"
+            lsrlist append newRow "$email"
+        fi
+
+        rows+=("$newRow")
         ((index++))
     done <<< "$(lseval ".gitusers | to_entries | .[] | .key")"
 
@@ -162,5 +227,37 @@ git_users_set_initials() {
     local initials=$(prompt_if_not_exists "Initials" $2)
     localsettings_eval_with_save ".gitusers.\"$identifier\".initials = \"$initials\""
     print_success "Updated initials for gituser '$identifier'"
+    localsettings_reformat
+}
+
+git_users_set_phone() {
+    local identifier=$(prompt_if_not_exists "Identifier" $1)
+
+    # Attempt get, if already exists, error
+    local getResult=$(localsettings_eval ".gitusers.\"$identifier\"")
+    if [[ "$getResult" == "null" ]]; then
+        print_error "Git user with identifier $identifier does not exist"
+        return 1
+    fi
+
+    local phone=$(prompt_if_not_exists "phone" $2)
+    localsettings_eval_with_save ".gitusers.\"$identifier\".phone = \"$phone\""
+    print_success "Updated phone for gituser '$identifier'"
+    localsettings_reformat
+}
+
+git_users_set_email() {
+    local identifier=$(prompt_if_not_exists "Identifier" $1)
+
+    # Attempt get, if already exists, error
+    local getResult=$(localsettings_eval ".gitusers.\"$identifier\"")
+    if [[ "$getResult" == "null" ]]; then
+        print_error "Git user with identifier $identifier does not exist"
+        return 1
+    fi
+
+    local email=$(prompt_if_not_exists "email" $2)
+    localsettings_eval_with_save ".gitusers.\"$identifier\".email = \"$email\""
+    print_success "Updated email for gituser '$identifier'"
     localsettings_reformat
 }
