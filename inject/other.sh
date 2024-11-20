@@ -118,6 +118,7 @@ command_not_found_handle() {
     # When command is not found, fallback on scripts
     # Location Priority:
     #   - In current directory
+    #   - In ./_lsr_scripts folder
     #   - In ./scripts/ folder
     # Language Priority:
     #   - .sh scripts
@@ -130,6 +131,11 @@ command_not_found_handle() {
         print_info "Running script $cmd.sh"
         bash "./$cmd.sh" "${@:2}"
 
+    # Run the /_lsr_scripts/ bash script if it exists
+    elif [[ -f "./_lsr_scripts/$cmd.sh" ]]; then
+        print_info "Running script $cmd.sh"
+        bash "./_lsr_scripts/$cmd.sh" "${@:2}"
+
     # Run the /scripts/ bash script if it exists
     elif [[ -f "./scripts/$cmd.sh" ]]; then
         print_info "Running script $cmd.sh"
@@ -140,10 +146,25 @@ command_not_found_handle() {
         print_info "Running script $cmd.py"
         python3 "./$cmd.py" "${@:2}"
 
+    # Run the /_lsr_scripts/ python script if it exists
+    elif [[ -f "./_lsr_scripts/$cmd.py" ]]; then
+        print_info "Running script $cmd.py"
+        python3 "./_lsr_scripts/$cmd.py" "${@:2}"
+
     # Run the /scripts/ python script if it exists
     elif [[ -f "./scripts/$cmd.py" ]]; then
         print_info "Running script $cmd.py"
         python3 "./scripts/$cmd.py" "${@:2}"
+
+    # Run the js script if it exists
+    elif [[ -f "./$cmd.js" ]]; then
+        print_info "Node script $cmd.js"
+        node "./$cmd.js" "${@:2}"
+
+    # Run the /_lsr_scripts/ js script if it exists
+    elif [[ -f "./_lsr_scripts/$cmd.js" ]]; then
+        print_info "Node script $cmd.js"
+        node "./_lsr_scripts/$cmd.js" "${@:2}"
 
     # Run the /scripts/ js script if it exists
     elif [[ -f "./scripts/$cmd.js" ]]; then
@@ -212,7 +233,7 @@ select_scripts() {
 # - python scripts
 # - nodejs scripts
 scripts() {
-    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || $(find ./scripts -wholename "*.sh" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || $(find ./scripts -wholename "*.sh" -print -quit) || $(find ./_lsr_scripts -wholename "*.sh" -print -quit) ]]; then
         echo "Bash scripts:"
     fi
     for file in ./*.sh; do
@@ -231,11 +252,19 @@ scripts() {
             echo " - $basename"
         fi
     done
-    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || $(find ./scripts -wholename "*.sh" -print -quit) ]]; then
+    for file in ./_lsr_scripts/*.sh; do
+        filename="${file##*/}"      # Remove the ./ prefix
+        basename="${filename%.sh}"  # Remove the .sh suffix
+
+        if [[ "$basename" != "*" ]]; then
+            echo " - $basename"
+        fi
+    done
+    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || $(find ./scripts -wholename "*.sh" -print -quit) || $(find ./_lsr_scripts -wholename "*.sh" -print -quit) ]]; then
         echo ""
     fi
 
-    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || $(find ./scripts -wholename "*.py" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || $(find ./scripts -wholename "*.py" -print -quit) || $(find ./_lsr_scripts -wholename "*.py" -print -quit) ]]; then
         echo "Python scripts:"
     fi
     for file in ./*.py; do
@@ -254,11 +283,11 @@ scripts() {
             echo " - $basename"
         fi
     done
-    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || $(find ./scripts -wholename "*.py" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || $(find ./scripts -wholename "*.py" -print -quit) || $(find ./_lsr_scripts -wholename "*.py" -print -quit) ]]; then
         echo ""
     fi
 
-    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit) || $(find ./scripts -wholename "*.js" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit) || $(find ./scripts -wholename "*.js" -print -quit) || $(find ./_lsr_scripts -wholename "*.js" -print -quit) ]]; then
         echo "Node scripts:"
     fi
     for file in ./*.js; do
@@ -277,7 +306,7 @@ scripts() {
             echo " - $basename"
         fi
     done
-    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit) || $(find ./scripts -wholename "*.js" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit) || $(find ./scripts -wholename "*.js" -print -quit) || $(find ./_lsr_scripts -wholename "*.js" -print -quit) ]]; then
         echo ""
     fi
 
