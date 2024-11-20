@@ -115,28 +115,40 @@ PROMPT_COMMAND=do_before_prompt
 command_not_found_handle() {
     cmd="$1"
 
-    # Check if there is a .sh script in the current directory
-    # with the command name
+    # When command is not found, fallback on scripts
+    # Location Priority:
+    #   - In current directory
+    #   - In ./scripts/ folder
+    # Language Priority:
+    #   - .sh scripts
+    #   - .py scripts
+    #   - .js scripts
+    #   - npm scripts
     
     # Run the bash script if it exists
     if [[ -f "./$cmd.sh" ]]; then # Run the script
         print_info "Running script $cmd.sh"
         bash "./$cmd.sh" "${@:2}"
-    
-    # Run the python script if it exists
-    elif [[ -f "./$cmd.sh" ]]; then # Run the script
-        print_info "Running script $cmd.py"
-        python3 "./$cmd.py" "${@:2}"
 
     # Run the /scripts/ bash script if it exists
     elif [[ -f "./scripts/$cmd.sh" ]]; then
         print_info "Running script $cmd.sh"
         bash "./scripts/$cmd.sh" "${@:2}"
-    
+
+    # Run the python script if it exists
+    elif [[ -f "./$cmd.py" ]]; then
+        print_info "Running script $cmd.py"
+        python3 "./$cmd.py" "${@:2}"
+
     # Run the /scripts/ python script if it exists
     elif [[ -f "./scripts/$cmd.py" ]]; then
         print_info "Running script $cmd.py"
         python3 "./scripts/$cmd.py" "${@:2}"
+
+    # Run the /scripts/ js script if it exists
+    elif [[ -f "./scripts/$cmd.js" ]]; then
+        print_info "Node script $cmd.js"
+        node "./scripts/$cmd.js" "${@:2}"
 
     # Run the script from the npm folder if it exists
     elif [[ -f "./package.json" && "$(grep \"$cmd\": package.json)" != "" ]]; then
@@ -195,11 +207,14 @@ select_scripts() {
     $value
 }
 
+# Finds scripts to fall back on, in either the current dir, or the ./scripts/ dir
+# - bash scripts
+# - python scripts
+# - nodejs scripts
 scripts() {
-    if [[ $(find . -name "*.sh" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || $(find ./scripts -wholename "*.sh" -print -quit) ]]; then
         echo "Bash scripts:"
     fi
-
     for file in ./*.sh; do
         filename="${file##*/}"      # Remove the ./ prefix
         basename="${filename%.sh}"  # Remove the .sh suffix
@@ -208,7 +223,6 @@ scripts() {
             echo " - $basename"
         fi
     done
-
     for file in ./scripts/*.sh; do
         filename="${file##*/}"      # Remove the ./ prefix
         basename="${filename%.sh}"  # Remove the .sh suffix
@@ -217,15 +231,13 @@ scripts() {
             echo " - $basename"
         fi
     done
-
-    if [[ $(find . -name "*.sh" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || $(find ./scripts -wholename "*.sh" -print -quit) ]]; then
         echo ""
     fi
 
-    if [[ $(find . -name "*.py" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || $(find ./scripts -wholename "*.py" -print -quit) ]]; then
         echo "Python scripts:"
     fi
-
     for file in ./*.py; do
         filename="${file##*/}"      # Remove the ./scripts/ prefix
         basename="${filename%.py}"  # Remove the .py suffix
@@ -234,7 +246,6 @@ scripts() {
             echo "- $basename"
         fi
     done
-
     for file in ./scripts/*.py; do
         filename="${file##*/}"      # Remove the ./scripts/ prefix
         basename="${filename%.py}"  # Remove the .py suffix
@@ -243,8 +254,30 @@ scripts() {
             echo " - $basename"
         fi
     done
+    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || $(find ./scripts -wholename "*.py" -print -quit) ]]; then
+        echo ""
+    fi
 
-    if [[ $(find . -name "*.py" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit) || $(find ./scripts -wholename "*.js" -print -quit) ]]; then
+        echo "Node scripts:"
+    fi
+    for file in ./*.js; do
+        filename="${file##*/}"      # Remove the ./scripts/ prefix
+        basename="${filename%.js}"  # Remove the .js suffix
+
+        if [[ "$basename" != "*" ]]; then
+            echo "- $basename"
+        fi
+    done
+    for file in ./scripts/*.js; do
+        filename="${file##*/}"      # Remove the ./scripts/ prefix
+        basename="${filename%.js}"  # Remove the .py suffix
+
+        if [[ "$basename" != "*" ]]; then
+            echo " - $basename"
+        fi
+    done
+    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit) || $(find ./scripts -wholename "*.js" -print -quit) ]]; then
         echo ""
     fi
 
