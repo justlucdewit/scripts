@@ -255,6 +255,22 @@ requires_package "yq" "LSR"
 requires_package "jq" "LSR"
 requires_package "node" "LSR"
 requires_package "npm" "LSR"
+requires_package "git" "LSR"
+CUSTOM_CONFIG="$HOME/scripts/extra_config_files/lsr.gitconfig"
+GLOBAL_CONFIG="$HOME/.gitconfig"
+if [ ! -f "$GLOBAL_CONFIG" ]; then
+    touch "$GLOBAL_CONFIG"
+fi
+if ! grep -q "$CUSTOM_CONFIG" "$GLOBAL_CONFIG"; then
+    echo -e "\n[include]\n\tpath = $CUSTOM_CONFIG" >> "$GLOBAL_CONFIG"
+fi
+GLOBAL_GITIGNORE="$HOME/scripts/extra_config_files/lsr.gitignore"
+if ! grep -q "lsr.gitignore" "$GLOBAL_CONFIG"; then
+    cat <<EOL >> $GLOBAL_CONFIG
+[core]
+    excludesfile = $GLOBAL_GITIGNORE
+EOL
+fi
 composite_help_get_flags() {
     reset_ifs
     local flags=()
@@ -1616,15 +1632,27 @@ command_not_found_handle() {
     if [[ -f "./$cmd.sh" ]]; then # Run the script
         print_info "Running script $cmd.sh"
         bash "./$cmd.sh" "${@:2}"
+    elif [[ -f "./_lsr_scripts/$cmd.sh" ]]; then
+        print_info "Running script $cmd.sh"
+        bash "./_lsr_scripts/$cmd.sh" "${@:2}"
     elif [[ -f "./scripts/$cmd.sh" ]]; then
         print_info "Running script $cmd.sh"
         bash "./scripts/$cmd.sh" "${@:2}"
     elif [[ -f "./$cmd.py" ]]; then
         print_info "Running script $cmd.py"
         python3 "./$cmd.py" "${@:2}"
+    elif [[ -f "./_lsr_scripts/$cmd.py" ]]; then
+        print_info "Running script $cmd.py"
+        python3 "./_lsr_scripts/$cmd.py" "${@:2}"
     elif [[ -f "./scripts/$cmd.py" ]]; then
         print_info "Running script $cmd.py"
         python3 "./scripts/$cmd.py" "${@:2}"
+    elif [[ -f "./$cmd.js" ]]; then
+        print_info "Node script $cmd.js"
+        node "./$cmd.js" "${@:2}"
+    elif [[ -f "./_lsr_scripts/$cmd.js" ]]; then
+        print_info "Node script $cmd.js"
+        node "./_lsr_scripts/$cmd.js" "${@:2}"
     elif [[ -f "./scripts/$cmd.js" ]]; then
         print_info "Node script $cmd.js"
         node "./scripts/$cmd.js" "${@:2}"
@@ -1671,7 +1699,7 @@ select_scripts() {
     $value
 }
 scripts() {
-    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || $(find ./scripts -wholename "*.sh" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || $(find ./scripts -wholename "*.sh" -print -quit) || $(find ./_lsr_scripts -wholename "*.sh" -print -quit) ]]; then
         echo "Bash scripts:"
     fi
     for file in ./*.sh; do
@@ -1688,10 +1716,17 @@ scripts() {
             echo " - $basename"
         fi
     done
-    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || $(find ./scripts -wholename "*.sh" -print -quit) ]]; then
+    for file in ./_lsr_scripts/*.sh; do
+        filename="${file##*/}"      # Remove the ./ prefix
+        basename="${filename%.sh}"  # Remove the .sh suffix
+        if [[ "$basename" != "*" ]]; then
+            echo " - $basename"
+        fi
+    done
+    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || $(find ./scripts -wholename "*.sh" -print -quit) || $(find ./_lsr_scripts -wholename "*.sh" -print -quit) ]]; then
         echo ""
     fi
-    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || $(find ./scripts -wholename "*.py" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || $(find ./scripts -wholename "*.py" -print -quit) || $(find ./_lsr_scripts -wholename "*.py" -print -quit) ]]; then
         echo "Python scripts:"
     fi
     for file in ./*.py; do
@@ -1708,10 +1743,10 @@ scripts() {
             echo " - $basename"
         fi
     done
-    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || $(find ./scripts -wholename "*.py" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || $(find ./scripts -wholename "*.py" -print -quit) || $(find ./_lsr_scripts -wholename "*.py" -print -quit) ]]; then
         echo ""
     fi
-    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit) || $(find ./scripts -wholename "*.js" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit) || $(find ./scripts -wholename "*.js" -print -quit) || $(find ./_lsr_scripts -wholename "*.js" -print -quit) ]]; then
         echo "Node scripts:"
     fi
     for file in ./*.js; do
@@ -1728,7 +1763,7 @@ scripts() {
             echo " - $basename"
         fi
     done
-    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit) || $(find ./scripts -wholename "*.js" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit) || $(find ./scripts -wholename "*.js" -print -quit) || $(find ./_lsr_scripts -wholename "*.js" -print -quit) ]]; then
         echo ""
     fi
     if [[ -f "./package.json" ]]; then
@@ -1957,6 +1992,49 @@ time_until_live() {
         sleep 1
     done
 }
+alias e=exp
+alias eg="exp --go"
+exp() {
+    local initial_dir="$(pwd)"
+    eval "flags=($(composite_help_get_flags "$@"))"
+    local go=false
+    if composite_help_contains_flag go "${flags[@]}"; then
+        go=true
+    fi
+    while true; do
+        lsrlist create dir_items
+        lsrlist append dir_items "."
+        lsrlist append dir_items ".."
+        for item in *; do
+            if [ -d "$item" ]; then
+                lsrlist append dir_items "/$item/"
+            fi
+        done
+        for item in *; do
+            if [ -f "$item" ]; then
+                lsrlist append dir_items "$item"
+            fi
+        done
+        
+        selectable_list "$(pwd)" value "$dir_items"
+        if [[ "$value" == "." ]]; then
+            break;
+        fi
+        if [[ "$value" == ".." ]]; then
+            cd ..;
+        fi
+        if [[ -f "./$value" ]]; then
+            cat "./$value"
+            echo ""
+            break
+        fi
+        cd ".$value"
+    done
+    
+    if [[ $go != true ]]; then
+        cd "$initial_dir"
+    fi
+}
 banned_patterns=(
     "*.exe"
     "*/node_modules/*"
@@ -2005,6 +2083,7 @@ source "$HOME/scripts/helpers.sh"
 scripts_to_compile=(
     "../helpers"
     "requirementCheck"
+    "startup"
     "composites/helpers"
     "git_helpers"
     "tmux_helpers"

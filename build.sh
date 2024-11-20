@@ -1,8 +1,9 @@
 # LSR v1.1
-# Local build (11:53 20/11/2024)
+# Local build (16:28 20/11/2024)
 # Includes LSR modules:
 # - /home/luc/scripts/inject/../helpers.sh
 # - /home/luc/scripts/inject/requirementCheck.sh
+# - /home/luc/scripts/inject/startup.sh
 # - /home/luc/scripts/inject/composites/helpers.sh
 # - /home/luc/scripts/inject/git_helpers.sh
 # - /home/luc/scripts/inject/tmux_helpers.sh
@@ -346,8 +347,8 @@ requires_package() {
 #############################################
 # Start of LSR module #2                    #
 # Injected LSR module: requirementCheck.sh  #
-# Number of lines: 5                        #
-# Filesize: 278 B                           #
+# Number of lines: 6                        #
+# Filesize: 307 B                           #
 #############################################
 # This file includes require package statements that makes sure that all packages needed for a basic LSR
 # installation are indeed correctly installed and callable
@@ -355,8 +356,36 @@ requires_package "yq" "LSR"
 requires_package "jq" "LSR"
 requires_package "node" "LSR"
 requires_package "npm" "LSR"
+requires_package "git" "LSR"
+####################################
+# Start of LSR module #3           #
+# Injected LSR module: startup.sh  #
+# Number of lines: 20              #
+# Filesize: 577 B                  #
+####################################
+# Inject the LSR gitconfig in the global gitconfig
+CUSTOM_CONFIG="$HOME/scripts/extra_config_files/lsr.gitconfig"
+GLOBAL_CONFIG="$HOME/.gitconfig"
+
+if [ ! -f "$GLOBAL_CONFIG" ]; then
+    touch "$GLOBAL_CONFIG"
+fi
+
+if ! grep -q "$CUSTOM_CONFIG" "$GLOBAL_CONFIG"; then
+    echo -e "\n[include]\n\tpath = $CUSTOM_CONFIG" >> "$GLOBAL_CONFIG"
+fi
+
+# Inject the LSR global gitignore
+GLOBAL_GITIGNORE="$HOME/scripts/extra_config_files/lsr.gitignore"
+if ! grep -q "lsr.gitignore" "$GLOBAL_CONFIG"; then
+    cat <<EOL >> $GLOBAL_CONFIG
+[core]
+    excludesfile = $GLOBAL_GITIGNORE
+EOL
+
+fi
 ###############################################
-# Start of LSR module #3                      #
+# Start of LSR module #4                      #
 # Injected LSR module: composites/helpers.sh  #
 # Number of lines: 129                        #
 # Filesize: 3.36 KB                           #
@@ -492,7 +521,7 @@ composite_help_command() {
     done
 }
 ########################################
-# Start of LSR module #4               #
+# Start of LSR module #5               #
 # Injected LSR module: git_helpers.sh  #
 # Number of lines: 60                  #
 # Filesize: 1.77 KB                    #
@@ -559,7 +588,7 @@ alias st='git stash'
 alias delete='git branch -d'
 alias d="!f() { git branch -d $1 && git push origin --delete $1; }; f"
 #########################################
-# Start of LSR module #5                #
+# Start of LSR module #6                #
 # Injected LSR module: tmux_helpers.sh  #
 # Number of lines: 437                  #
 # Filesize: 13.52 KB                    #
@@ -1003,7 +1032,7 @@ alias ripuf="run_in_pane_until_finished"
 alias tc="tclose"
 
 ##################################
-# Start of LSR module #6         #
+# Start of LSR module #7         #
 # Injected LSR module: utils.sh  #
 # Number of lines: 199           #
 # Filesize: 5.60 KB              #
@@ -1209,7 +1238,7 @@ selectable_list() {
     done
 }
 #################################
-# Start of LSR module #7        #
+# Start of LSR module #8        #
 # Injected LSR module: proj.sh  #
 # Number of lines: 240          #
 # Filesize: 7.44 KB             #
@@ -1456,7 +1485,7 @@ list_projects() {
     done
 }
 ####################################
-# Start of LSR module #8           #
+# Start of LSR module #9           #
 # Injected LSR module: aliases.sh  #
 # Number of lines: 28              #
 # Filesize: 793 B                  #
@@ -1491,7 +1520,7 @@ joke() {
 }
 
 ####################################
-# Start of LSR module #9           #
+# Start of LSR module #10          #
 # Injected LSR module: laravel.sh  #
 # Number of lines: 215             #
 # Filesize: 5.81 KB                #
@@ -1713,7 +1742,7 @@ fresh_install_sail() {
     fi
 }
 ###########################################
-# Start of LSR module #10                 #
+# Start of LSR module #11                 #
 # Injected LSR module: local_settings.sh  #
 # Number of lines: 224                    #
 # Filesize: 6.03 KB                       #
@@ -1944,7 +1973,7 @@ localsettings_reformat() {
     localsettings_sort .
 }
 ###############################################
-# Start of LSR module #11                     #
+# Start of LSR module #12                     #
 # Injected LSR module: version_management.sh  #
 # Number of lines: 88                         #
 # Filesize: 2.55 KB                           #
@@ -2039,7 +2068,7 @@ lsr_uninstall() {
     reload_bash
 }
 ################################
-# Start of LSR module #12      #
+# Start of LSR module #13      #
 # Injected LSR module: vim.sh  #
 # Number of lines: 36          #
 # Filesize: 1004 B             #
@@ -2082,7 +2111,7 @@ source ~/scripts/extra_config_files/LukesVimConfig.vim
 
 write_to_vimrc
 #################################
-# Start of LSR module #13       #
+# Start of LSR module #14       #
 # Injected LSR module: work.sh  #
 # Number of lines: 101          #
 # Filesize: 4.07 KB             #
@@ -2190,10 +2219,10 @@ work() {
     cd "$original_pwd"
 }
 ##################################
-# Start of LSR module #14        #
+# Start of LSR module #15        #
 # Injected LSR module: other.sh  #
-# Number of lines: 576           #
-# Filesize: 18.63 KB             #
+# Number of lines: 660           #
+# Filesize: 21.03 KB             #
 ##################################
 LIGHT_GREEN='\033[1;32m'
 RED='\033[0;31m'
@@ -2315,6 +2344,7 @@ command_not_found_handle() {
     # When command is not found, fallback on scripts
     # Location Priority:
     #   - In current directory
+    #   - In ./_lsr_scripts folder
     #   - In ./scripts/ folder
     # Language Priority:
     #   - .sh scripts
@@ -2327,6 +2357,11 @@ command_not_found_handle() {
         print_info "Running script $cmd.sh"
         bash "./$cmd.sh" "${@:2}"
 
+    # Run the /_lsr_scripts/ bash script if it exists
+    elif [[ -f "./_lsr_scripts/$cmd.sh" ]]; then
+        print_info "Running script $cmd.sh"
+        bash "./_lsr_scripts/$cmd.sh" "${@:2}"
+
     # Run the /scripts/ bash script if it exists
     elif [[ -f "./scripts/$cmd.sh" ]]; then
         print_info "Running script $cmd.sh"
@@ -2337,10 +2372,25 @@ command_not_found_handle() {
         print_info "Running script $cmd.py"
         python3 "./$cmd.py" "${@:2}"
 
+    # Run the /_lsr_scripts/ python script if it exists
+    elif [[ -f "./_lsr_scripts/$cmd.py" ]]; then
+        print_info "Running script $cmd.py"
+        python3 "./_lsr_scripts/$cmd.py" "${@:2}"
+
     # Run the /scripts/ python script if it exists
     elif [[ -f "./scripts/$cmd.py" ]]; then
         print_info "Running script $cmd.py"
         python3 "./scripts/$cmd.py" "${@:2}"
+
+    # Run the js script if it exists
+    elif [[ -f "./$cmd.js" ]]; then
+        print_info "Node script $cmd.js"
+        node "./$cmd.js" "${@:2}"
+
+    # Run the /_lsr_scripts/ js script if it exists
+    elif [[ -f "./_lsr_scripts/$cmd.js" ]]; then
+        print_info "Node script $cmd.js"
+        node "./_lsr_scripts/$cmd.js" "${@:2}"
 
     # Run the /scripts/ js script if it exists
     elif [[ -f "./scripts/$cmd.js" ]]; then
@@ -2409,7 +2459,7 @@ select_scripts() {
 # - python scripts
 # - nodejs scripts
 scripts() {
-    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || $(find ./scripts -wholename "*.sh" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || $(find ./scripts -wholename "*.sh" -print -quit) || $(find ./_lsr_scripts -wholename "*.sh" -print -quit) ]]; then
         echo "Bash scripts:"
     fi
     for file in ./*.sh; do
@@ -2428,11 +2478,19 @@ scripts() {
             echo " - $basename"
         fi
     done
-    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || $(find ./scripts -wholename "*.sh" -print -quit) ]]; then
+    for file in ./_lsr_scripts/*.sh; do
+        filename="${file##*/}"      # Remove the ./ prefix
+        basename="${filename%.sh}"  # Remove the .sh suffix
+
+        if [[ "$basename" != "*" ]]; then
+            echo " - $basename"
+        fi
+    done
+    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || $(find ./scripts -wholename "*.sh" -print -quit) || $(find ./_lsr_scripts -wholename "*.sh" -print -quit) ]]; then
         echo ""
     fi
 
-    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || $(find ./scripts -wholename "*.py" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || $(find ./scripts -wholename "*.py" -print -quit) || $(find ./_lsr_scripts -wholename "*.py" -print -quit) ]]; then
         echo "Python scripts:"
     fi
     for file in ./*.py; do
@@ -2451,11 +2509,11 @@ scripts() {
             echo " - $basename"
         fi
     done
-    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || $(find ./scripts -wholename "*.py" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || $(find ./scripts -wholename "*.py" -print -quit) || $(find ./_lsr_scripts -wholename "*.py" -print -quit) ]]; then
         echo ""
     fi
 
-    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit) || $(find ./scripts -wholename "*.js" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit) || $(find ./scripts -wholename "*.js" -print -quit) || $(find ./_lsr_scripts -wholename "*.js" -print -quit) ]]; then
         echo "Node scripts:"
     fi
     for file in ./*.js; do
@@ -2474,7 +2532,7 @@ scripts() {
             echo " - $basename"
         fi
     done
-    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit) || $(find ./scripts -wholename "*.js" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit) || $(find ./scripts -wholename "*.js" -print -quit) || $(find ./_lsr_scripts -wholename "*.js" -print -quit) ]]; then
         echo ""
     fi
 
@@ -2772,8 +2830,63 @@ time_until_live() {
     done
 }
 
+alias e=exp
+alias eg="exp --go"
+
+exp() {
+    local initial_dir="$(pwd)"
+    eval "flags=($(composite_help_get_flags "$@"))"
+
+    local go=false
+    if composite_help_contains_flag go "${flags[@]}"; then
+        go=true
+    fi
+
+    while true; do
+        lsrlist create dir_items
+        lsrlist append dir_items "."
+        lsrlist append dir_items ".."
+
+        # Add folders
+        for item in *; do
+            if [ -d "$item" ]; then
+                lsrlist append dir_items "/$item/"
+            fi
+        done
+
+        # Add files
+        for item in *; do
+            if [ -f "$item" ]; then
+                lsrlist append dir_items "$item"
+            fi
+        done
+        
+        selectable_list "$(pwd)" value "$dir_items"
+
+        if [[ "$value" == "." ]]; then
+            break;
+        fi
+
+        if [[ "$value" == ".." ]]; then
+            cd ..;
+        fi
+
+        if [[ -f "./$value" ]]; then
+            cat "./$value"
+            echo ""
+            break
+        fi
+
+        cd ".$value"
+    done
+    
+    if [[ $go != true ]]; then
+        cd "$initial_dir"
+    fi
+}
+
 ##################################
-# Start of LSR module #15        #
+# Start of LSR module #16        #
 # Injected LSR module: cfind.sh  #
 # Number of lines: 58            #
 # Filesize: 1.63 KB              #
@@ -2838,10 +2951,10 @@ cfind() {
 }
 
 ####################################
-# Start of LSR module #16          #
+# Start of LSR module #17          #
 # Injected LSR module: compile.sh  #
-# Number of lines: 155             #
-# Filesize: 5.33 KB                #
+# Number of lines: 156             #
+# Filesize: 5.34 KB                #
 ####################################
 source "$HOME/scripts/helpers.sh"
 
@@ -2849,6 +2962,7 @@ source "$HOME/scripts/helpers.sh"
 scripts_to_compile=(
     "../helpers"
     "requirementCheck"
+    "startup"
     "composites/helpers"
     "git_helpers"
     "tmux_helpers"
@@ -3000,7 +3114,7 @@ lsr_compile() {
 }
 
 ######################################
-# Start of LSR module #17            #
+# Start of LSR module #18            #
 # Injected LSR module: remotelog.sh  #
 # Number of lines: 88                #
 # Filesize: 2.46 KB                  #
@@ -3095,7 +3209,7 @@ remotelog() {
 
 
 ##################################################
-# Start of LSR module #18                        #
+# Start of LSR module #19                        #
 # Injected LSR module: composites/utils/list.sh  #
 # Number of lines: 42                            #
 # Filesize: 883 B                                #
@@ -3144,7 +3258,7 @@ lsrlist_create() {
     list=""
 }
 ###################################################
-# Start of LSR module #19                         #
+# Start of LSR module #20                         #
 # Injected LSR module: composites/docker/dock.sh  #
 # Number of lines: 194                            #
 # Filesize: 6.43 KB                               #
@@ -3345,7 +3459,7 @@ dock_restart() {
     fi
 }
 ####################################################
-# Start of LSR module #20                          #
+# Start of LSR module #21                          #
 # Injected LSR module: composites/git/gitusers.sh  #
 # Number of lines: 262                             #
 # Filesize: 8.43 KB                                #
@@ -3614,7 +3728,7 @@ git_users_set_email() {
     localsettings_reformat
 }
 ####################################################
-# Start of LSR module #21                          #
+# Start of LSR module #22                          #
 # Injected LSR module: composites/git/branches.sh  #
 # Number of lines: 154                             #
 # Filesize: 4.51 KB                                #
@@ -3775,7 +3889,7 @@ git_branches_list() {
     git branch --all --no-color
 }
 ########################################################
-# Start of LSR module #22                              #
+# Start of LSR module #23                              #
 # Injected LSR module: composites/settings/profile.sh  #
 # Number of lines: 159                                 #
 # Filesize: 4.54 KB                                    #
