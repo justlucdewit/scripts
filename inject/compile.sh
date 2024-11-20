@@ -19,6 +19,7 @@ scripts_to_compile=(
     "cfind"
     "compile"
     "remotelog"
+    "composites/utils/list"
     "composites/docker/dock"
     "composites/git/gitusers"
     "composites/git/branches"
