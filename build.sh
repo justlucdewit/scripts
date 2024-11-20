@@ -1,5 +1,5 @@
 # LSR v1.1
-# Local build (10:15 15/11/2024)
+# Local build (11:53 20/11/2024)
 # Includes LSR modules:
 # - /home/luc/scripts/inject/../helpers.sh
 # - /home/luc/scripts/inject/requirementCheck.sh
@@ -18,6 +18,7 @@
 # - /home/luc/scripts/inject/cfind.sh
 # - /home/luc/scripts/inject/compile.sh
 # - /home/luc/scripts/inject/remotelog.sh
+# - /home/luc/scripts/inject/composites/utils/list.sh
 # - /home/luc/scripts/inject/composites/docker/dock.sh
 # - /home/luc/scripts/inject/composites/git/gitusers.sh
 # - /home/luc/scripts/inject/composites/git/branches.sh
@@ -2191,8 +2192,8 @@ work() {
 ##################################
 # Start of LSR module #14        #
 # Injected LSR module: other.sh  #
-# Number of lines: 543           #
-# Filesize: 17.12 KB             #
+# Number of lines: 576           #
+# Filesize: 18.63 KB             #
 ##################################
 LIGHT_GREEN='\033[1;32m'
 RED='\033[0;31m'
@@ -2311,28 +2312,40 @@ PROMPT_COMMAND=do_before_prompt
 command_not_found_handle() {
     cmd="$1"
 
-    # Check if there is a .sh script in the current directory
-    # with the command name
+    # When command is not found, fallback on scripts
+    # Location Priority:
+    #   - In current directory
+    #   - In ./scripts/ folder
+    # Language Priority:
+    #   - .sh scripts
+    #   - .py scripts
+    #   - .js scripts
+    #   - npm scripts
     
     # Run the bash script if it exists
     if [[ -f "./$cmd.sh" ]]; then # Run the script
         print_info "Running script $cmd.sh"
         bash "./$cmd.sh" "${@:2}"
-    
-    # Run the python script if it exists
-    elif [[ -f "./$cmd.sh" ]]; then # Run the script
-        print_info "Running script $cmd.py"
-        python3 "./$cmd.py" "${@:2}"
 
     # Run the /scripts/ bash script if it exists
     elif [[ -f "./scripts/$cmd.sh" ]]; then
         print_info "Running script $cmd.sh"
         bash "./scripts/$cmd.sh" "${@:2}"
-    
+
+    # Run the python script if it exists
+    elif [[ -f "./$cmd.py" ]]; then
+        print_info "Running script $cmd.py"
+        python3 "./$cmd.py" "${@:2}"
+
     # Run the /scripts/ python script if it exists
     elif [[ -f "./scripts/$cmd.py" ]]; then
         print_info "Running script $cmd.py"
         python3 "./scripts/$cmd.py" "${@:2}"
+
+    # Run the /scripts/ js script if it exists
+    elif [[ -f "./scripts/$cmd.js" ]]; then
+        print_info "Node script $cmd.js"
+        node "./scripts/$cmd.js" "${@:2}"
 
     # Run the script from the npm folder if it exists
     elif [[ -f "./package.json" && "$(grep \"$cmd\": package.json)" != "" ]]; then
@@ -2391,11 +2404,14 @@ select_scripts() {
     $value
 }
 
+# Finds scripts to fall back on, in either the current dir, or the ./scripts/ dir
+# - bash scripts
+# - python scripts
+# - nodejs scripts
 scripts() {
-    if [[ $(find . -name "*.sh" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || $(find ./scripts -wholename "*.sh" -print -quit) ]]; then
         echo "Bash scripts:"
     fi
-
     for file in ./*.sh; do
         filename="${file##*/}"      # Remove the ./ prefix
         basename="${filename%.sh}"  # Remove the .sh suffix
@@ -2404,7 +2420,6 @@ scripts() {
             echo " - $basename"
         fi
     done
-
     for file in ./scripts/*.sh; do
         filename="${file##*/}"      # Remove the ./ prefix
         basename="${filename%.sh}"  # Remove the .sh suffix
@@ -2413,15 +2428,13 @@ scripts() {
             echo " - $basename"
         fi
     done
-
-    if [[ $(find . -name "*.sh" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || $(find ./scripts -wholename "*.sh" -print -quit) ]]; then
         echo ""
     fi
 
-    if [[ $(find . -name "*.py" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || $(find ./scripts -wholename "*.py" -print -quit) ]]; then
         echo "Python scripts:"
     fi
-
     for file in ./*.py; do
         filename="${file##*/}"      # Remove the ./scripts/ prefix
         basename="${filename%.py}"  # Remove the .py suffix
@@ -2430,7 +2443,6 @@ scripts() {
             echo "- $basename"
         fi
     done
-
     for file in ./scripts/*.py; do
         filename="${file##*/}"      # Remove the ./scripts/ prefix
         basename="${filename%.py}"  # Remove the .py suffix
@@ -2439,8 +2451,30 @@ scripts() {
             echo " - $basename"
         fi
     done
+    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || $(find ./scripts -wholename "*.py" -print -quit) ]]; then
+        echo ""
+    fi
 
-    if [[ $(find . -name "*.py" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit) || $(find ./scripts -wholename "*.js" -print -quit) ]]; then
+        echo "Node scripts:"
+    fi
+    for file in ./*.js; do
+        filename="${file##*/}"      # Remove the ./scripts/ prefix
+        basename="${filename%.js}"  # Remove the .js suffix
+
+        if [[ "$basename" != "*" ]]; then
+            echo "- $basename"
+        fi
+    done
+    for file in ./scripts/*.js; do
+        filename="${file##*/}"      # Remove the ./scripts/ prefix
+        basename="${filename%.js}"  # Remove the .py suffix
+
+        if [[ "$basename" != "*" ]]; then
+            echo " - $basename"
+        fi
+    done
+    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit) || $(find ./scripts -wholename "*.js" -print -quit) ]]; then
         echo ""
     fi
 
@@ -2806,8 +2840,8 @@ cfind() {
 ####################################
 # Start of LSR module #16          #
 # Injected LSR module: compile.sh  #
-# Number of lines: 154             #
-# Filesize: 5.30 KB                #
+# Number of lines: 155             #
+# Filesize: 5.33 KB                #
 ####################################
 source "$HOME/scripts/helpers.sh"
 
@@ -2830,6 +2864,7 @@ scripts_to_compile=(
     "cfind"
     "compile"
     "remotelog"
+    "composites/utils/list"
     "composites/docker/dock"
     "composites/git/gitusers"
     "composites/git/branches"
@@ -3059,8 +3094,57 @@ remotelog() {
 }
 
 
+##################################################
+# Start of LSR module #18                        #
+# Injected LSR module: composites/utils/list.sh  #
+# Number of lines: 42                            #
+# Filesize: 883 B                                #
+##################################################
+# Composite command
+lsrlist() {
+    # Help command
+    if [ ! "$#" -gt 0 ]; then
+        echo "usage: "
+        echo "  - lsrlist create <listname>"
+        echo "  - lsrlist append <listname> <item>"
+        echo "  - lsrlist index <listname> <index>"
+        return 0
+    fi
+
+    local command=$1
+    local -n list_ref=$2
+    shift
+    shift
+
+    if is_in_list "$command" "create"; then
+        lsrlist_create list_ref $@
+    elif is_in_list "$command" "append"; then
+        lsrlist_append list_ref "$@"
+    else
+        print_error "Command $command does not exist"
+        lsrlist # Re-run for help command
+    fi
+}
+
+lsrlist_append() {
+    # echo "aaaaaa: $1"
+    # echo "aaaaaa: $2"
+    local -n list=$1
+    local value="$2"
+
+    if [[ "$list" == "" ]]; then
+        list="$value"
+    else
+        list+=",$value"
+    fi
+}
+
+lsrlist_create() {
+    local -n list=$1
+    list=""
+}
 ###################################################
-# Start of LSR module #18                         #
+# Start of LSR module #19                         #
 # Injected LSR module: composites/docker/dock.sh  #
 # Number of lines: 194                            #
 # Filesize: 6.43 KB                               #
@@ -3261,10 +3345,10 @@ dock_restart() {
     fi
 }
 ####################################################
-# Start of LSR module #19                          #
+# Start of LSR module #20                          #
 # Injected LSR module: composites/git/gitusers.sh  #
-# Number of lines: 144                             #
-# Filesize: 4.44 KB                                #
+# Number of lines: 262                             #
+# Filesize: 8.43 KB                                #
 ####################################################
 alias gitusers="git_users_main_command"
 
@@ -3279,6 +3363,9 @@ git_users_main_command() {
         echo "  - gitusers del <identifier>"
         echo "  - gitusers alias <identifier> <alias>"
         echo "  - gitusers unlias <identifier> <alias>"
+        echo "  - gitusers set-initials <identifier> <initials>"
+        echo "  - gitusers set-email <identifier> <initials>"
+        echo "  - gitusers set-phone <identifier> <initials>"
         return 0
     fi
 
@@ -3297,6 +3384,12 @@ git_users_main_command() {
         git_users_set_alias $@
     elif is_in_list "$command" "del-alias,rem-alias,delete-alias,remove-alias,unalias"; then
         git_users_unset_alias $@
+    elif is_in_list "$command" "set-initials"; then
+        git_users_set_initials $@
+    elif is_in_list "$command" "set-email"; then
+        git_users_set_email $@
+    elif is_in_list "$command" "set-phone"; then
+        git_users_set_phone $@
     else
         print_error "Command $command does not exist"
         git_users_main_command # Re-run for help command
@@ -3304,20 +3397,81 @@ git_users_main_command() {
 }
 
 git_users_list() {
-    # localsettings_reformat
-    # localsettings_get .gitusers
+    eval "flags=($(composite_help_get_flags "$@"))"
+
+    local INCLUDE_IDENTIFIER=true
+    local INCLUDE_FULLNAME=true
+    local INCLUDE_ALIASES=false
+    local INCLUDE_INITIALS=false
+    local INCLUDE_PHONE=false
+    local INCLUDE_EMAIL=false
+    
+    if composite_help_contains_flag aliases "${flags[@]}"; then
+        INCLUDE_ALIASES=true
+    fi
+    if composite_help_contains_flag initials "${flags[@]}"; then
+        INCLUDE_INITIALS=true
+    fi
+    if composite_help_contains_flag phone "${flags[@]}"; then
+        INCLUDE_PHONE=true
+    fi
+    if composite_help_contains_flag email "${flags[@]}"; then
+        INCLUDE_EMAIL=true
+    fi
+    
+    lsrlist create headers
+
+    if [[ $INCLUDE_IDENTIFIER == true ]]; then
+        lsrlist append headers "Identifier"
+    fi
+    if [[ $INCLUDE_FULLNAME == true ]]; then
+        lsrlist append headers "Full name"
+    fi
+    if [[ $INCLUDE_ALIASES == true ]]; then
+        lsrlist append headers "Aliases"
+    fi
+    if [[ $INCLUDE_INITIALS == true ]]; then
+        lsrlist append headers "Initials"
+    fi
+    if [[ $INCLUDE_PHONE == true ]]; then
+        lsrlist append headers "Phone"
+    fi
+    if [[ $INCLUDE_EMAIL == true ]]; then
+        lsrlist append headers "Email"
+    fi
 
     users=$(localsettings_get .gitusers)
-    headers='Index,Identifier,Full name,Aliases'
     rows=()
 
     index=0
     while IFS= read -r user; do
-        fullname="$(lsget .gitusers.$user.fullname)"
-        aliases="$(lseval ".gitusers.$user.aliases | join(\"\\,\")")"
+        lsrlist create newRow
 
-        rows+=("$index,$user,$fullname,$aliases")
-        # # Increment the index
+        if [[ $INCLUDE_IDENTIFIER == true ]]; then
+            lsrlist append newRow "$user"
+        fi
+        if [[ $INCLUDE_FULLNAME == true ]]; then
+            local fullname="$(lsget .gitusers.$user.fullname)"
+            lsrlist append newRow "$fullname"
+        fi
+        if [[ $INCLUDE_ALIASES == true ]]; then
+            local aliases="$(lseval ".gitusers.$user.aliases | join(\"\\,\")")"
+            lsrlist append newRow "$aliases"
+        fi
+        if [[ $INCLUDE_INITIALS == true ]]; then
+            local initials="$(lseval ".gitusers.$user.initials // \" \"")"
+            lsrlist append newRow "$initials"
+        fi
+        if [[ $INCLUDE_PHONE == true ]]; then
+            local phone="$(lseval ".gitusers.$user.phone // \" \"")"
+            lsrlist append newRow "$phone"
+        fi
+        if [[ $INCLUDE_EMAIL == true ]]; then
+            local email="$(lseval ".gitusers.$user.email // \" \"")"
+            lsrlist append newRow "$email"
+        fi
+
+        rows+=("$newRow")
         ((index++))
     done <<< "$(lseval ".gitusers | to_entries | .[] | .key")"
 
@@ -3411,8 +3565,56 @@ git_users_unset_alias() {
 
     localsettings_reformat
 }
+
+git_users_set_initials() {
+    local identifier=$(prompt_if_not_exists "Identifier" $1)
+
+    # Attempt get, if already exists, error
+    local getResult=$(localsettings_eval ".gitusers.\"$identifier\"")
+    if [[ "$getResult" == "null" ]]; then
+        print_error "Git user with identifier $identifier does not exist"
+        return 1
+    fi
+
+    local initials=$(prompt_if_not_exists "Initials" $2)
+    localsettings_eval_with_save ".gitusers.\"$identifier\".initials = \"$initials\""
+    print_success "Updated initials for gituser '$identifier'"
+    localsettings_reformat
+}
+
+git_users_set_phone() {
+    local identifier=$(prompt_if_not_exists "Identifier" $1)
+
+    # Attempt get, if already exists, error
+    local getResult=$(localsettings_eval ".gitusers.\"$identifier\"")
+    if [[ "$getResult" == "null" ]]; then
+        print_error "Git user with identifier $identifier does not exist"
+        return 1
+    fi
+
+    local phone=$(prompt_if_not_exists "phone" $2)
+    localsettings_eval_with_save ".gitusers.\"$identifier\".phone = \"$phone\""
+    print_success "Updated phone for gituser '$identifier'"
+    localsettings_reformat
+}
+
+git_users_set_email() {
+    local identifier=$(prompt_if_not_exists "Identifier" $1)
+
+    # Attempt get, if already exists, error
+    local getResult=$(localsettings_eval ".gitusers.\"$identifier\"")
+    if [[ "$getResult" == "null" ]]; then
+        print_error "Git user with identifier $identifier does not exist"
+        return 1
+    fi
+
+    local email=$(prompt_if_not_exists "email" $2)
+    localsettings_eval_with_save ".gitusers.\"$identifier\".email = \"$email\""
+    print_success "Updated email for gituser '$identifier'"
+    localsettings_reformat
+}
 ####################################################
-# Start of LSR module #20                          #
+# Start of LSR module #21                          #
 # Injected LSR module: composites/git/branches.sh  #
 # Number of lines: 154                             #
 # Filesize: 4.51 KB                                #
@@ -3573,10 +3775,10 @@ git_branches_list() {
     git branch --all --no-color
 }
 ########################################################
-# Start of LSR module #21                              #
+# Start of LSR module #22                              #
 # Injected LSR module: composites/settings/profile.sh  #
-# Number of lines: 140                                 #
-# Filesize: 4.01 KB                                    #
+# Number of lines: 159                                 #
+# Filesize: 4.54 KB                                    #
 ########################################################
 local_settings_file="$HOME/scripts/local_data/local_settings.yml"
 local_settings_dir="$(dirname "$local_settings_file")"
@@ -3611,6 +3813,8 @@ profile_main_command() {
         profile_load $@
     elif is_in_list "$command" "save"; then
         profile_save $@
+    elif is_in_list "$command" "edit"; then
+        profile_edit $@
     elif is_in_list "$command" "delete"; then
         profile_delete $@
     else
@@ -3691,6 +3895,23 @@ profile_save() {
     # Save it
     cp "$local_settings_dir/local_settings.yml" "$local_settings_dir/local_settings.$profile.yml"
     print_success "Saved current profile to local_settings.$profile.yml"
+}
+
+profile_edit() {
+    # Get the profile name
+    if [ "$#" -ne 1 ]; then
+        echo "Usage: profile save <identifier>"
+        return 1  # Return an error code
+    fi
+    local profile=$1
+    echo "profile => $local_settings_dir/local_settings.$profile.yml"
+
+    if [[ ! -f "$local_settings_dir/local_settings.$profile.yml" ]]; then
+        print_error "Profile '$profile' does not exist"
+        return 1
+    fi
+
+    nano "$local_settings_dir/local_settings.$profile.yml"
 }
 
 profile_list() {

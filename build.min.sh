@@ -1616,17 +1616,18 @@ command_not_found_handle() {
     if [[ -f "./$cmd.sh" ]]; then # Run the script
         print_info "Running script $cmd.sh"
         bash "./$cmd.sh" "${@:2}"
-    
-    elif [[ -f "./$cmd.sh" ]]; then # Run the script
-        print_info "Running script $cmd.py"
-        python3 "./$cmd.py" "${@:2}"
     elif [[ -f "./scripts/$cmd.sh" ]]; then
         print_info "Running script $cmd.sh"
         bash "./scripts/$cmd.sh" "${@:2}"
-    
+    elif [[ -f "./$cmd.py" ]]; then
+        print_info "Running script $cmd.py"
+        python3 "./$cmd.py" "${@:2}"
     elif [[ -f "./scripts/$cmd.py" ]]; then
         print_info "Running script $cmd.py"
         python3 "./scripts/$cmd.py" "${@:2}"
+    elif [[ -f "./scripts/$cmd.js" ]]; then
+        print_info "Node script $cmd.js"
+        node "./scripts/$cmd.js" "${@:2}"
     elif [[ -f "./package.json" && "$(grep \"$cmd\": package.json)" != "" ]]; then
         print_info "Running NPM script '$cmd'"
         npm run $cmd --silent
@@ -1670,7 +1671,7 @@ select_scripts() {
     $value
 }
 scripts() {
-    if [[ $(find . -name "*.sh" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || $(find ./scripts -wholename "*.sh" -print -quit) ]]; then
         echo "Bash scripts:"
     fi
     for file in ./*.sh; do
@@ -1687,10 +1688,10 @@ scripts() {
             echo " - $basename"
         fi
     done
-    if [[ $(find . -name "*.sh" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || $(find ./scripts -wholename "*.sh" -print -quit) ]]; then
         echo ""
     fi
-    if [[ $(find . -name "*.py" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || $(find ./scripts -wholename "*.py" -print -quit) ]]; then
         echo "Python scripts:"
     fi
     for file in ./*.py; do
@@ -1707,7 +1708,27 @@ scripts() {
             echo " - $basename"
         fi
     done
-    if [[ $(find . -name "*.py" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || $(find ./scripts -wholename "*.py" -print -quit) ]]; then
+        echo ""
+    fi
+    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit) || $(find ./scripts -wholename "*.js" -print -quit) ]]; then
+        echo "Node scripts:"
+    fi
+    for file in ./*.js; do
+        filename="${file##*/}"      # Remove the ./scripts/ prefix
+        basename="${filename%.js}"  # Remove the .js suffix
+        if [[ "$basename" != "*" ]]; then
+            echo "- $basename"
+        fi
+    done
+    for file in ./scripts/*.js; do
+        filename="${file##*/}"      # Remove the ./scripts/ prefix
+        basename="${filename%.js}"  # Remove the .py suffix
+        if [[ "$basename" != "*" ]]; then
+            echo " - $basename"
+        fi
+    done
+    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit) || $(find ./scripts -wholename "*.js" -print -quit) ]]; then
         echo ""
     fi
     if [[ -f "./package.json" ]]; then
@@ -1999,6 +2020,7 @@ scripts_to_compile=(
     "cfind"
     "compile"
     "remotelog"
+    "composites/utils/list"
     "composites/docker/dock"
     "composites/git/gitusers"
     "composites/git/branches"
@@ -2149,6 +2171,40 @@ remotelog() {
     NGROK_URL=$(grep 'https://[a-z0-9\-]*.ngrok-free.app' $LOG_FILE | awk -F"url=" '{print $2}' | awk '{print $1}')
     echo "Your ngrok URL is: $NGROK_URL"
     start_remote_log_catcher_server $port $NGROK_URL
+}
+lsrlist() {
+    if [ ! "$#" -gt 0 ]; then
+        echo "usage: "
+        echo "  - lsrlist create <listname>"
+        echo "  - lsrlist append <listname> <item>"
+        echo "  - lsrlist index <listname> <index>"
+        return 0
+    fi
+    local command=$1
+    local -n list_ref=$2
+    shift
+    shift
+    if is_in_list "$command" "create"; then
+        lsrlist_create list_ref $@
+    elif is_in_list "$command" "append"; then
+        lsrlist_append list_ref "$@"
+    else
+        print_error "Command $command does not exist"
+        lsrlist # Re-run for help command
+    fi
+}
+lsrlist_append() {
+    local -n list=$1
+    local value="$2"
+    if [[ "$list" == "" ]]; then
+        list="$value"
+    else
+        list+=",$value"
+    fi
+}
+lsrlist_create() {
+    local -n list=$1
+    list=""
 }
 LIGHT_GREEN='\033[1;32m'
 RED='\033[0;31m'
@@ -2307,6 +2363,9 @@ git_users_main_command() {
         echo "  - gitusers del <identifier>"
         echo "  - gitusers alias <identifier> <alias>"
         echo "  - gitusers unlias <identifier> <alias>"
+        echo "  - gitusers set-initials <identifier> <initials>"
+        echo "  - gitusers set-email <identifier> <initials>"
+        echo "  - gitusers set-phone <identifier> <initials>"
         return 0
     fi
     local command=$1
@@ -2323,20 +2382,87 @@ git_users_main_command() {
         git_users_set_alias $@
     elif is_in_list "$command" "del-alias,rem-alias,delete-alias,remove-alias,unalias"; then
         git_users_unset_alias $@
+    elif is_in_list "$command" "set-initials"; then
+        git_users_set_initials $@
+    elif is_in_list "$command" "set-email"; then
+        git_users_set_email $@
+    elif is_in_list "$command" "set-phone"; then
+        git_users_set_phone $@
     else
         print_error "Command $command does not exist"
         git_users_main_command # Re-run for help command
     fi
 }
 git_users_list() {
+    eval "flags=($(composite_help_get_flags "$@"))"
+    local INCLUDE_IDENTIFIER=true
+    local INCLUDE_FULLNAME=true
+    local INCLUDE_ALIASES=false
+    local INCLUDE_INITIALS=false
+    local INCLUDE_PHONE=false
+    local INCLUDE_EMAIL=false
+    
+    if composite_help_contains_flag aliases "${flags[@]}"; then
+        INCLUDE_ALIASES=true
+    fi
+    if composite_help_contains_flag initials "${flags[@]}"; then
+        INCLUDE_INITIALS=true
+    fi
+    if composite_help_contains_flag phone "${flags[@]}"; then
+        INCLUDE_PHONE=true
+    fi
+    if composite_help_contains_flag email "${flags[@]}"; then
+        INCLUDE_EMAIL=true
+    fi
+    
+    lsrlist create headers
+    if [[ $INCLUDE_IDENTIFIER == true ]]; then
+        lsrlist append headers "Identifier"
+    fi
+    if [[ $INCLUDE_FULLNAME == true ]]; then
+        lsrlist append headers "Full name"
+    fi
+    if [[ $INCLUDE_ALIASES == true ]]; then
+        lsrlist append headers "Aliases"
+    fi
+    if [[ $INCLUDE_INITIALS == true ]]; then
+        lsrlist append headers "Initials"
+    fi
+    if [[ $INCLUDE_PHONE == true ]]; then
+        lsrlist append headers "Phone"
+    fi
+    if [[ $INCLUDE_EMAIL == true ]]; then
+        lsrlist append headers "Email"
+    fi
     users=$(localsettings_get .gitusers)
-    headers='Index,Identifier,Full name,Aliases'
     rows=()
     index=0
     while IFS= read -r user; do
-        fullname="$(lsget .gitusers.$user.fullname)"
-        aliases="$(lseval ".gitusers.$user.aliases | join(\"\\,\")")"
-        rows+=("$index,$user,$fullname,$aliases")
+        lsrlist create newRow
+        if [[ $INCLUDE_IDENTIFIER == true ]]; then
+            lsrlist append newRow "$user"
+        fi
+        if [[ $INCLUDE_FULLNAME == true ]]; then
+            local fullname="$(lsget .gitusers.$user.fullname)"
+            lsrlist append newRow "$fullname"
+        fi
+        if [[ $INCLUDE_ALIASES == true ]]; then
+            local aliases="$(lseval ".gitusers.$user.aliases | join(\"\\,\")")"
+            lsrlist append newRow "$aliases"
+        fi
+        if [[ $INCLUDE_INITIALS == true ]]; then
+            local initials="$(lseval ".gitusers.$user.initials // \" \"")"
+            lsrlist append newRow "$initials"
+        fi
+        if [[ $INCLUDE_PHONE == true ]]; then
+            local phone="$(lseval ".gitusers.$user.phone // \" \"")"
+            lsrlist append newRow "$phone"
+        fi
+        if [[ $INCLUDE_EMAIL == true ]]; then
+            local email="$(lseval ".gitusers.$user.email // \" \"")"
+            lsrlist append newRow "$email"
+        fi
+        rows+=("$newRow")
         ((index++))
     done <<< "$(lseval ".gitusers | to_entries | .[] | .key")"
     table "$headers" "${rows[@]}"
@@ -2397,6 +2523,42 @@ git_users_unset_alias() {
     local alias=$(prompt_if_not_exists "Alias" $2)
     localsettings_eval_with_save "del(.gitusers.\"$identifier\".aliases[] | select(. == \"$alias\"))"
     print_success "Deleted alias '$alias' to gituser '$identifier'"
+    localsettings_reformat
+}
+git_users_set_initials() {
+    local identifier=$(prompt_if_not_exists "Identifier" $1)
+    local getResult=$(localsettings_eval ".gitusers.\"$identifier\"")
+    if [[ "$getResult" == "null" ]]; then
+        print_error "Git user with identifier $identifier does not exist"
+        return 1
+    fi
+    local initials=$(prompt_if_not_exists "Initials" $2)
+    localsettings_eval_with_save ".gitusers.\"$identifier\".initials = \"$initials\""
+    print_success "Updated initials for gituser '$identifier'"
+    localsettings_reformat
+}
+git_users_set_phone() {
+    local identifier=$(prompt_if_not_exists "Identifier" $1)
+    local getResult=$(localsettings_eval ".gitusers.\"$identifier\"")
+    if [[ "$getResult" == "null" ]]; then
+        print_error "Git user with identifier $identifier does not exist"
+        return 1
+    fi
+    local phone=$(prompt_if_not_exists "phone" $2)
+    localsettings_eval_with_save ".gitusers.\"$identifier\".phone = \"$phone\""
+    print_success "Updated phone for gituser '$identifier'"
+    localsettings_reformat
+}
+git_users_set_email() {
+    local identifier=$(prompt_if_not_exists "Identifier" $1)
+    local getResult=$(localsettings_eval ".gitusers.\"$identifier\"")
+    if [[ "$getResult" == "null" ]]; then
+        print_error "Git user with identifier $identifier does not exist"
+        return 1
+    fi
+    local email=$(prompt_if_not_exists "email" $2)
+    localsettings_eval_with_save ".gitusers.\"$identifier\".email = \"$email\""
+    print_success "Updated email for gituser '$identifier'"
     localsettings_reformat
 }
 alias branches="git_branches_main_command"
@@ -2546,6 +2708,8 @@ profile_main_command() {
         profile_load $@
     elif is_in_list "$command" "save"; then
         profile_save $@
+    elif is_in_list "$command" "edit"; then
+        profile_edit $@
     elif is_in_list "$command" "delete"; then
         profile_delete $@
     else
@@ -2603,6 +2767,19 @@ profile_save() {
     fi
     cp "$local_settings_dir/local_settings.yml" "$local_settings_dir/local_settings.$profile.yml"
     print_success "Saved current profile to local_settings.$profile.yml"
+}
+profile_edit() {
+    if [ "$#" -ne 1 ]; then
+        echo "Usage: profile save <identifier>"
+        return 1  # Return an error code
+    fi
+    local profile=$1
+    echo "profile => $local_settings_dir/local_settings.$profile.yml"
+    if [[ ! -f "$local_settings_dir/local_settings.$profile.yml" ]]; then
+        print_error "Profile '$profile' does not exist"
+        return 1
+    fi
+    nano "$local_settings_dir/local_settings.$profile.yml"
 }
 profile_list() {
     echo "Profiles: "
