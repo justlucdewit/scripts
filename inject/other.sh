@@ -603,3 +603,58 @@ time_until_live() {
         sleep 1
     done
 }
+
+alias e=exp
+alias eg="exp --go"
+
+exp() {
+    local initial_dir="$(pwd)"
+    eval "flags=($(composite_help_get_flags "$@"))"
+
+    local go=false
+    if composite_help_contains_flag go "${flags[@]}"; then
+        go=true
+    fi
+
+    while true; do
+        lsrlist create dir_items
+        lsrlist append dir_items "."
+        lsrlist append dir_items ".."
+
+        # Add folders
+        for item in *; do
+            if [ -d "$item" ]; then
+                lsrlist append dir_items "/$item/"
+            fi
+        done
+
+        # Add files
+        for item in *; do
+            if [ -f "$item" ]; then
+                lsrlist append dir_items "$item"
+            fi
+        done
+        
+        selectable_list "$(pwd)" value "$dir_items"
+
+        if [[ "$value" == "." ]]; then
+            break;
+        fi
+
+        if [[ "$value" == ".." ]]; then
+            cd ..;
+        fi
+
+        if [[ -f "./$value" ]]; then
+            cat "./$value"
+            echo ""
+            break
+        fi
+
+        cd ".$value"
+    done
+    
+    if [[ $go != true ]]; then
+        cd "$initial_dir"
+    fi
+}
