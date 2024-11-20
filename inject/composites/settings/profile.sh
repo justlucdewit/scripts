@@ -31,6 +31,8 @@ profile_main_command() {
         profile_load $@
     elif is_in_list "$command" "save"; then
         profile_save $@
+    elif is_in_list "$command" "edit"; then
+        profile_edit $@
     elif is_in_list "$command" "delete"; then
         profile_delete $@
     else
@@ -111,6 +113,23 @@ profile_save() {
     # Save it
     cp "$local_settings_dir/local_settings.yml" "$local_settings_dir/local_settings.$profile.yml"
     print_success "Saved current profile to local_settings.$profile.yml"
+}
+
+profile_edit() {
+    # Get the profile name
+    if [ "$#" -ne 1 ]; then
+        echo "Usage: profile save <identifier>"
+        return 1  # Return an error code
+    fi
+    local profile=$1
+    echo "profile => $local_settings_dir/local_settings.$profile.yml"
+
+    if [[ ! -f "$local_settings_dir/local_settings.$profile.yml" ]]; then
+        print_error "Profile '$profile' does not exist"
+        return 1
+    fi
+
+    nano "$local_settings_dir/local_settings.$profile.yml"
 }
 
 profile_list() {
