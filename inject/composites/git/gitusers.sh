@@ -11,6 +11,9 @@ git_users_main_command() {
         echo "  - gitusers del <identifier>"
         echo "  - gitusers alias <identifier> <alias>"
         echo "  - gitusers unlias <identifier> <alias>"
+        echo "  - gitusers set-initials <identifier> <initials>"
+        echo "  - gitusers set-email <identifier> <initials>"
+        echo "  - gitusers set-phone <identifier> <initials>"
         return 0
     fi
 
@@ -29,6 +32,8 @@ git_users_main_command() {
         git_users_set_alias $@
     elif is_in_list "$command" "del-alias,rem-alias,delete-alias,remove-alias,unalias"; then
         git_users_unset_alias $@
+    elif is_in_list "$command" "set-initials"; then
+        git_users_set_initials $@
     else
         print_error "Command $command does not exist"
         git_users_main_command # Re-run for help command
@@ -141,5 +146,21 @@ git_users_unset_alias() {
 
     print_success "Deleted alias '$alias' to gituser '$identifier'"
 
+    localsettings_reformat
+}
+
+git_users_set_initials() {
+    local identifier=$(prompt_if_not_exists "Identifier" $1)
+
+    # Attempt get, if already exists, error
+    local getResult=$(localsettings_eval ".gitusers.\"$identifier\"")
+    if [[ "$getResult" == "null" ]]; then
+        print_error "Git user with identifier $identifier does not exist"
+        return 1
+    fi
+
+    local initials=$(prompt_if_not_exists "Initials" $2)
+    localsettings_eval_with_save ".gitusers.\"$identifier\".initials = \"$initials\""
+    print_success "Updated initials for gituser '$identifier'"
     localsettings_reformat
 }
