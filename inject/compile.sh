@@ -4,6 +4,7 @@ source "$HOME/scripts/helpers.sh"
 scripts_to_compile=(
     "../helpers"
     "requirementCheck"
+    "startup"
     "composites/helpers"
     "git_helpers"
     "tmux_helpers"
