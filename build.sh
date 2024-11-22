@@ -1,5 +1,5 @@
 # LSR v1.1
-# Local build (16:28 20/11/2024)
+# Local build (11:42 22/11/2024)
 # Includes LSR modules:
 # - /home/luc/scripts/inject/../helpers.sh
 # - /home/luc/scripts/inject/requirementCheck.sh
@@ -2221,10 +2221,10 @@ work() {
 ##################################
 # Start of LSR module #15        #
 # Injected LSR module: other.sh  #
-# Number of lines: 660           #
-# Filesize: 21.03 KB             #
+# Number of lines: 719           #
+# Filesize: 22.90 KB             #
 ##################################
-LIGHT_GREEN='\033[1;32m'
+jjjjLIGHT_GREEN='\033[1;32m'
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
@@ -2342,6 +2342,7 @@ command_not_found_handle() {
     cmd="$1"
 
     # When command is not found, fallback on scripts
+    # If the script name starts with an underscore, it is hidden and thus not listed nor callable
     # Location Priority:
     #   - In current directory
     #   - In ./_lsr_scripts folder
@@ -2353,66 +2354,77 @@ command_not_found_handle() {
     #   - npm scripts
     
     # Run the bash script if it exists
-    if [[ -f "./$cmd.sh" ]]; then # Run the script
-        print_info "Running script $cmd.sh"
-        bash "./$cmd.sh" "${@:2}"
+    if [[ $cmd != _* ]]; then
+        if [[ -f "./$cmd.sh" ]]; then # Run the script
+            print_info "Running script $cmd.sh"
+            bash "./$cmd.sh" "${@:2}"
+            return
 
-    # Run the /_lsr_scripts/ bash script if it exists
-    elif [[ -f "./_lsr_scripts/$cmd.sh" ]]; then
-        print_info "Running script $cmd.sh"
-        bash "./_lsr_scripts/$cmd.sh" "${@:2}"
+        # Run the /_lsr_scripts/ bash script if it exists
+        elif [[ -d "./_lsr_scripts" && -f "./_lsr_scripts/$cmd.sh" ]]; then
+            print_info "Running script $cmd.sh"
+            bash "./_lsr_scripts/$cmd.sh" "${@:2}"
+            return
 
-    # Run the /scripts/ bash script if it exists
-    elif [[ -f "./scripts/$cmd.sh" ]]; then
-        print_info "Running script $cmd.sh"
-        bash "./scripts/$cmd.sh" "${@:2}"
+        # Run the /scripts/ bash script if it exists
+        elif [[ -d "./scripts" && -f "./scripts/$cmd.sh" ]]; then
+            print_info "Running script $cmd.sh"
+            bash "./scripts/$cmd.sh" "${@:2}"
+            return
 
-    # Run the python script if it exists
-    elif [[ -f "./$cmd.py" ]]; then
-        print_info "Running script $cmd.py"
-        python3 "./$cmd.py" "${@:2}"
+        # Run the python script if it exists
+        elif [[ -f "./$cmd.py" ]]; then
+            print_info "Running script $cmd.py"
+            python3 "./$cmd.py" "${@:2}"
+            return
 
-    # Run the /_lsr_scripts/ python script if it exists
-    elif [[ -f "./_lsr_scripts/$cmd.py" ]]; then
-        print_info "Running script $cmd.py"
-        python3 "./_lsr_scripts/$cmd.py" "${@:2}"
+        # Run the /_lsr_scripts/ python script if it exists
+        elif [[ -d "./_lsr_scripts" && -f "./_lsr_scripts/$cmd.py" ]]; then
+            print_info "Running script $cmd.py"
+            python3 "./_lsr_scripts/$cmd.py" "${@:2}"
+            return
 
-    # Run the /scripts/ python script if it exists
-    elif [[ -f "./scripts/$cmd.py" ]]; then
-        print_info "Running script $cmd.py"
-        python3 "./scripts/$cmd.py" "${@:2}"
+        # Run the /scripts/ python script if it exists
+        elif [[ -d "./scripts" && -f "./scripts/$cmd.py" ]]; then
+            print_info "Running script $cmd.py"
+            python3 "./scripts/$cmd.py" "${@:2}"
+            return
 
-    # Run the js script if it exists
-    elif [[ -f "./$cmd.js" ]]; then
-        print_info "Node script $cmd.js"
-        node "./$cmd.js" "${@:2}"
+        # Run the js script if it exists
+        elif [[ -f "./$cmd.js" ]]; then
+            print_info "Node script $cmd.js"
+            node "./$cmd.js" "${@:2}"
+            return
 
-    # Run the /_lsr_scripts/ js script if it exists
-    elif [[ -f "./_lsr_scripts/$cmd.js" ]]; then
-        print_info "Node script $cmd.js"
-        node "./_lsr_scripts/$cmd.js" "${@:2}"
+        # Run the /_lsr_scripts/ js script if it exists
+        elif [[ -d "./_lsr_scripts" && -f "./_lsr_scripts/$cmd.js" ]]; then
+            print_info "Node script $cmd.js"
+            node "./_lsr_scripts/$cmd.js" "${@:2}"
+            return
 
-    # Run the /scripts/ js script if it exists
-    elif [[ -f "./scripts/$cmd.js" ]]; then
-        print_info "Node script $cmd.js"
-        node "./scripts/$cmd.js" "${@:2}"
+        # Run the /scripts/ js script if it exists
+        elif [[ -d "./scripts" && -f "./scripts/$cmd.js" ]]; then
+            print_info "Node script $cmd.js"
+            node "./scripts/$cmd.js" "${@:2}"
+            return
 
-    # Run the script from the npm folder if it exists
-    elif [[ -f "./package.json" && "$(grep \"$cmd\": package.json)" != "" ]]; then
-        print_info "Running NPM script '$cmd'"
-        npm run $cmd --silent
+        # Run the script from the npm folder if it exists
+        elif [[ -f "./package.json" && "$(grep \"$cmd\": package.json)" != "" ]]; then
+            print_info "Running NPM script '$cmd'"
+            npm run $cmd --silent
+            return
+        fi
+    fi
 
     # Command was not found
+    suggestions=$(compgen -c "$cmd" | head -n 5)
+    if [[ -n "$suggestions" ]]; then
+        echo "bash: $cmd: command not found. Did you mean one of these?"
+        echo " - $suggestions" | while read -r suggestion; do echo "  $suggestion"; done
     else
-        suggestions=$(compgen -c "$cmd" | head -n 5)
-        if [[ -n "$suggestions" ]]; then
-            echo "bash: $cmd: command not found. Did you mean one of these?"
-            echo " - $suggestions" | while read -r suggestion; do echo "  $suggestion"; done
-        else
-            echo "bash: $cmd: command not found"
-        fi
-        return 127
+        echo "bash: $cmd: command not found"
     fi
+    return 127
 }
 
 packages() {
@@ -2454,19 +2466,20 @@ select_scripts() {
     $value
 }
 
-# Finds scripts to fall back on, in either the current dir, or the ./scripts/ dir
+# Finds scripts to fall back on, in either the current dir, or the ./scripts/ or the ./_lsr_scripts dir.
+# If the script name starts with an underscore, it is hidden and thus not listed nor callable
 # - bash scripts
 # - python scripts
 # - nodejs scripts
 scripts() {
-    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || $(find ./scripts -wholename "*.sh" -print -quit) || $(find ./_lsr_scripts -wholename "*.sh" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || ( -d ./scripts && $(find ./scripts -wholename "*.sh" -print -quit) ) || ( -d ./_lsr_scripts && $(find ./_lsr_scripts -wholename "*.sh" -print -quit)) ]]; then
         echo "Bash scripts:"
     fi
     for file in ./*.sh; do
         filename="${file##*/}"      # Remove the ./ prefix
         basename="${filename%.sh}"  # Remove the .sh suffix
 
-        if [[ "$basename" != "*" ]]; then
+        if [[ "$basename" != "*" && $basename != _* ]]; then
             echo " - $basename"
         fi
     done
@@ -2474,7 +2487,7 @@ scripts() {
         filename="${file##*/}"      # Remove the ./ prefix
         basename="${filename%.sh}"  # Remove the .sh suffix
 
-        if [[ "$basename" != "*" ]]; then
+        if [[ "$basename" != "*"  && $basename != _* ]]; then
             echo " - $basename"
         fi
     done
@@ -2482,22 +2495,22 @@ scripts() {
         filename="${file##*/}"      # Remove the ./ prefix
         basename="${filename%.sh}"  # Remove the .sh suffix
 
-        if [[ "$basename" != "*" ]]; then
+        if [[ "$basename" != "*"  && $basename != _* ]]; then
             echo " - $basename"
         fi
     done
-    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || $(find ./scripts -wholename "*.sh" -print -quit) || $(find ./_lsr_scripts -wholename "*.sh" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || ( -d ./scripts && $(find ./scripts -wholename "*.sh" -print -quit) ) || ( -d ./_lsr_scripts && $(find ./_lsr_scripts -wholename "*.sh" -print -quit)) ]]; then
         echo ""
     fi
 
-    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || $(find ./scripts -wholename "*.py" -print -quit) || $(find ./_lsr_scripts -wholename "*.py" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || ( -d ./scripts && $(find ./scripts -wholename "*.py" -print -quit) ) || ( -d ./_lsr_scripts && $(find ./_lsr_scripts -wholename "*.py" -print -quit)) ]]; then
         echo "Python scripts:"
     fi
     for file in ./*.py; do
         filename="${file##*/}"      # Remove the ./scripts/ prefix
         basename="${filename%.py}"  # Remove the .py suffix
 
-        if [[ "$basename" != "*" ]]; then
+        if [[ "$basename" != "*"  && $basename != _* ]]; then
             echo "- $basename"
         fi
     done
@@ -2505,22 +2518,22 @@ scripts() {
         filename="${file##*/}"      # Remove the ./scripts/ prefix
         basename="${filename%.py}"  # Remove the .py suffix
 
-        if [[ "$basename" != "*" ]]; then
+        if [[ "$basename" != "*"  && $basename != _* ]]; then
             echo " - $basename"
         fi
     done
-    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || $(find ./scripts -wholename "*.py" -print -quit) || $(find ./_lsr_scripts -wholename "*.py" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || ( -d ./scripts && $(find ./scripts -wholename "*.py" -print -quit) ) || ( -d ./_lsr_scripts && $(find ./_lsr_scripts -wholename "*.py" -print -quit)) ]]; then
         echo ""
     fi
 
-    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit) || $(find ./scripts -wholename "*.js" -print -quit) || $(find ./_lsr_scripts -wholename "*.js" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit) || ( -d ./scripts && $(find ./scripts -wholename "*js" -print -quit) ) || ( -d ./_lsr_scripts && $(find ./_lsr_scripts -wholename "*.js" -print -quit)) ]]; then
         echo "Node scripts:"
     fi
     for file in ./*.js; do
         filename="${file##*/}"      # Remove the ./scripts/ prefix
         basename="${filename%.js}"  # Remove the .js suffix
 
-        if [[ "$basename" != "*" ]]; then
+        if [[ "$basename" != "*"  && $basename != _* ]]; then
             echo "- $basename"
         fi
     done
@@ -2528,11 +2541,11 @@ scripts() {
         filename="${file##*/}"      # Remove the ./scripts/ prefix
         basename="${filename%.js}"  # Remove the .py suffix
 
-        if [[ "$basename" != "*" ]]; then
+        if [[ "$basename" != "*"  && $basename != _* ]]; then
             echo " - $basename"
         fi
     done
-    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit) || $(find ./scripts -wholename "*.js" -print -quit) || $(find ./_lsr_scripts -wholename "*.js" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit)  || ( -d ./scripts && $(find ./scripts -wholename "*.js" -print -quit) ) || ( -d ./_lsr_scripts && $(find ./_lsr_scripts -wholename "*.js" -print -quit)) ]]; then
         echo ""
     fi
 
@@ -2884,6 +2897,52 @@ exp() {
         cd "$initial_dir"
     fi
 }
+
+copy() {
+    local pathToCopy="."
+    
+    if [ "$#" -gt 0 ]; then
+        pathToCopy="$1"
+    fi
+    
+    clear-copy
+    mkdir -p "$HOME/.copy"
+
+    # Check if the given path is the current directory
+    if [ "$pathToCopy" = "." ]; then
+        # If it's the current directory, copy the contents
+        cp -r * "$HOME/.copy"
+    else
+        cp -r "$pathToCopy" "$HOME/.copy"
+    fi
+}
+
+clear-copy() {
+    rm -rf "$HOME/.copy"
+}
+
+cut() {
+    local pathToCut="."
+    if [ ! "$#" -gt 0 ]; then
+        pathToCut="."
+    fi
+
+    copy "$pathToCut"
+    rm -rf "$pathToCut"
+}
+
+paste() {
+    local target="."
+    if [ "$#" -gt 0 ]; then
+        target="$1"
+    fi
+
+    # Ensure both hidden and non-hidden files are copied
+    cp -r "$HOME/.copy"/* "$target"
+    cp -r "$HOME/.copy"/.* "$target" 2>/dev/null
+}
+
+alias lg="lazygit"
 
 ##################################
 # Start of LSR module #16        #

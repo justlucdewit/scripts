@@ -1538,7 +1538,7 @@ work() {
     done
     cd "$original_pwd"
 }
-LIGHT_GREEN='\033[1;32m'
+jjjjLIGHT_GREEN='\033[1;32m'
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
@@ -1629,46 +1629,57 @@ PROMPT_COMMAND=do_before_prompt
 command_not_found_handle() {
     cmd="$1"
     
-    if [[ -f "./$cmd.sh" ]]; then # Run the script
-        print_info "Running script $cmd.sh"
-        bash "./$cmd.sh" "${@:2}"
-    elif [[ -f "./_lsr_scripts/$cmd.sh" ]]; then
-        print_info "Running script $cmd.sh"
-        bash "./_lsr_scripts/$cmd.sh" "${@:2}"
-    elif [[ -f "./scripts/$cmd.sh" ]]; then
-        print_info "Running script $cmd.sh"
-        bash "./scripts/$cmd.sh" "${@:2}"
-    elif [[ -f "./$cmd.py" ]]; then
-        print_info "Running script $cmd.py"
-        python3 "./$cmd.py" "${@:2}"
-    elif [[ -f "./_lsr_scripts/$cmd.py" ]]; then
-        print_info "Running script $cmd.py"
-        python3 "./_lsr_scripts/$cmd.py" "${@:2}"
-    elif [[ -f "./scripts/$cmd.py" ]]; then
-        print_info "Running script $cmd.py"
-        python3 "./scripts/$cmd.py" "${@:2}"
-    elif [[ -f "./$cmd.js" ]]; then
-        print_info "Node script $cmd.js"
-        node "./$cmd.js" "${@:2}"
-    elif [[ -f "./_lsr_scripts/$cmd.js" ]]; then
-        print_info "Node script $cmd.js"
-        node "./_lsr_scripts/$cmd.js" "${@:2}"
-    elif [[ -f "./scripts/$cmd.js" ]]; then
-        print_info "Node script $cmd.js"
-        node "./scripts/$cmd.js" "${@:2}"
-    elif [[ -f "./package.json" && "$(grep \"$cmd\": package.json)" != "" ]]; then
-        print_info "Running NPM script '$cmd'"
-        npm run $cmd --silent
-    else
-        suggestions=$(compgen -c "$cmd" | head -n 5)
-        if [[ -n "$suggestions" ]]; then
-            echo "bash: $cmd: command not found. Did you mean one of these?"
-            echo " - $suggestions" | while read -r suggestion; do echo "  $suggestion"; done
-        else
-            echo "bash: $cmd: command not found"
+    if [[ $cmd != _* ]]; then
+        if [[ -f "./$cmd.sh" ]]; then # Run the script
+            print_info "Running script $cmd.sh"
+            bash "./$cmd.sh" "${@:2}"
+            return
+        elif [[ -d "./_lsr_scripts" && -f "./_lsr_scripts/$cmd.sh" ]]; then
+            print_info "Running script $cmd.sh"
+            bash "./_lsr_scripts/$cmd.sh" "${@:2}"
+            return
+        elif [[ -d "./scripts" && -f "./scripts/$cmd.sh" ]]; then
+            print_info "Running script $cmd.sh"
+            bash "./scripts/$cmd.sh" "${@:2}"
+            return
+        elif [[ -f "./$cmd.py" ]]; then
+            print_info "Running script $cmd.py"
+            python3 "./$cmd.py" "${@:2}"
+            return
+        elif [[ -d "./_lsr_scripts" && -f "./_lsr_scripts/$cmd.py" ]]; then
+            print_info "Running script $cmd.py"
+            python3 "./_lsr_scripts/$cmd.py" "${@:2}"
+            return
+        elif [[ -d "./scripts" && -f "./scripts/$cmd.py" ]]; then
+            print_info "Running script $cmd.py"
+            python3 "./scripts/$cmd.py" "${@:2}"
+            return
+        elif [[ -f "./$cmd.js" ]]; then
+            print_info "Node script $cmd.js"
+            node "./$cmd.js" "${@:2}"
+            return
+        elif [[ -d "./_lsr_scripts" && -f "./_lsr_scripts/$cmd.js" ]]; then
+            print_info "Node script $cmd.js"
+            node "./_lsr_scripts/$cmd.js" "${@:2}"
+            return
+        elif [[ -d "./scripts" && -f "./scripts/$cmd.js" ]]; then
+            print_info "Node script $cmd.js"
+            node "./scripts/$cmd.js" "${@:2}"
+            return
+        elif [[ -f "./package.json" && "$(grep \"$cmd\": package.json)" != "" ]]; then
+            print_info "Running NPM script '$cmd'"
+            npm run $cmd --silent
+            return
         fi
-        return 127
     fi
+    suggestions=$(compgen -c "$cmd" | head -n 5)
+    if [[ -n "$suggestions" ]]; then
+        echo "bash: $cmd: command not found. Did you mean one of these?"
+        echo " - $suggestions" | while read -r suggestion; do echo "  $suggestion"; done
+    else
+        echo "bash: $cmd: command not found"
+    fi
+    return 127
 }
 packages() {
     if [[ -f "./package.json" ]]; then
@@ -1699,71 +1710,71 @@ select_scripts() {
     $value
 }
 scripts() {
-    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || $(find ./scripts -wholename "*.sh" -print -quit) || $(find ./_lsr_scripts -wholename "*.sh" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || ( -d ./scripts && $(find ./scripts -wholename "*.sh" -print -quit) ) || ( -d ./_lsr_scripts && $(find ./_lsr_scripts -wholename "*.sh" -print -quit)) ]]; then
         echo "Bash scripts:"
     fi
     for file in ./*.sh; do
         filename="${file##*/}"      # Remove the ./ prefix
         basename="${filename%.sh}"  # Remove the .sh suffix
-        if [[ "$basename" != "*" ]]; then
+        if [[ "$basename" != "*" && $basename != _* ]]; then
             echo " - $basename"
         fi
     done
     for file in ./scripts/*.sh; do
         filename="${file##*/}"      # Remove the ./ prefix
         basename="${filename%.sh}"  # Remove the .sh suffix
-        if [[ "$basename" != "*" ]]; then
+        if [[ "$basename" != "*"  && $basename != _* ]]; then
             echo " - $basename"
         fi
     done
     for file in ./_lsr_scripts/*.sh; do
         filename="${file##*/}"      # Remove the ./ prefix
         basename="${filename%.sh}"  # Remove the .sh suffix
-        if [[ "$basename" != "*" ]]; then
+        if [[ "$basename" != "*"  && $basename != _* ]]; then
             echo " - $basename"
         fi
     done
-    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || $(find ./scripts -wholename "*.sh" -print -quit) || $(find ./_lsr_scripts -wholename "*.sh" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || ( -d ./scripts && $(find ./scripts -wholename "*.sh" -print -quit) ) || ( -d ./_lsr_scripts && $(find ./_lsr_scripts -wholename "*.sh" -print -quit)) ]]; then
         echo ""
     fi
-    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || $(find ./scripts -wholename "*.py" -print -quit) || $(find ./_lsr_scripts -wholename "*.py" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || ( -d ./scripts && $(find ./scripts -wholename "*.py" -print -quit) ) || ( -d ./_lsr_scripts && $(find ./_lsr_scripts -wholename "*.py" -print -quit)) ]]; then
         echo "Python scripts:"
     fi
     for file in ./*.py; do
         filename="${file##*/}"      # Remove the ./scripts/ prefix
         basename="${filename%.py}"  # Remove the .py suffix
-        if [[ "$basename" != "*" ]]; then
+        if [[ "$basename" != "*"  && $basename != _* ]]; then
             echo "- $basename"
         fi
     done
     for file in ./scripts/*.py; do
         filename="${file##*/}"      # Remove the ./scripts/ prefix
         basename="${filename%.py}"  # Remove the .py suffix
-        if [[ "$basename" != "*" ]]; then
+        if [[ "$basename" != "*"  && $basename != _* ]]; then
             echo " - $basename"
         fi
     done
-    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || $(find ./scripts -wholename "*.py" -print -quit) || $(find ./_lsr_scripts -wholename "*.py" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || ( -d ./scripts && $(find ./scripts -wholename "*.py" -print -quit) ) || ( -d ./_lsr_scripts && $(find ./_lsr_scripts -wholename "*.py" -print -quit)) ]]; then
         echo ""
     fi
-    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit) || $(find ./scripts -wholename "*.js" -print -quit) || $(find ./_lsr_scripts -wholename "*.js" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit) || ( -d ./scripts && $(find ./scripts -wholename "*js" -print -quit) ) || ( -d ./_lsr_scripts && $(find ./_lsr_scripts -wholename "*.js" -print -quit)) ]]; then
         echo "Node scripts:"
     fi
     for file in ./*.js; do
         filename="${file##*/}"      # Remove the ./scripts/ prefix
         basename="${filename%.js}"  # Remove the .js suffix
-        if [[ "$basename" != "*" ]]; then
+        if [[ "$basename" != "*"  && $basename != _* ]]; then
             echo "- $basename"
         fi
     done
     for file in ./scripts/*.js; do
         filename="${file##*/}"      # Remove the ./scripts/ prefix
         basename="${filename%.js}"  # Remove the .py suffix
-        if [[ "$basename" != "*" ]]; then
+        if [[ "$basename" != "*"  && $basename != _* ]]; then
             echo " - $basename"
         fi
     done
-    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit) || $(find ./scripts -wholename "*.js" -print -quit) || $(find ./_lsr_scripts -wholename "*.js" -print -quit) ]]; then
+    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit)  || ( -d ./scripts && $(find ./scripts -wholename "*.js" -print -quit) ) || ( -d ./_lsr_scripts && $(find ./_lsr_scripts -wholename "*.js" -print -quit)) ]]; then
         echo ""
     fi
     if [[ -f "./package.json" ]]; then
@@ -2035,6 +2046,41 @@ exp() {
         cd "$initial_dir"
     fi
 }
+copy() {
+    local pathToCopy="."
+    
+    if [ "$#" -gt 0 ]; then
+        pathToCopy="$1"
+    fi
+    
+    clear-copy
+    mkdir -p "$HOME/.copy"
+    if [ "$pathToCopy" = "." ]; then
+        cp -r * "$HOME/.copy"
+    else
+        cp -r "$pathToCopy" "$HOME/.copy"
+    fi
+}
+clear-copy() {
+    rm -rf "$HOME/.copy"
+}
+cut() {
+    local pathToCut="."
+    if [ ! "$#" -gt 0 ]; then
+        pathToCut="."
+    fi
+    copy "$pathToCut"
+    rm -rf "$pathToCut"
+}
+paste() {
+    local target="."
+    if [ "$#" -gt 0 ]; then
+        target="$1"
+    fi
+    cp -r "$HOME/.copy"/* "$target"
+    cp -r "$HOME/.copy"/.* "$target" 2>/dev/null
+}
+alias lg="lazygit"
 banned_patterns=(
     "*.exe"
     "*/node_modules/*"
