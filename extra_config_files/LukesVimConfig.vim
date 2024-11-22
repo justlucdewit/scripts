@@ -67,23 +67,6 @@ Plug 'junegunn/fzf.vim'
 
 call plug#end()
 
-" Function to check and install missing plugins
-function! CheckNewPlugins()
-    " List of plugins to check
-    let plugins = ['preservim/nerdtree', 'junegunn/fzf.vim', 'junegunn/fzf' ]
-
-    for plugin in plugins
-        " Check if the plugin is installed
-        if !filereadable(expand('~/.vim/plugged/' . plugin))
-            execute 'PlugInstall'
-            return
-        endif
-    endfor
-endfunction
-
-" Auto-run CheckNewPlugins on Vim startup
-autocmd VimEnter * call CheckNewPlugins()
-
 " Key mapping to toggle NERDTree
 nnoremap <leader>e :NERDTreeToggle<CR>
 nnoremap <leader>f :FzfAg<CR>
