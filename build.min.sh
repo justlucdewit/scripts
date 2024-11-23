@@ -1388,32 +1388,9 @@ BASHRC_STARTER="# !! LSR LOADER START !!"
 BASHRC_ENDERER="# !! LSR LOADER END !!"
 SETTINGS_FILE=~/scripts/_settings.yml
 HISTORY_FILE=~/scripts/local_data/version_history.yml
-alias lstatus=lsr_status
 alias linstall=lsr_install
 alias lreinstall=lsr_reinstall
 alias luninstall=lsr_uninstall
-lsr_status() {
-    local bashrc_installed=false
-    local local_data_installed=false
-    if grep -q "$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
-        bashrc_installed=true
-    fi
-    if [ -f "$HISTORY_FILE" ]; then
-        CURRENT_VERSION=$(yq e '.version_history[-1]' "$HISTORY_FILE" 2>/dev/null)
-        if [ ! -z "$CURRENT_VERSION" ]; then
-            local_data_installed=true
-        fi
-    fi
-    if [ "$bashrc_installed" = true ] && [ "$local_data_installed" = true ]; then
-        NAME=$(yq e '.name' "$SETTINGS_FILE")
-        MAJOR_VERSION=$(yq e '.version.major' "$SETTINGS_FILE")
-        MINOR_VERSION=$(yq e '.version.minor' "$SETTINGS_FILE")
-        FULL_VERSION="v$MAJOR_VERSION.$MINOR_VERSION"
-        print_success "$NAME $FULL_VERSION is installed."
-    else
-        print_error "Lukes Script Repository is not installed."
-    fi
-}
 lsr_install() {
     ~/scripts/_install.sh
     reload_bash
@@ -2145,6 +2122,7 @@ scripts_to_compile=(
     "cfind"
     "compile"
     "remotelog"
+    "composites/lsr/lsr"
     "composites/utils/list"
     "composites/docker/dock"
     "composites/git/gitusers"
@@ -2296,6 +2274,55 @@ remotelog() {
     NGROK_URL=$(grep 'https://[a-z0-9\-]*.ngrok-free.app' $LOG_FILE | awk -F"url=" '{print $2}' | awk '{print $1}')
     echo "Your ngrok URL is: $NGROK_URL"
     start_remote_log_catcher_server $port $NGROK_URL
+}
+alias lsr="lsr_main_command"
+lsr_main_command() {
+    if [ ! "$#" -gt 0 ]; then
+        echo "usage: "
+        echo "  - lsr install"
+        echo "  - lsr uninstall"
+        echo "  - lsr reinstall"
+        echo "  - lsr compile"
+        return
+    fi
+    local command=$1
+    shift
+    if is_in_list "$command" "status"; then
+        lsr_status
+    elif is_in_list "$command" "install"; then
+        return
+    elif is_in_list "$command" "uninstall"; then
+        return
+    elif is_in_list "$command" "reinstall"; then
+        return
+    elif is_in_list "$command" "compile"; then
+        return
+    else
+        print_error "Command $command does not exist"
+        lsr_main_command # Re-run for help command
+    fi
+}
+lsr_status() {
+    local bashrc_installed=false
+    local local_data_installed=false
+    if grep -q "$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
+        bashrc_installed=true
+    fi
+    if [ -f "$HISTORY_FILE" ]; then
+        CURRENT_VERSION=$(yq e '.version_history[-1]' "$HISTORY_FILE" 2>/dev/null)
+        if [ ! -z "$CURRENT_VERSION" ]; then
+            local_data_installed=true
+        fi
+    fi
+    if [ "$bashrc_installed" = true ] && [ "$local_data_installed" = true ]; then
+        NAME=$(yq e '.name' "$SETTINGS_FILE")
+        MAJOR_VERSION=$(yq e '.version.major' "$SETTINGS_FILE")
+        MINOR_VERSION=$(yq e '.version.minor' "$SETTINGS_FILE")
+        FULL_VERSION="v$MAJOR_VERSION.$MINOR_VERSION"
+        print_success "$NAME $FULL_VERSION is installed."
+    else
+        print_error "Lukes Script Repository is not installed."
+    fi
 }
 lsrlist() {
     if [ ! "$#" -gt 0 ]; then

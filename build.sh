@@ -1,29 +1,30 @@
 # LSR v1.1
-# Local build (11:42 22/11/2024)
+# Local build (12:09 23/11/2024)
 # Includes LSR modules:
-# - /home/luc/scripts/inject/../helpers.sh
-# - /home/luc/scripts/inject/requirementCheck.sh
-# - /home/luc/scripts/inject/startup.sh
-# - /home/luc/scripts/inject/composites/helpers.sh
-# - /home/luc/scripts/inject/git_helpers.sh
-# - /home/luc/scripts/inject/tmux_helpers.sh
-# - /home/luc/scripts/inject/utils.sh
-# - /home/luc/scripts/inject/proj.sh
-# - /home/luc/scripts/inject/aliases.sh
-# - /home/luc/scripts/inject/laravel.sh
-# - /home/luc/scripts/inject/local_settings.sh
-# - /home/luc/scripts/inject/version_management.sh
-# - /home/luc/scripts/inject/vim.sh
-# - /home/luc/scripts/inject/work.sh
-# - /home/luc/scripts/inject/other.sh
-# - /home/luc/scripts/inject/cfind.sh
-# - /home/luc/scripts/inject/compile.sh
-# - /home/luc/scripts/inject/remotelog.sh
-# - /home/luc/scripts/inject/composites/utils/list.sh
-# - /home/luc/scripts/inject/composites/docker/dock.sh
-# - /home/luc/scripts/inject/composites/git/gitusers.sh
-# - /home/luc/scripts/inject/composites/git/branches.sh
-# - /home/luc/scripts/inject/composites/settings/profile.sh
+# - /home/lucdewit/scripts/inject/../helpers.sh
+# - /home/lucdewit/scripts/inject/requirementCheck.sh
+# - /home/lucdewit/scripts/inject/startup.sh
+# - /home/lucdewit/scripts/inject/composites/helpers.sh
+# - /home/lucdewit/scripts/inject/git_helpers.sh
+# - /home/lucdewit/scripts/inject/tmux_helpers.sh
+# - /home/lucdewit/scripts/inject/utils.sh
+# - /home/lucdewit/scripts/inject/proj.sh
+# - /home/lucdewit/scripts/inject/aliases.sh
+# - /home/lucdewit/scripts/inject/laravel.sh
+# - /home/lucdewit/scripts/inject/local_settings.sh
+# - /home/lucdewit/scripts/inject/version_management.sh
+# - /home/lucdewit/scripts/inject/vim.sh
+# - /home/lucdewit/scripts/inject/work.sh
+# - /home/lucdewit/scripts/inject/other.sh
+# - /home/lucdewit/scripts/inject/cfind.sh
+# - /home/lucdewit/scripts/inject/compile.sh
+# - /home/lucdewit/scripts/inject/remotelog.sh
+# - /home/lucdewit/scripts/inject/composites/lsr/lsr.sh
+# - /home/lucdewit/scripts/inject/composites/utils/list.sh
+# - /home/lucdewit/scripts/inject/composites/docker/dock.sh
+# - /home/lucdewit/scripts/inject/composites/git/gitusers.sh
+# - /home/lucdewit/scripts/inject/composites/git/branches.sh
+# - /home/lucdewit/scripts/inject/composites/settings/profile.sh
 
 #######################################
 # Start of LSR module #1              #
@@ -1975,8 +1976,8 @@ localsettings_reformat() {
 ###############################################
 # Start of LSR module #12                     #
 # Injected LSR module: version_management.sh  #
-# Number of lines: 88                         #
-# Filesize: 2.55 KB                           #
+# Number of lines: 57                         #
+# Filesize: 1.41 KB                           #
 ###############################################
 # Source the needed helper files
 source ~/scripts/helpers.sh
@@ -1988,42 +1989,11 @@ BASHRC_ENDERER="# !! LSR LOADER END !!"
 SETTINGS_FILE=~/scripts/_settings.yml
 HISTORY_FILE=~/scripts/local_data/version_history.yml
 
-alias lstatus=lsr_status
 alias linstall=lsr_install
 alias lreinstall=lsr_reinstall
 alias luninstall=lsr_uninstall
 
-lsr_status() {
-    # Variable to store installation status
-    local bashrc_installed=false
-    local local_data_installed=false
 
-    # Check if the identifier exists in .bashrc
-    if grep -q "$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
-        bashrc_installed=true
-    fi
-
-    # Check if there's a version history file and if it contains the current version
-    if [ -f "$HISTORY_FILE" ]; then
-        CURRENT_VERSION=$(yq e '.version_history[-1]' "$HISTORY_FILE" 2>/dev/null)
-        if [ ! -z "$CURRENT_VERSION" ]; then
-            local_data_installed=true
-        fi
-    fi
-
-    # Check if both bashrc and version history are present
-    if [ "$bashrc_installed" = true ] && [ "$local_data_installed" = true ]; then
-        # Retrieve the installed version from _settings.yml
-        NAME=$(yq e '.name' "$SETTINGS_FILE")
-        MAJOR_VERSION=$(yq e '.version.major' "$SETTINGS_FILE")
-        MINOR_VERSION=$(yq e '.version.minor' "$SETTINGS_FILE")
-        FULL_VERSION="v$MAJOR_VERSION.$MINOR_VERSION"
-
-        print_success "$NAME $FULL_VERSION is installed."
-    else
-        print_error "Lukes Script Repository is not installed."
-    fi
-}
 
 lsr_install() {
     ~/scripts/_install.sh
@@ -3012,8 +2982,8 @@ cfind() {
 ####################################
 # Start of LSR module #17          #
 # Injected LSR module: compile.sh  #
-# Number of lines: 156             #
-# Filesize: 5.34 KB                #
+# Number of lines: 157             #
+# Filesize: 5.36 KB                #
 ####################################
 source "$HOME/scripts/helpers.sh"
 
@@ -3037,6 +3007,7 @@ scripts_to_compile=(
     "cfind"
     "compile"
     "remotelog"
+    "composites/lsr/lsr"
     "composites/utils/list"
     "composites/docker/dock"
     "composites/git/gitusers"
@@ -3267,8 +3238,76 @@ remotelog() {
 }
 
 
+###############################################
+# Start of LSR module #19                     #
+# Injected LSR module: composites/lsr/lsr.sh  #
+# Number of lines: 61                         #
+# Filesize: 1.83 KB                           #
+###############################################
+alias lsr="lsr_main_command"
+
+lsr_main_command() {
+    if [ ! "$#" -gt 0 ]; then
+        echo "usage: "
+        echo "  - lsr install"
+        echo "  - lsr uninstall"
+        echo "  - lsr reinstall"
+        echo "  - lsr compile"
+        return
+    fi
+
+    local command=$1
+    shift
+
+    if is_in_list "$command" "status"; then
+        lsr_status
+    elif is_in_list "$command" "install"; then
+        return
+    elif is_in_list "$command" "uninstall"; then
+        return
+    elif is_in_list "$command" "reinstall"; then
+        return
+    elif is_in_list "$command" "compile"; then
+        return
+    else
+        print_error "Command $command does not exist"
+        lsr_main_command # Re-run for help command
+    fi
+}
+
+lsr_status() {
+    # Variable to store installation status
+    local bashrc_installed=false
+    local local_data_installed=false
+
+    # Check if the identifier exists in .bashrc
+    if grep -q "$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
+        bashrc_installed=true
+    fi
+
+    # Check if there's a version history file and if it contains the current version
+    if [ -f "$HISTORY_FILE" ]; then
+        CURRENT_VERSION=$(yq e '.version_history[-1]' "$HISTORY_FILE" 2>/dev/null)
+        if [ ! -z "$CURRENT_VERSION" ]; then
+            local_data_installed=true
+        fi
+    fi
+
+    # Check if both bashrc and version history are present
+    if [ "$bashrc_installed" = true ] && [ "$local_data_installed" = true ]; then
+        # Retrieve the installed version from _settings.yml
+        NAME=$(yq e '.name' "$SETTINGS_FILE")
+        MAJOR_VERSION=$(yq e '.version.major' "$SETTINGS_FILE")
+        MINOR_VERSION=$(yq e '.version.minor' "$SETTINGS_FILE")
+        FULL_VERSION="v$MAJOR_VERSION.$MINOR_VERSION"
+
+        print_success "$NAME $FULL_VERSION is installed."
+    else
+        print_error "Lukes Script Repository is not installed."
+    fi
+}
 ##################################################
-# Start of LSR module #19                        #
+# Start of LSR module #20                        #
 # Injected LSR module: composites/utils/list.sh  #
 # Number of lines: 42                            #
 # Filesize: 883 B                                #
@@ -3317,7 +3356,7 @@ lsrlist_create() {
     list=""
 }
 ###################################################
-# Start of LSR module #20                         #
+# Start of LSR module #21                         #
 # Injected LSR module: composites/docker/dock.sh  #
 # Number of lines: 194                            #
 # Filesize: 6.43 KB                               #
@@ -3518,7 +3557,7 @@ dock_restart() {
     fi
 }
 ####################################################
-# Start of LSR module #21                          #
+# Start of LSR module #22                          #
 # Injected LSR module: composites/git/gitusers.sh  #
 # Number of lines: 262                             #
 # Filesize: 8.43 KB                                #
@@ -3787,7 +3826,7 @@ git_users_set_email() {
     localsettings_reformat
 }
 ####################################################
-# Start of LSR module #22                          #
+# Start of LSR module #23                          #
 # Injected LSR module: composites/git/branches.sh  #
 # Number of lines: 154                             #
 # Filesize: 4.51 KB                                #
@@ -3948,7 +3987,7 @@ git_branches_list() {
     git branch --all --no-color
 }
 ########################################################
-# Start of LSR module #23                              #
+# Start of LSR module #24                              #
 # Injected LSR module: composites/settings/profile.sh  #
 # Number of lines: 159                                 #
 # Filesize: 4.54 KB                                    #
