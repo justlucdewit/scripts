@@ -1381,49 +1381,6 @@ localsettings_reformat() {
     localsettings_sort .gitusers
     localsettings_sort .
 }
-source ~/scripts/helpers.sh
-BASHRC_PATH=~/.bashrc
-BASHRC_IDENTIFIER="# Luke's Script Repository Loader"
-BASHRC_STARTER="# !! LSR LOADER START !!"
-BASHRC_ENDERER="# !! LSR LOADER END !!"
-SETTINGS_FILE=~/scripts/_settings.yml
-HISTORY_FILE=~/scripts/local_data/version_history.yml
-alias linstall=lsr_install
-alias lreinstall=lsr_reinstall
-alias luninstall=lsr_uninstall
-lsr_install() {
-    ~/scripts/_install.sh
-    reload_bash
-}
-lsr_reinstall() {
-    print_info "Uninstalling LSR"
-    lsrsilence true
-    lsr_uninstall
-    lsrsilence false
-    print_info "Recompiling LSR"
-    lsrsilence true
-    lsr_compile
-    lsrsilence false
-    print_info "Installing LSR"
-    lsrsilence true
-    lsr_install
-    lsrsilence false
-}
-lsr_uninstall() {
-    if [[ -f "$HISTORY_FILE" ]]; then
-        rm "$HISTORY_FILE"
-        print_info "Deleted version history file"
-    fi
-    if grep -q "^$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
-        sed -i "/^$BASHRC_STARTER/,/^$BASHRC_ENDERER/d" "$BASHRC_PATH"
-        print_info "Removed LSR loader from $BASHRC_PATH"
-    fi
-    print_empty_line
-    print_info "LSR has been reinstalled"
-    print_info " - linstall to undo"
-    print_info " - Open new session to confirm"
-    reload_bash
-}
 setup_vim_plug() {
     local vim_autoload_dir="$HOME/.vim/autoload"
     local plug_file="$vim_autoload_dir/plug.vim"
@@ -2102,35 +2059,159 @@ cfind() {
         fi
     done
 }
-source "$HOME/scripts/helpers.sh"
-scripts_to_compile=(
-    "../helpers"
-    "requirementCheck"
-    "startup"
-    "composites/helpers"
-    "git_helpers"
-    "tmux_helpers"
-    "utils"
-    "proj"
-    "aliases"
-    "laravel"
-    "local_settings"
-    "version_management"
-    "vim"
-    "work"
-    "other"
-    "cfind"
-    "compile"
-    "remotelog"
-    "composites/lsr/lsr"
-    "composites/utils/list"
-    "composites/docker/dock"
-    "composites/git/gitusers"
-    "composites/git/branches"
-    "composites/settings/profile"
-)
-alias lcompile=lsr_compile
-print_info "LSR has been loaded in current session"
+start_remote_log_catcher_server() {
+    PORT="$1"
+    URL="$2"
+    if [[ -z $1 ]]; then
+        PORT=43872
+    fi
+    echo "Server running on port $URL, waiting for requests..."
+    while true; do
+        request=$(nc -l -p "$PORT" -w 1)  # -w 5 means wait for up to 5 seconds for data
+        if [ -z "$request" ]; then
+            continue
+        fi
+        body=$(echo "$request" | sed -n '/^\r$/,$p' | tail -n +2)
+        print_info "$request"
+    done
+}
+locallog() {
+    port="$1"
+    if [[ -z $1 ]]; then
+        port=58473
+    fi
+    start_remote_log_catcher_server $port "https://localhost:$port"
+}
+remotelog() {
+    > $LOG_FILE
+    local LOG_FILE='./ngrok.log'
+    for pid in $(pgrep ngrok); do
+        kill -9 $pid
+    done
+    if ! command -v "ngrok" &> /dev/null; then
+        print_error "ngrok must be installed for remotelog. Please install and run ngrok config add-authtoken <token>"
+    fi
+    pgrep ngrok > /dev/null
+    if [ $? -eq 0 ]; then
+        print_info "ngrok was already running, killing other instance... you can only have one ngrok/remotelog instance running."
+        pkill ngrok  # Kill any running ngrok processes
+        sleep 1  # Give a moment for the processes to terminate
+    fi
+    port="$1"
+    if [[ -z $1 ]]; then
+        port=58473
+    fi
+    print_info "Initializing server..."
+    ngrok http $port --log $LOG_FILE &
+    NGROK_PID=$!
+    while ! grep -q 'https://[a-z0-9\-]*.ngrok-free.app' $LOG_FILE; do
+        sleep 1  # Wait until the URL is available in the log
+    done
+    NGROK_URL=$(grep 'https://[a-z0-9\-]*.ngrok-free.app' $LOG_FILE | awk -F"url=" '{print $2}' | awk '{print $1}')
+    echo "Your ngrok URL is: $NGROK_URL"
+    start_remote_log_catcher_server $port $NGROK_URL
+}
+source ~/scripts/helpers.sh
+alias lsr="lsr_main_command"
+BASHRC_PATH=~/.bashrc
+BASHRC_IDENTIFIER="# Luke's Script Repository Loader"
+BASHRC_STARTER="# !! LSR LOADER START !!"
+BASHRC_ENDERER="# !! LSR LOADER END !!"
+SETTINGS_FILE=~/scripts/_settings.yml
+HISTORY_FILE=~/scripts/local_data/version_history.yml
+lsr_main_command() {
+    echo ""
+    echo "####  ################  ##########"
+    echo "####  ################  ##########"
+    echo "####  ####              ####  ####"
+    echo "####  ################  ####  ####"
+    echo "####  ################  ####"
+    echo "####              ####  ####"
+    echo "##########  ##########  ####"
+    echo "##########  ##########  ####"
+    echo ""
+    if [ ! "$#" -gt 0 ]; then
+        echo "usage: "
+        echo "  - lsr status"
+        echo "  - lsr install"
+        echo "  - lsr uninstall" # Todo
+        echo "  - lsr reinstall" # Todo
+        echo "  - lsr compile"
+        return
+    fi
+    local command=$1
+    shift
+    if is_in_list "$command" "status"; then
+        lsr_status
+    elif is_in_list "$command" "install"; then
+        ensure_sudo
+        lsr_install
+    elif is_in_list "$command" "uninstall"; then
+        lsr_uninstall
+    elif is_in_list "$command" "reinstall"; then
+        lsr_reinstall
+    elif is_in_list "$command" "compile"; then
+        lsr_compile
+    else
+        print_error "Command $command does not exist"
+        lsr_main_command # Re-run for help command
+    fi
+}
+lsr_status() {
+    local bashrc_installed=false
+    local local_data_installed=false
+    if grep -q "$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
+        bashrc_installed=true
+    fi
+    if [ -f "$HISTORY_FILE" ]; then
+        CURRENT_VERSION=$(yq e '.version_history[-1]' "$HISTORY_FILE" 2>/dev/null)
+        if [ ! -z "$CURRENT_VERSION" ]; then
+            local_data_installed=true
+        fi
+    fi
+    if [ "$bashrc_installed" = true ] && [ "$local_data_installed" = true ]; then
+        NAME=$(yq e '.name' "$SETTINGS_FILE")
+        MAJOR_VERSION=$(yq e '.version.major' "$SETTINGS_FILE")
+        MINOR_VERSION=$(yq e '.version.minor' "$SETTINGS_FILE")
+        FULL_VERSION="v$MAJOR_VERSION.$MINOR_VERSION"
+        print_success "$NAME $FULL_VERSION is installed."
+    else
+        print_error "Lukes Script Repository is not installed."
+    fi
+}
+lsr_install() {
+    bash ~/scripts/_install.sh
+    reload_bash
+}
+lsr_uninstall() {
+    if [[ -f "$HISTORY_FILE" ]]; then
+        rm "$HISTORY_FILE"
+        print_info "Deleted version history file"
+    fi
+    if grep -q "^$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
+        sed -i "/^$BASHRC_STARTER/,/^$BASHRC_ENDERER/d" "$BASHRC_PATH"
+        print_info "Removed LSR loader from $BASHRC_PATH"
+    fi
+    print_empty_line
+    print_info "LSR has been reinstalled"
+    print_info " - linstall to undo"
+    print_info " - Open new session to confirm"
+    reload_bash
+}
+lsr_reinstall() {
+    print_info "Uninstalling LSR"
+    lsrsilence true
+    lsr_uninstall
+    lsrsilence false
+    print_info "Recompiling LSR"
+    lsrsilence true
+    lsr_compile
+    lsrsilence false
+    print_info "Installing LSR"
+    lsrsilence true
+    lsr_install
+    lsrsilence false
+}
 lsr_compile() {
     print_info "Starting re-compilation of LSR"
     local build_file="$HOME/scripts/build.sh"
@@ -2141,6 +2222,30 @@ lsr_compile() {
     local MINOR_VERSION=$(yq e '.version.minor' "$SETTINGS_FILE")
     local FULL_VERSION=v$MAJOR_VERSION.$MINOR_VERSION
     local SCRIPT_PREFIX="$HOME/scripts/inject/"
+    local scripts_to_compile=(
+        "../helpers"
+        "requirementCheck"
+        "startup"
+        "composites/helpers"
+        "git_helpers"
+        "tmux_helpers"
+        "utils"
+        "proj"
+        "aliases"
+        "laravel"
+        "local_settings"
+        "vim"
+        "work"
+        "other"
+        "cfind"
+        "remotelog"
+        "composites/lsr/lsr"
+        "composites/utils/list"
+        "composites/docker/dock"
+        "composites/git/gitusers"
+        "composites/git/branches"
+        "composites/settings/profile"
+    )
     if [[ -f "$build_file" ]]; then
         > "$build_file"
     else
@@ -2222,107 +2327,6 @@ lsr_compile() {
     print_info "Total final build.min.sh size: $(get_filesize "$minimized_build_file")"
     print_info "Total final build.min.sh lines: $(get_line_count "$minimized_build_file")"
     reload_bash
-}
-start_remote_log_catcher_server() {
-    PORT="$1"
-    URL="$2"
-    if [[ -z $1 ]]; then
-        PORT=43872
-    fi
-    echo "Server running on port $URL, waiting for requests..."
-    while true; do
-        request=$(nc -l -p "$PORT" -w 1)  # -w 5 means wait for up to 5 seconds for data
-        if [ -z "$request" ]; then
-            continue
-        fi
-        body=$(echo "$request" | sed -n '/^\r$/,$p' | tail -n +2)
-        print_info "$request"
-    done
-}
-locallog() {
-    port="$1"
-    if [[ -z $1 ]]; then
-        port=58473
-    fi
-    start_remote_log_catcher_server $port "https://localhost:$port"
-}
-remotelog() {
-    > $LOG_FILE
-    local LOG_FILE='./ngrok.log'
-    for pid in $(pgrep ngrok); do
-        kill -9 $pid
-    done
-    if ! command -v "ngrok" &> /dev/null; then
-        print_error "ngrok must be installed for remotelog. Please install and run ngrok config add-authtoken <token>"
-    fi
-    pgrep ngrok > /dev/null
-    if [ $? -eq 0 ]; then
-        print_info "ngrok was already running, killing other instance... you can only have one ngrok/remotelog instance running."
-        pkill ngrok  # Kill any running ngrok processes
-        sleep 1  # Give a moment for the processes to terminate
-    fi
-    port="$1"
-    if [[ -z $1 ]]; then
-        port=58473
-    fi
-    print_info "Initializing server..."
-    ngrok http $port --log $LOG_FILE &
-    NGROK_PID=$!
-    while ! grep -q 'https://[a-z0-9\-]*.ngrok-free.app' $LOG_FILE; do
-        sleep 1  # Wait until the URL is available in the log
-    done
-    NGROK_URL=$(grep 'https://[a-z0-9\-]*.ngrok-free.app' $LOG_FILE | awk -F"url=" '{print $2}' | awk '{print $1}')
-    echo "Your ngrok URL is: $NGROK_URL"
-    start_remote_log_catcher_server $port $NGROK_URL
-}
-alias lsr="lsr_main_command"
-lsr_main_command() {
-    if [ ! "$#" -gt 0 ]; then
-        echo "usage: "
-        echo "  - lsr install"
-        echo "  - lsr uninstall"
-        echo "  - lsr reinstall"
-        echo "  - lsr compile"
-        return
-    fi
-    local command=$1
-    shift
-    if is_in_list "$command" "status"; then
-        lsr_status
-    elif is_in_list "$command" "install"; then
-        return
-    elif is_in_list "$command" "uninstall"; then
-        return
-    elif is_in_list "$command" "reinstall"; then
-        return
-    elif is_in_list "$command" "compile"; then
-        return
-    else
-        print_error "Command $command does not exist"
-        lsr_main_command # Re-run for help command
-    fi
-}
-lsr_status() {
-    local bashrc_installed=false
-    local local_data_installed=false
-    if grep -q "$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
-        bashrc_installed=true
-    fi
-    if [ -f "$HISTORY_FILE" ]; then
-        CURRENT_VERSION=$(yq e '.version_history[-1]' "$HISTORY_FILE" 2>/dev/null)
-        if [ ! -z "$CURRENT_VERSION" ]; then
-            local_data_installed=true
-        fi
-    fi
-    if [ "$bashrc_installed" = true ] && [ "$local_data_installed" = true ]; then
-        NAME=$(yq e '.name' "$SETTINGS_FILE")
-        MAJOR_VERSION=$(yq e '.version.major' "$SETTINGS_FILE")
-        MINOR_VERSION=$(yq e '.version.minor' "$SETTINGS_FILE")
-        FULL_VERSION="v$MAJOR_VERSION.$MINOR_VERSION"
-        print_success "$NAME $FULL_VERSION is installed."
-    else
-        print_error "Lukes Script Repository is not installed."
-    fi
 }
 lsrlist() {
     if [ ! "$#" -gt 0 ]; then

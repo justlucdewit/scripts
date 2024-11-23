@@ -1,5 +1,5 @@
 # LSR v1.1
-# Local build (12:09 23/11/2024)
+# Local build (13:28 23/11/2024)
 # Includes LSR modules:
 # - /home/lucdewit/scripts/inject/../helpers.sh
 # - /home/lucdewit/scripts/inject/requirementCheck.sh
@@ -12,12 +12,10 @@
 # - /home/lucdewit/scripts/inject/aliases.sh
 # - /home/lucdewit/scripts/inject/laravel.sh
 # - /home/lucdewit/scripts/inject/local_settings.sh
-# - /home/lucdewit/scripts/inject/version_management.sh
 # - /home/lucdewit/scripts/inject/vim.sh
 # - /home/lucdewit/scripts/inject/work.sh
 # - /home/lucdewit/scripts/inject/other.sh
 # - /home/lucdewit/scripts/inject/cfind.sh
-# - /home/lucdewit/scripts/inject/compile.sh
 # - /home/lucdewit/scripts/inject/remotelog.sh
 # - /home/lucdewit/scripts/inject/composites/lsr/lsr.sh
 # - /home/lucdewit/scripts/inject/composites/utils/list.sh
@@ -1973,72 +1971,8 @@ localsettings_reformat() {
     localsettings_sort .gitusers
     localsettings_sort .
 }
-###############################################
-# Start of LSR module #12                     #
-# Injected LSR module: version_management.sh  #
-# Number of lines: 57                         #
-# Filesize: 1.41 KB                           #
-###############################################
-# Source the needed helper files
-source ~/scripts/helpers.sh
-
-BASHRC_PATH=~/.bashrc
-BASHRC_IDENTIFIER="# Luke's Script Repository Loader"
-BASHRC_STARTER="# !! LSR LOADER START !!"
-BASHRC_ENDERER="# !! LSR LOADER END !!"
-SETTINGS_FILE=~/scripts/_settings.yml
-HISTORY_FILE=~/scripts/local_data/version_history.yml
-
-alias linstall=lsr_install
-alias lreinstall=lsr_reinstall
-alias luninstall=lsr_uninstall
-
-
-
-lsr_install() {
-    ~/scripts/_install.sh
-    reload_bash
-}
-
-lsr_reinstall() {
-    print_info "Uninstalling LSR"
-    lsrsilence true
-    lsr_uninstall
-    lsrsilence false
-
-    print_info "Recompiling LSR"
-    lsrsilence true
-    lsr_compile
-    lsrsilence false
-
-    print_info "Installing LSR"
-    lsrsilence true
-    lsr_install
-    lsrsilence false
-}
-
-lsr_uninstall() {
-    # 1. Remove the version history file if it exists
-    if [[ -f "$HISTORY_FILE" ]]; then
-        rm "$HISTORY_FILE"
-        print_info "Deleted version history file"
-    fi
-
-    # 2. Check if the LSR loader section exists before attempting to remove it
-    if grep -q "^$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
-        # Remove the LSR loader section from .bashrc
-        sed -i "/^$BASHRC_STARTER/,/^$BASHRC_ENDERER/d" "$BASHRC_PATH"
-        print_info "Removed LSR loader from $BASHRC_PATH"
-    fi
-
-    print_empty_line
-    print_info "LSR has been reinstalled"
-    print_info " - linstall to undo"
-    print_info " - Open new session to confirm"
-    reload_bash
-}
 ################################
-# Start of LSR module #13      #
+# Start of LSR module #12      #
 # Injected LSR module: vim.sh  #
 # Number of lines: 36          #
 # Filesize: 1004 B             #
@@ -2081,7 +2015,7 @@ source ~/scripts/extra_config_files/LukesVimConfig.vim
 
 write_to_vimrc
 #################################
-# Start of LSR module #14       #
+# Start of LSR module #13       #
 # Injected LSR module: work.sh  #
 # Number of lines: 101          #
 # Filesize: 4.07 KB             #
@@ -2189,7 +2123,7 @@ work() {
     cd "$original_pwd"
 }
 ##################################
-# Start of LSR module #15        #
+# Start of LSR module #14        #
 # Injected LSR module: other.sh  #
 # Number of lines: 719           #
 # Filesize: 22.90 KB             #
@@ -2915,7 +2849,7 @@ paste() {
 alias lg="lazygit"
 
 ##################################
-# Start of LSR module #16        #
+# Start of LSR module #15        #
 # Injected LSR module: cfind.sh  #
 # Number of lines: 58            #
 # Filesize: 1.63 KB              #
@@ -2979,45 +2913,234 @@ cfind() {
     done
 }
 
-####################################
-# Start of LSR module #17          #
-# Injected LSR module: compile.sh  #
-# Number of lines: 157             #
-# Filesize: 5.36 KB                #
-####################################
-source "$HOME/scripts/helpers.sh"
+######################################
+# Start of LSR module #16            #
+# Injected LSR module: remotelog.sh  #
+# Number of lines: 88                #
+# Filesize: 2.46 KB                  #
+######################################
+#!/bin/bash
 
-# Global list of scripts to compile
-scripts_to_compile=(
-    "../helpers"
-    "requirementCheck"
-    "startup"
-    "composites/helpers"
-    "git_helpers"
-    "tmux_helpers"
-    "utils"
-    "proj"
-    "aliases"
-    "laravel"
-    "local_settings"
-    "version_management"
-    "vim"
-    "work"
-    "other"
-    "cfind"
-    "compile"
-    "remotelog"
-    "composites/lsr/lsr"
-    "composites/utils/list"
-    "composites/docker/dock"
-    "composites/git/gitusers"
-    "composites/git/branches"
-    "composites/settings/profile"
-)
+start_remote_log_catcher_server() {
+    PORT="$1"
+    URL="$2"
+    if [[ -z $1 ]]; then
+        PORT=43872
+    fi
 
-alias lcompile=lsr_compile
+    # Start the server
+    echo "Server running on port $URL, waiting for requests..."
 
-print_info "LSR has been loaded in current session"
+    # Infinite loop to keep the server running
+    while true; do
+        # Use nc to listen and capture the output into a temporary file
+        request=$(nc -l -p "$PORT" -w 1)  # -w 5 means wait for up to 5 seconds for data
+
+        # If no data is received, continue to the next loop
+        if [ -z "$request" ]; then
+            continue
+        fi
+
+        # Extract the body of the request (everything after the blank line)
+        body=$(echo "$request" | sed -n '/^\r$/,$p' | tail -n +2)
+
+        # Log the raw body to the console
+        print_info "$request"
+    done
+}
+
+locallog() {
+    # Set default port if not provided
+    port="$1"
+    if [[ -z $1 ]]; then
+        port=58473
+    fi
+
+    # Start the remote log catcher server
+    start_remote_log_catcher_server $port "https://localhost:$port"
+}
+
+remotelog() {
+    > $LOG_FILE
+    local LOG_FILE='./ngrok.log'
+
+    for pid in $(pgrep ngrok); do
+        kill -9 $pid
+    done
+
+    if ! command -v "ngrok" &> /dev/null; then
+        print_error "ngrok must be installed for remotelog. Please install and run ngrok config add-authtoken <token>"
+    fi
+
+    # Check if ngrok is already running and kill it
+    pgrep ngrok > /dev/null
+    if [ $? -eq 0 ]; then
+        print_info "ngrok was already running, killing other instance... you can only have one ngrok/remotelog instance running."
+        pkill ngrok  # Kill any running ngrok processes
+        sleep 1  # Give a moment for the processes to terminate
+    fi
+
+    # Set default port if not provided
+    port="$1"
+    if [[ -z $1 ]]; then
+        port=58473
+    fi
+
+    print_info "Initializing server..."
+
+    # Start ngrok in the background and redirect both stdout and stderr to the log file
+    ngrok http $port --log $LOG_FILE &
+    NGROK_PID=$!
+
+    # Wait for ngrok to generate the URL by checking the log file
+    while ! grep -q 'https://[a-z0-9\-]*.ngrok-free.app' $LOG_FILE; do
+        sleep 1  # Wait until the URL is available in the log
+    done
+
+    # Extract the ngrok URL from the log file
+    NGROK_URL=$(grep 'https://[a-z0-9\-]*.ngrok-free.app' $LOG_FILE | awk -F"url=" '{print $2}' | awk '{print $1}')
+
+    # Print the ngrok URL
+    echo "Your ngrok URL is: $NGROK_URL"
+
+    # Start the remote log catcher server
+    start_remote_log_catcher_server $port $NGROK_URL
+}
+
+
+###############################################
+# Start of LSR module #17                     #
+# Injected LSR module: composites/lsr/lsr.sh  #
+# Number of lines: 274                        #
+# Filesize: 8.85 KB                           #
+###############################################
+source ~/scripts/helpers.sh
+
+alias lsr="lsr_main_command"
+
+BASHRC_PATH=~/.bashrc
+BASHRC_IDENTIFIER="# Luke's Script Repository Loader"
+BASHRC_STARTER="# !! LSR LOADER START !!"
+BASHRC_ENDERER="# !! LSR LOADER END !!"
+SETTINGS_FILE=~/scripts/_settings.yml
+HISTORY_FILE=~/scripts/local_data/version_history.yml
+
+lsr_main_command() {
+    echo ""
+    echo "####  ################  ##########"
+    echo "####  ################  ##########"
+    echo "####  ####              ####  ####"
+    echo "####  ################  ####  ####"
+    echo "####  ################  ####"
+    echo "####              ####  ####"
+    echo "##########  ##########  ####"
+    echo "##########  ##########  ####"
+    echo ""
+
+    if [ ! "$#" -gt 0 ]; then
+        echo "usage: "
+        echo "  - lsr status"
+        echo "  - lsr install"
+        echo "  - lsr uninstall" # Todo
+        echo "  - lsr reinstall" # Todo
+        echo "  - lsr compile"
+        return
+    fi
+
+    local command=$1
+    shift
+
+    if is_in_list "$command" "status"; then
+        lsr_status
+    elif is_in_list "$command" "install"; then
+        ensure_sudo
+        lsr_install
+    elif is_in_list "$command" "uninstall"; then
+        lsr_uninstall
+    elif is_in_list "$command" "reinstall"; then
+        lsr_reinstall
+    elif is_in_list "$command" "compile"; then
+        lsr_compile
+    else
+        print_error "Command $command does not exist"
+        lsr_main_command # Re-run for help command
+    fi
+}
+
+lsr_status() {
+    # Variable to store installation status
+    local bashrc_installed=false
+    local local_data_installed=false
+
+    # Check if the identifier exists in .bashrc
+    if grep -q "$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
+        bashrc_installed=true
+    fi
+
+    # Check if there's a version history file and if it contains the current version
+    if [ -f "$HISTORY_FILE" ]; then
+        CURRENT_VERSION=$(yq e '.version_history[-1]' "$HISTORY_FILE" 2>/dev/null)
+        if [ ! -z "$CURRENT_VERSION" ]; then
+            local_data_installed=true
+        fi
+    fi
+
+    # Check if both bashrc and version history are present
+    if [ "$bashrc_installed" = true ] && [ "$local_data_installed" = true ]; then
+        # Retrieve the installed version from _settings.yml
+        NAME=$(yq e '.name' "$SETTINGS_FILE")
+        MAJOR_VERSION=$(yq e '.version.major' "$SETTINGS_FILE")
+        MINOR_VERSION=$(yq e '.version.minor' "$SETTINGS_FILE")
+        FULL_VERSION="v$MAJOR_VERSION.$MINOR_VERSION"
+
+        print_success "$NAME $FULL_VERSION is installed."
+    else
+        print_error "Lukes Script Repository is not installed."
+    fi
+}
+
+lsr_install() {
+    bash ~/scripts/_install.sh
+    reload_bash
+}
+
+lsr_uninstall() {
+    # 1. Remove the version history file if it exists
+    if [[ -f "$HISTORY_FILE" ]]; then
+        rm "$HISTORY_FILE"
+        print_info "Deleted version history file"
+    fi
+
+    # 2. Check if the LSR loader section exists before attempting to remove it
+    if grep -q "^$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
+        # Remove the LSR loader section from .bashrc
+        sed -i "/^$BASHRC_STARTER/,/^$BASHRC_ENDERER/d" "$BASHRC_PATH"
+        print_info "Removed LSR loader from $BASHRC_PATH"
+    fi
+
+    print_empty_line
+    print_info "LSR has been reinstalled"
+    print_info " - linstall to undo"
+    print_info " - Open new session to confirm"
+    reload_bash
+}
+
+lsr_reinstall() {
+    print_info "Uninstalling LSR"
+    lsrsilence true
+    lsr_uninstall
+    lsrsilence false
+
+    print_info "Recompiling LSR"
+    lsrsilence true
+    lsr_compile
+    lsrsilence false
+
+    print_info "Installing LSR"
+    lsrsilence true
+    lsr_install
+    lsrsilence false
+}
 
 lsr_compile() {
     print_info "Starting re-compilation of LSR"
@@ -3029,6 +3152,30 @@ lsr_compile() {
     local MINOR_VERSION=$(yq e '.version.minor' "$SETTINGS_FILE")
     local FULL_VERSION=v$MAJOR_VERSION.$MINOR_VERSION
     local SCRIPT_PREFIX="$HOME/scripts/inject/"
+    local scripts_to_compile=(
+        "../helpers"
+        "requirementCheck"
+        "startup"
+        "composites/helpers"
+        "git_helpers"
+        "tmux_helpers"
+        "utils"
+        "proj"
+        "aliases"
+        "laravel"
+        "local_settings"
+        "vim"
+        "work"
+        "other"
+        "cfind"
+        "remotelog"
+        "composites/lsr/lsr"
+        "composites/utils/list"
+        "composites/docker/dock"
+        "composites/git/gitusers"
+        "composites/git/branches"
+        "composites/settings/profile"
+    )
 
     # Make buildfile if it doesn't exist, else clear it
     if [[ -f "$build_file" ]]; then
@@ -3142,172 +3289,8 @@ lsr_compile() {
 
     reload_bash
 }
-
-######################################
-# Start of LSR module #18            #
-# Injected LSR module: remotelog.sh  #
-# Number of lines: 88                #
-# Filesize: 2.46 KB                  #
-######################################
-#!/bin/bash
-
-start_remote_log_catcher_server() {
-    PORT="$1"
-    URL="$2"
-    if [[ -z $1 ]]; then
-        PORT=43872
-    fi
-
-    # Start the server
-    echo "Server running on port $URL, waiting for requests..."
-
-    # Infinite loop to keep the server running
-    while true; do
-        # Use nc to listen and capture the output into a temporary file
-        request=$(nc -l -p "$PORT" -w 1)  # -w 5 means wait for up to 5 seconds for data
-
-        # If no data is received, continue to the next loop
-        if [ -z "$request" ]; then
-            continue
-        fi
-
-        # Extract the body of the request (everything after the blank line)
-        body=$(echo "$request" | sed -n '/^\r$/,$p' | tail -n +2)
-
-        # Log the raw body to the console
-        print_info "$request"
-    done
-}
-
-locallog() {
-    # Set default port if not provided
-    port="$1"
-    if [[ -z $1 ]]; then
-        port=58473
-    fi
-
-    # Start the remote log catcher server
-    start_remote_log_catcher_server $port "https://localhost:$port"
-}
-
-remotelog() {
-    > $LOG_FILE
-    local LOG_FILE='./ngrok.log'
-
-    for pid in $(pgrep ngrok); do
-        kill -9 $pid
-    done
-
-    if ! command -v "ngrok" &> /dev/null; then
-        print_error "ngrok must be installed for remotelog. Please install and run ngrok config add-authtoken <token>"
-    fi
-
-    # Check if ngrok is already running and kill it
-    pgrep ngrok > /dev/null
-    if [ $? -eq 0 ]; then
-        print_info "ngrok was already running, killing other instance... you can only have one ngrok/remotelog instance running."
-        pkill ngrok  # Kill any running ngrok processes
-        sleep 1  # Give a moment for the processes to terminate
-    fi
-
-    # Set default port if not provided
-    port="$1"
-    if [[ -z $1 ]]; then
-        port=58473
-    fi
-
-    print_info "Initializing server..."
-
-    # Start ngrok in the background and redirect both stdout and stderr to the log file
-    ngrok http $port --log $LOG_FILE &
-    NGROK_PID=$!
-
-    # Wait for ngrok to generate the URL by checking the log file
-    while ! grep -q 'https://[a-z0-9\-]*.ngrok-free.app' $LOG_FILE; do
-        sleep 1  # Wait until the URL is available in the log
-    done
-
-    # Extract the ngrok URL from the log file
-    NGROK_URL=$(grep 'https://[a-z0-9\-]*.ngrok-free.app' $LOG_FILE | awk -F"url=" '{print $2}' | awk '{print $1}')
-
-    # Print the ngrok URL
-    echo "Your ngrok URL is: $NGROK_URL"
-
-    # Start the remote log catcher server
-    start_remote_log_catcher_server $port $NGROK_URL
-}
-
-
-###############################################
-# Start of LSR module #19                     #
-# Injected LSR module: composites/lsr/lsr.sh  #
-# Number of lines: 61                         #
-# Filesize: 1.83 KB                           #
-###############################################
-alias lsr="lsr_main_command"
-
-lsr_main_command() {
-    if [ ! "$#" -gt 0 ]; then
-        echo "usage: "
-        echo "  - lsr install"
-        echo "  - lsr uninstall"
-        echo "  - lsr reinstall"
-        echo "  - lsr compile"
-        return
-    fi
-
-    local command=$1
-    shift
-
-    if is_in_list "$command" "status"; then
-        lsr_status
-    elif is_in_list "$command" "install"; then
-        return
-    elif is_in_list "$command" "uninstall"; then
-        return
-    elif is_in_list "$command" "reinstall"; then
-        return
-    elif is_in_list "$command" "compile"; then
-        return
-    else
-        print_error "Command $command does not exist"
-        lsr_main_command # Re-run for help command
-    fi
-}
-
-lsr_status() {
-    # Variable to store installation status
-    local bashrc_installed=false
-    local local_data_installed=false
-
-    # Check if the identifier exists in .bashrc
-    if grep -q "$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
-        bashrc_installed=true
-    fi
-
-    # Check if there's a version history file and if it contains the current version
-    if [ -f "$HISTORY_FILE" ]; then
-        CURRENT_VERSION=$(yq e '.version_history[-1]' "$HISTORY_FILE" 2>/dev/null)
-        if [ ! -z "$CURRENT_VERSION" ]; then
-            local_data_installed=true
-        fi
-    fi
-
-    # Check if both bashrc and version history are present
-    if [ "$bashrc_installed" = true ] && [ "$local_data_installed" = true ]; then
-        # Retrieve the installed version from _settings.yml
-        NAME=$(yq e '.name' "$SETTINGS_FILE")
-        MAJOR_VERSION=$(yq e '.version.major' "$SETTINGS_FILE")
-        MINOR_VERSION=$(yq e '.version.minor' "$SETTINGS_FILE")
-        FULL_VERSION="v$MAJOR_VERSION.$MINOR_VERSION"
-
-        print_success "$NAME $FULL_VERSION is installed."
-    else
-        print_error "Lukes Script Repository is not installed."
-    fi
-}
 ##################################################
-# Start of LSR module #20                        #
+# Start of LSR module #18                        #
 # Injected LSR module: composites/utils/list.sh  #
 # Number of lines: 42                            #
 # Filesize: 883 B                                #
@@ -3356,7 +3339,7 @@ lsrlist_create() {
     list=""
 }
 ###################################################
-# Start of LSR module #21                         #
+# Start of LSR module #19                         #
 # Injected LSR module: composites/docker/dock.sh  #
 # Number of lines: 194                            #
 # Filesize: 6.43 KB                               #
@@ -3557,7 +3540,7 @@ dock_restart() {
     fi
 }
 ####################################################
-# Start of LSR module #22                          #
+# Start of LSR module #20                          #
 # Injected LSR module: composites/git/gitusers.sh  #
 # Number of lines: 262                             #
 # Filesize: 8.43 KB                                #
@@ -3826,7 +3809,7 @@ git_users_set_email() {
     localsettings_reformat
 }
 ####################################################
-# Start of LSR module #23                          #
+# Start of LSR module #21                          #
 # Injected LSR module: composites/git/branches.sh  #
 # Number of lines: 154                             #
 # Filesize: 4.51 KB                                #
@@ -3987,7 +3970,7 @@ git_branches_list() {
     git branch --all --no-color
 }
 ########################################################
-# Start of LSR module #24                              #
+# Start of LSR module #22                              #
 # Injected LSR module: composites/settings/profile.sh  #
 # Number of lines: 159                                 #
 # Filesize: 4.54 KB                                    #
