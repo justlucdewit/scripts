@@ -146,7 +146,6 @@ lsr_compile() {
         "utils"
         "proj"
         "aliases"
-        "laravel"
         "local_settings"
         "vim"
         "work"
