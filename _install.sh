@@ -4,7 +4,7 @@
 # Lukes script repository on your local machine
 
 # Source the needed helper files
-source ~/scripts/helpers.sh
+source "$HOME/scripts/helpers.sh"
 
 ensure_sudo
 
@@ -81,7 +81,7 @@ if [ -f "$HOME/scripts/build.sh" ]; then
     source "$HOME/scripts/build.sh"
 fi
 
-source "$HOME/scripts/inject/compile.sh"
+# source "$HOME/scripts/inject/compile.sh"
 lsr_compile
 
 # Check if the identifier already exists in .bashrc
@@ -91,6 +91,7 @@ if ! grep -q "$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
     INJECTION_CODE+="# source \"$HOME/scripts/inject/compile.sh\" # Recompile LSR\n" # Recompile LSR
     INJECTION_CODE+="# lsr_compile\n" # Recompile LSR
     INJECTION_CODE+="source \"$HOME/scripts/build.sh\" # Load LSR in current session\n" # Source the script
+    INJECTION_CODE+="print_info \"LSR Has been loaded in current session\"" # Source the script
     INJECTION_CODE+="$BASHRC_ENDERER"
 
     # Append the injection code to .bashrc
