@@ -19,3 +19,14 @@ if ! grep -q "lsr.gitignore" "$GLOBAL_CONFIG"; then
 EOL
 
 fi
+
+# Set up custom vimrc
+local vimrc_file="$HOME/.vimrc"
+
+# Hardcoded Vim configuration
+local vimrc_text="
+source ~/scripts/extra_config_files/LukesVimConfig.vim
+"
+
+# Create or clear the .vimrc file and write the hardcoded text
+echo "$vimrc_text" > "$vimrc_file"

@@ -271,6 +271,11 @@ if ! grep -q "lsr.gitignore" "$GLOBAL_CONFIG"; then
     excludesfile = $GLOBAL_GITIGNORE
 EOL
 fi
+local vimrc_file="$HOME/.vimrc"
+local vimrc_text="
+source ~/scripts/extra_config_files/LukesVimConfig.vim
+"
+echo "$vimrc_text" > "$vimrc_file"
 composite_help_get_flags() {
     reset_ifs
     local flags=()
@@ -1229,28 +1234,6 @@ localsettings_reformat() {
     localsettings_sort .gitusers
     localsettings_sort .
 }
-setup_vim_plug() {
-    local vim_autoload_dir="$HOME/.vim/autoload"
-    local plug_file="$vim_autoload_dir/plug.vim"
-    if [ ! -d "$vim_autoload_dir" ]; then
-        mkdir -p "$vim_autoload_dir"
-        print_info "Created directory: $vim_autoload_dir"
-    fi
-    if [ ! -f "$plug_file" ]; then
-        curl -fLo "$plug_file" --create-dirs \
-            https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-        print_info "Downloaded vim-plug to $plug_file"
-    fi
-}
-write_to_vimrc() {
-    local vimrc_file="$HOME/.vimrc"
-    setup_vim_plug
-    local vimrc_text="
-source ~/scripts/extra_config_files/LukesVimConfig.vim
-"
-    echo "$vimrc_text" > "$vimrc_file"
-}
-write_to_vimrc
 work() {
     local date="$(date --date='yesterday' +%Y-%m-%d)"
     local filter_user=""

@@ -1,5 +1,5 @@
 # LSR v1.1
-# Local build (20:30 23/11/2024)
+# Local build (20:57 23/11/2024)
 # Includes LSR modules:
 # - /home/lucdewit/scripts/inject/../helpers.sh
 # - /home/lucdewit/scripts/inject/requirementCheck.sh
@@ -11,7 +11,6 @@
 # - /home/lucdewit/scripts/inject/proj.sh
 # - /home/lucdewit/scripts/inject/aliases.sh
 # - /home/lucdewit/scripts/inject/local_settings.sh
-# - /home/lucdewit/scripts/inject/vim.sh
 # - /home/lucdewit/scripts/inject/work.sh
 # - /home/lucdewit/scripts/inject/other.sh
 # - /home/lucdewit/scripts/inject/cfind.sh
@@ -358,8 +357,8 @@ requires_package "git" "LSR"
 ####################################
 # Start of LSR module #3           #
 # Injected LSR module: startup.sh  #
-# Number of lines: 20              #
-# Filesize: 577 B                  #
+# Number of lines: 31              #
+# Filesize: 838 B                  #
 ####################################
 # Inject the LSR gitconfig in the global gitconfig
 CUSTOM_CONFIG="$HOME/scripts/extra_config_files/lsr.gitconfig"
@@ -382,6 +381,17 @@ if ! grep -q "lsr.gitignore" "$GLOBAL_CONFIG"; then
 EOL
 
 fi
+
+# Set up custom vimrc
+local vimrc_file="$HOME/.vimrc"
+
+# Hardcoded Vim configuration
+local vimrc_text="
+source ~/scripts/extra_config_files/LukesVimConfig.vim
+"
+
+# Create or clear the .vimrc file and write the hardcoded text
+echo "$vimrc_text" > "$vimrc_file"
 ###############################################
 # Start of LSR module #4                      #
 # Injected LSR module: composites/helpers.sh  #
@@ -1748,51 +1758,8 @@ localsettings_reformat() {
     localsettings_sort .gitusers
     localsettings_sort .
 }
-################################
-# Start of LSR module #11      #
-# Injected LSR module: vim.sh  #
-# Number of lines: 36          #
-# Filesize: 1004 B             #
-################################
-# Function to setup vim-plug for Vim
-setup_vim_plug() {
-    # Define the directory and file
-    local vim_autoload_dir="$HOME/.vim/autoload"
-    local plug_file="$vim_autoload_dir/plug.vim"
-
-    # Create the autoload directory if it doesn't exist
-    if [ ! -d "$vim_autoload_dir" ]; then
-        mkdir -p "$vim_autoload_dir"
-        print_info "Created directory: $vim_autoload_dir"
-    fi
-
-    # Download plug.vim if it doesn't exist
-    if [ ! -f "$plug_file" ]; then
-        curl -fLo "$plug_file" --create-dirs \
-            https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-        print_info "Downloaded vim-plug to $plug_file"
-    fi
-}
-
-
-# Setting settings of vim
-write_to_vimrc() {
-    local vimrc_file="$HOME/.vimrc"
-
-    setup_vim_plug
-
-    # Hardcoded Vim configuration
-    local vimrc_text="
-source ~/scripts/extra_config_files/LukesVimConfig.vim
-"
-
-    # Create or clear the .vimrc file and write the hardcoded text
-    echo "$vimrc_text" > "$vimrc_file"
-}
-
-write_to_vimrc
 #################################
-# Start of LSR module #12       #
+# Start of LSR module #11       #
 # Injected LSR module: work.sh  #
 # Number of lines: 101          #
 # Filesize: 4.07 KB             #
@@ -1900,7 +1867,7 @@ work() {
     cd "$original_pwd"
 }
 ##################################
-# Start of LSR module #13        #
+# Start of LSR module #12        #
 # Injected LSR module: other.sh  #
 # Number of lines: 719           #
 # Filesize: 22.90 KB             #
@@ -2626,7 +2593,7 @@ paste() {
 alias lg="lazygit"
 
 ##################################
-# Start of LSR module #14        #
+# Start of LSR module #13        #
 # Injected LSR module: cfind.sh  #
 # Number of lines: 58            #
 # Filesize: 1.63 KB              #
@@ -2691,7 +2658,7 @@ cfind() {
 }
 
 ######################################
-# Start of LSR module #15            #
+# Start of LSR module #14            #
 # Injected LSR module: remotelog.sh  #
 # Number of lines: 88                #
 # Filesize: 2.46 KB                  #
@@ -2786,7 +2753,7 @@ remotelog() {
 
 
 ###############################################
-# Start of LSR module #16                     #
+# Start of LSR module #15                     #
 # Injected LSR module: composites/lsr/lsr.sh  #
 # Number of lines: 273                        #
 # Filesize: 9.22 KB                           #
@@ -3066,7 +3033,7 @@ lsr_compile() {
     reload_bash
 }
 ##################################################
-# Start of LSR module #17                        #
+# Start of LSR module #16                        #
 # Injected LSR module: composites/utils/list.sh  #
 # Number of lines: 42                            #
 # Filesize: 883 B                                #
@@ -3115,7 +3082,7 @@ lsrlist_create() {
     list=""
 }
 ###################################################
-# Start of LSR module #18                         #
+# Start of LSR module #17                         #
 # Injected LSR module: composites/docker/dock.sh  #
 # Number of lines: 194                            #
 # Filesize: 6.43 KB                               #
@@ -3316,7 +3283,7 @@ dock_restart() {
     fi
 }
 ####################################################
-# Start of LSR module #19                          #
+# Start of LSR module #18                          #
 # Injected LSR module: composites/git/gitusers.sh  #
 # Number of lines: 262                             #
 # Filesize: 8.43 KB                                #
@@ -3585,7 +3552,7 @@ git_users_set_email() {
     localsettings_reformat
 }
 ####################################################
-# Start of LSR module #20                          #
+# Start of LSR module #19                          #
 # Injected LSR module: composites/git/branches.sh  #
 # Number of lines: 154                             #
 # Filesize: 4.51 KB                                #
@@ -3746,7 +3713,7 @@ git_branches_list() {
     git branch --all --no-color
 }
 ########################################################
-# Start of LSR module #21                              #
+# Start of LSR module #20                              #
 # Injected LSR module: composites/settings/profile.sh  #
 # Number of lines: 159                                 #
 # Filesize: 4.54 KB                                    #
