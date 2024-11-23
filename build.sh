@@ -1,5 +1,5 @@
 # LSR v1.1
-# Local build (13:28 23/11/2024)
+# Local build (13:57 23/11/2024)
 # Includes LSR modules:
 # - /home/lucdewit/scripts/inject/../helpers.sh
 # - /home/lucdewit/scripts/inject/requirementCheck.sh
@@ -3012,7 +3012,7 @@ remotelog() {
 # Start of LSR module #17                     #
 # Injected LSR module: composites/lsr/lsr.sh  #
 # Number of lines: 274                        #
-# Filesize: 8.85 KB                           #
+# Filesize: 9.24 KB                           #
 ###############################################
 source ~/scripts/helpers.sh
 
@@ -3027,14 +3027,14 @@ HISTORY_FILE=~/scripts/local_data/version_history.yml
 
 lsr_main_command() {
     echo ""
-    echo "####  ################  ##########"
-    echo "####  ################  ##########"
-    echo "####  ####              ####  ####"
-    echo "####  ################  ####  ####"
-    echo "####  ################  ####"
-    echo "####              ####  ####"
-    echo "##########  ##########  ####"
-    echo "##########  ##########  ####"
+    echo "▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓"
+    echo "▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓"
+    echo "▓▓▓▓  ▓▓▓▓              ▓▓▓▓  ▓▓▓▓"
+    echo "▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓  ▓▓▓▓"
+    echo "▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓      "
+    echo "▓▓▓▓              ▓▓▓▓  ▓▓▓▓      "
+    echo "▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓      "
+    echo "▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓      "
     echo ""
 
     if [ ! "$#" -gt 0 ]; then
