@@ -1,5 +1,3 @@
 ﻿local_data
-local_data/local_settings.yml
-local_data/tmp/tmux_pane_names.txt
 build.sh
-build.min.sh
+build-lite.sh

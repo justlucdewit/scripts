@@ -45,7 +45,7 @@ lsr_main_command() {
     elif is_in_list "$command" "reinstall"; then
         lsr_reinstall
     elif is_in_list "$command" "compile"; then
-        lsr_compile
+        lsr_compile $@
     else
         print_error "Command $command does not exist"
         lsr_main_command # Re-run for help command
@@ -89,6 +89,22 @@ lsr_install() {
     BASHRC_ENDERER="# !! LSR LOADER END !!"
     BASHRC_IDENTIFIER="# Luke's Script Repository Loader"
     CURRENT_VERSION="$NAME $FULL_VERSION"
+    CURRENT_BUILD_FILE="build.sh"
+    BUILD_FILE_PATH="$HOME/scripts/versions/dev/build.sh"
+
+    # Get the correct build file based on the version and dev setting
+    isDev=$(yq e ".dev" "$SETTINGS_FILE")
+    isLite=$(yq e ".lite" "$SETTINGS_FILE")
+    
+    if [[ "$isDev" == "true" ]]; then
+        CURRENT_VERSION="dev"
+    fi
+ 
+   if [[ "$isLite" == "true" ]]; then
+        CURRENT_BUILD_FILE="build-lite.sh"
+    fi
+
+    BUILD_FILE_PATH="$HOME/scripts/versions/$CURRENT_VERSION/$CURRENT_BUILD_FILE"
 
     # Check if there is already an injection in bashrc
     if grep -q "$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
@@ -96,7 +112,17 @@ lsr_install() {
         print_error "First run lsr_uninstall to be able to install"
         exit 1
     else
-        print_info "Installing $CURRENT_VERSION"
+        print_info "Installing LSR $CURRENT_VERSION"
+    fi
+
+    if [[ ! -f "$BUILD_FILE_PATH" ]]; then
+        if [[ "$isLite" == "true" ]]; then
+            print_error "No build found for version $current_version"
+        else
+            print_error "No build found for version $current_version-LITE"
+        fi
+
+        exit
     fi
     
     ensure_sudo
@@ -124,10 +150,8 @@ lsr_install() {
     if ! grep -q "$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
         # Create a block of code to inject into .bashrc
         INJECTION_CODE="\n\n$BASHRC_STARTER\n$BASHRC_IDENTIFIER\n"
-        INJECTION_CODE+="# source \"$HOME/scripts/inject/compile.sh\" # Recompile LSR\n" # Recompile LSR
-        INJECTION_CODE+="# lsr_compile\n" # Recompile LSR
-        INJECTION_CODE+="source \"$HOME/scripts/build.sh\" # Load LSR in current session\n" # Source the script
-        INJECTION_CODE+="print_info \"LSR Has been loaded in current session\"" # Source the script
+        INJECTION_CODE+="source \"$BUILD_FILE_PATH\" # Load LSR in current session\n" # Source the script
+        INJECTION_CODE+="print_info \"LSR $CURRENT_VERSION Has been loaded in current session\"\n" # Source the script
         INJECTION_CODE+="$BASHRC_ENDERER"
 
         # Append the injection code to .bashrc
@@ -181,31 +205,40 @@ lsr_reinstall() {
 }
 
 lsr_compile() {
-    print_info "Starting re-compilation of LSR"
-    local build_file="$HOME/scripts/build.sh"
-    local minimized_build_file="$HOME/scripts/build.min.sh"
+    local version_save_name="$1"
+    if [[ $# == 0 ]]; then
+        version_save_name="dev"
+    fi
+
+    mkdir -p "$HOME/scripts/versions/$version_save_name"
+
+    local build_file="$HOME/scripts/versions/$version_save_name/build.sh"
+    local lite_build_file="$HOME/scripts/versions/$version_save_name/build-lite.sh"
     local SETTINGS_FILE=~/scripts/_settings.yml
     local NAME=$(yq e '.name' "$SETTINGS_FILE")
     local MAJOR_VERSION=$(yq e '.version.major' "$SETTINGS_FILE")
     local MINOR_VERSION=$(yq e '.version.minor' "$SETTINGS_FILE")
     local FULL_VERSION=v$MAJOR_VERSION.$MINOR_VERSION
     local SCRIPT_PREFIX="$HOME/scripts/inject/"
+
+    local lite_scripts_to_compile=(
+        "aliases"
+    )
+
     local scripts_to_compile=(
-        "../helpers"
+        "helpers"
         "requirementCheck"
         "startup"
         "composites/helpers"
-        "git_helpers"
-        "tmux_helpers"
-        "utils"
-        "proj"
+        "git_helpers" # TODO: make composite
+        "tmux_helpers" # TODO: make composite
+        "utils" # TODO: make composite
+        "proj" # TODO: make composite
         "aliases"
-        "local_settings"
-        "vim"
-        "work"
-        "other"
-        "cfind"
-        "remotelog"
+        "local_settings" # TODO: make composite
+        "work" # TODO: make composite
+        "other" # TODO: make composite
+        "cfind" # TODO: make composite
         "composites/lsr/lsr"
         "composites/utils/list"
         "composites/docker/dock"
@@ -214,7 +247,7 @@ lsr_compile() {
         "composites/settings/profile"
     )
 
-    # Make buildfile if it doesn't exist, else clear it
+    # Compile LSR
     if [[ -f "$build_file" ]]; then
         > "$build_file"
     else
@@ -229,17 +262,22 @@ lsr_compile() {
 
     for script in "${scripts_to_compile[@]}"; do
         if [[ -f "$SCRIPT_PREFIX$script.sh" ]]; then
-            echo "# - $SCRIPT_PREFIX$script.sh" >> "$build_file"  # Add a newline for separation
+            echo "# - $script.sh" >> "$build_file"  # Add a newline for separation
         else
             print_info "Warning: $script does not exist, skipping."
         fi
     done
 
+    {
+        echo "LSR_TYPE=\"LSR-FULL\""
+        echo "LSR_VERSION=\"$FULL_VERSION\""
+    } >> "$build_file"
+
     echo "" >> "$build_file"  # Add a newline for separation
 
-    local i=1
-
     # Loop through the global array and compile the scripts
+    print_info "Starting re-compilation of LSR"
+    local i=1
     for script in "${scripts_to_compile[@]}"; do
         if [[ -f "$SCRIPT_PREFIX$script.sh" ]]; then
             local script_line_count=$(get_line_count "$SCRIPT_PREFIX$script.sh")
@@ -293,36 +331,97 @@ lsr_compile() {
             echo "" >> "$build_file"  # Add a newline for separation
         fi
     done
+    print_info "Finished recompiling LSR"
 
-    $build_file_size
-
-    print_info "Finished recompiling LSR at $build_file"
-    print_info "Total final build.sh size: $(get_filesize "$build_file")"
-    print_info "Total final build.sh lines: $(get_line_count "$build_file")"
-
-    # Minimization
-    print_empty_line
-    print_info "Generating minimized build file"
-
-    local remove_comment_lines='^\s*#'  # Matches lines that are just comments
-    local trim_whitespace='^\s*|\s*$'   # Matches leading and trailing whitespace on each line
-    local remove_empty_lines='^$'       # Matches empty lines
-    
-    # Check if minified file exists, if not, create it
-    if [[ ! -f $minimized_build_file ]]; then
-        touch "$minimized_build_file"
+    # Compile LSR-LITE
+    if [[ -f "$lite_build_file" ]]; then
+        > "$lite_build_file"
+    else
+        touch "$lite_build_file"
     fi
 
-    # Copy original script to the minified script file
-    cp "$build_file" "$minimized_build_file"
+    {
+        echo "# LSR $FULL_VERSION"
+        echo "# Local build ($(date +'%H:%M %d/%m/%Y'))"
+        echo "# Includes LSR modules:"
+    } >> "$lite_build_file"
 
-    # Apply regex transformations one by one
-    sed -i "/$remove_comment_lines/d" "$minimized_build_file"
-    sed -i "s/$trim_whitespace//g" "$minimized_build_file"
-    sed -i "/$remove_empty_lines/d" "$minimized_build_file"
+    for script in "${lite_scripts_to_compile[@]}"; do
+        if [[ -f "$SCRIPT_PREFIX$script.sh" ]]; then
+            echo "# - $script.sh" >> "$lite_build_file"  # Add a newline for separation
+        else
+            print_info "Warning: $script does not exist, skipping."
+        fi
+    done
 
-    print_info "Total final build.min.sh size: $(get_filesize "$minimized_build_file")"
-    print_info "Total final build.min.sh lines: $(get_line_count "$minimized_build_file")"
+    {
+        echo "LSR_TYPE=\"LSR-LITE\""
+        echo "LSR_VERSION=\"$FULL_VERSION\""
+    } >> "$lite_build_file"
 
+    echo "" >> "$lite_build_file"  # Add a newline for separation
+
+    print_info "Starting re-compilation of LSR-LITE"
+    local i=1
+    for script in "${lite_scripts_to_compile[@]}"; do
+        if [[ -f "$SCRIPT_PREFIX$script.sh" ]]; then
+            local script_line_count=$(get_line_count "$SCRIPT_PREFIX$script.sh")
+            local script_filesize=$(get_filesize "$SCRIPT_PREFIX$script.sh")
+            print_info " - Compiling $script.sh ($script_filesize/$script_line_count lines)"
+            
+            local module_index_line="# Start of LSR module #${i} "
+            ((i++))
+            local module_name_line="# Injected LSR module: $script.sh "
+            
+            local line_count_line="# Number of lines: $script_line_count "
+            local filesize_line="# Filesize: $script_filesize "
+            
+            # Function to calculate the length of a string
+            get_length() {
+                echo "${#1}"
+            }
+
+            # Determine the maximum length of the content (excluding hashtags)
+            max_content_length=$(get_length "$module_index_line")
+            for line in "$module_name_line" "$line_count_line" "$filesize_line"; do
+                line_length=$(get_length "$line")
+                if [[ $line_length -gt $max_content_length ]]; then
+                    max_content_length=$line_length
+                fi
+            done
+
+            # Add space for the right-side hashtag
+            max_line_length=$((max_content_length + 2)) # +2 for the hashtags on each side
+
+            # Make a horizontal line exactly long enough
+            horizontal_line=$(printf "#%0.s" $(seq 1 $max_line_length))
+
+            # Function to pad the lines with spaces and add the right border hashtag
+            pad_line() {
+                local content="$1"
+                local padding_needed=$((max_line_length - $(get_length "$content") - 1)) # -1 for the ending hashtag
+                printf "%s%${padding_needed}s#" "$content" ""
+            }
+
+            {
+                echo "$horizontal_line"
+                echo "$(pad_line "$module_index_line")"
+                echo "$(pad_line "$module_name_line")"
+                echo "$(pad_line "$line_count_line")"
+                echo "$(pad_line "$filesize_line")"
+                echo "$horizontal_line"
+            } >> "$lite_build_file"
+
+            cat "$SCRIPT_PREFIX$script.sh" >> "$lite_build_file"
+            echo "" >> "$lite_build_file"  # Add a newline for separation
+        fi
+    done
+    print_info "Finished recompiling LSR-LITE"
+
+    print_empty_line
+    print_info "build.sh:     $(get_line_count "$build_file") Lines"
+    print_info "build-lite.sh:     $(get_line_count "$lite_build_file") Lines"
+
+    print_empty_line
     reload_bash
 }
