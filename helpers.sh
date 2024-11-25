@@ -1,3 +1,13 @@
+enable_lsr_silence() {
+    SETTINGS_FILE=~/scripts/_settings.yml
+    yq e -i '.silent=true' "$SETTINGS_FILE"
+}
+
+disable_lsr_silence() {
+    SETTINGS_FILE=~/scripts/_settings.yml
+    yq e -i '.silent=false' "$SETTINGS_FILE"
+}
+
 is_in_list() {
     local value="$1"
     local list="$2"
