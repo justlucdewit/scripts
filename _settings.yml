@@ -4,3 +4,5 @@ version:
   minor: 1
 debug: false
 silent: false
+dev: true
+lite: false
