@@ -1,4 +1,5 @@
 source ~/scripts/helpers.sh
+source ~/scripts/inject/aliases.sh
 
 alias lsr="lsr_main_command"
 
@@ -10,24 +11,24 @@ SETTINGS_FILE=~/scripts/_settings.yml
 HISTORY_FILE=~/scripts/local_data/version_history.yml
 
 lsr_main_command() {
-    echo ""
-    echo "▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓"
-    echo "▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓"
-    echo "▓▓▓▓  ▓▓▓▓              ▓▓▓▓  ▓▓▓▓"
-    echo "▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓  ▓▓▓▓"
-    echo "▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓      "
-    echo "▓▓▓▓              ▓▓▓▓  ▓▓▓▓      "
-    echo "▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓      "
-    echo "▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓      "
-    echo ""
+    print_normal ""
+    print_normal "▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓"
+    print_normal "▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓"
+    print_normal "▓▓▓▓  ▓▓▓▓              ▓▓▓▓  ▓▓▓▓"
+    print_normal "▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓  ▓▓▓▓"
+    print_normal "▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓      "
+    print_normal "▓▓▓▓              ▓▓▓▓  ▓▓▓▓      "
+    print_normal "▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓      "
+    print_normal "▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓      "
+    print_normal ""
 
     if [ ! "$#" -gt 0 ]; then
-        echo "usage: "
-        echo "  - lsr status"
-        echo "  - lsr install"
-        echo "  - lsr uninstall" # Todo
-        echo "  - lsr reinstall" # Todo
-        echo "  - lsr compile"
+        print_normal "usage: "
+        print_normal "  - lsr status"
+        print_normal "  - lsr install"
+        print_normal "  - lsr uninstall" # Todo
+        print_normal "  - lsr reinstall" # Todo
+        print_normal "  - lsr compile"
         return
     fi
 
@@ -61,16 +62,8 @@ lsr_status() {
         bashrc_installed=true
     fi
 
-    # Check if there's a version history file and if it contains the current version
-    if [ -f "$HISTORY_FILE" ]; then
-        CURRENT_VERSION=$(yq e '.version_history[-1]' "$HISTORY_FILE" 2>/dev/null)
-        if [ ! -z "$CURRENT_VERSION" ]; then
-            local_data_installed=true
-        fi
-    fi
-
     # Check if both bashrc and version history are present
-    if [ "$bashrc_installed" = true ] && [ "$local_data_installed" = true ]; then
+    if [ "$bashrc_installed" = true ]; then
         # Retrieve the installed version from _settings.yml
         NAME=$(yq e '.name' "$SETTINGS_FILE")
         MAJOR_VERSION=$(yq e '.version.major' "$SETTINGS_FILE")
@@ -84,7 +77,68 @@ lsr_status() {
 }
 
 lsr_install() {
-    bash ~/scripts/_install.sh
+    # Defining variables of important files and locations
+    SETTINGS_FILE=~/scripts/_settings.yml
+    LOCAL_DATA_DIR=~/scripts/local_data
+    NAME=$(yq e '.name' $SETTINGS_FILE)
+    MAJOR_VERSION=$(yq e '.version.major' $SETTINGS_FILE)
+    MINOR_VERSION=$(yq e '.version.minor' $SETTINGS_FILE)
+    FULL_VERSION=v$MAJOR_VERSION.$MINOR_VERSION
+    BASHRC_PATH=~/.bashrc
+    BASHRC_STARTER="# !! LSR LOADER START !!"
+    BASHRC_ENDERER="# !! LSR LOADER END !!"
+    BASHRC_IDENTIFIER="# Luke's Script Repository Loader"
+    CURRENT_VERSION="$NAME $FULL_VERSION"
+
+    # Check if there is already an injection in bashrc
+    if grep -q "$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
+        print_error "There is already a LSR Loader located in bashrc\nFirst run lsr_uninstall to be able to install"
+        print_error "First run lsr_uninstall to be able to install"
+        exit 1
+    else
+        print_info "Installing $CURRENT_VERSION"
+    fi
+    
+    ensure_sudo
+
+    # Install needed libraries
+    if ! install_if_not_exist "yq"; then
+        exit 1 # Exit the script with error code
+    fi
+
+    if ! install_if_not_exist "jq"; then
+        exit 1 # Exit the script with error code
+    fi
+
+    if ! install_if_not_exist "bc"; then
+        exit 1 # Exit the script with error code
+    fi
+
+    if ! install_if_not_exist "silversearcher-ag" "ag"; then
+        exit 1 # Exit the script with error code
+    fi
+
+    mkdir -p "$LOCAL_DATA_DIR"
+
+    # Check if the identifier already exists in .bashrc
+    if ! grep -q "$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
+        # Create a block of code to inject into .bashrc
+        INJECTION_CODE="\n\n$BASHRC_STARTER\n$BASHRC_IDENTIFIER\n"
+        INJECTION_CODE+="# source \"$HOME/scripts/inject/compile.sh\" # Recompile LSR\n" # Recompile LSR
+        INJECTION_CODE+="# lsr_compile\n" # Recompile LSR
+        INJECTION_CODE+="source \"$HOME/scripts/build.sh\" # Load LSR in current session\n" # Source the script
+        INJECTION_CODE+="print_info \"LSR Has been loaded in current session\"" # Source the script
+        INJECTION_CODE+="$BASHRC_ENDERER"
+
+        # Append the injection code to .bashrc
+        echo -e "$INJECTION_CODE" >> "$BASHRC_PATH"
+        print_info "Injected script sourcing block into $BASHRC_PATH"
+        print_success "Installation of $CURRENT_VERSION was succefull\n"
+        print_info "Run 'source ~/.bashrc' to reload, or open a new terminal session"
+    else
+        print_info "Script sourcing block already exists in $BASHRC_PATH"
+    fi
+
     reload_bash
 }
 
