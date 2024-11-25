@@ -20,9 +20,3 @@ alias l="ls -la"
 alias rb="reload_bash"
 alias files="explorer.exe ."
 alias subl='"/mnt/c/Program Files/Sublime Text/sublime_text.exe"'
-
-unalias joke 2>/dev/null
-joke() {
-    curl -H "Accept: text/plain" https://icanhazdadjoke.com/
-    echo
-}
