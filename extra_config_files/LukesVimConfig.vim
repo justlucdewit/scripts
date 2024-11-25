@@ -27,10 +27,13 @@ set showtabline=2       " Always show tab line
 set autoread            " Auto-reload files if changed outside Vim
 
 " Custom Key Bindings for Easier File Management
-nnoremap <C-n> :enew<CR>                " Ctrl-n: Open a new empty buffer
-nnoremap <C-t> :tabnew<CR>              " Ctrl-t: Open a new tab
-nnoremap <C-h> :tabprevious<CR>      " Ctrl-Left: Move to previous tab
-nnoremap <C-l> :tabnext<CR>         " Ctrl-Right: Move to next tab
+nnoremap <C-s> :w<CR>                                       " Ctrl-s: Save file
+nnoremap <C-w> :q<CR>                                       " Ctrl-w: Close file
+nnoremap <C-n> :enew<CR>                                    " Ctrl-n: Open a new empty buffer
+nnoremap <C-t> :tabnew<CR>:NERDTreeExplore<CR>              " Ctrl-t: Open a new tab
+nnoremap <C-h> :tabprevious<CR>      " Ctrl-h: Move to previous tab
+nnoremap <C-l> :tabnext<CR>         " Ctrl-l: Move to next tab
+
 nnoremap <C-b> :ls<CR>:b<Space>         " Ctrl-b: List buffers and switch between them
 
 " Buffer and Window Navigation
