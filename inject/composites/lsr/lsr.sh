@@ -1,4 +1,4 @@
-source ~/scripts/helpers.sh
+source ~/scripts/inject/helpers.sh
 source ~/scripts/inject/aliases.sh
 
 alias lsr="lsr_main_command"
