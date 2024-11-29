@@ -129,7 +129,7 @@ profile_edit() {
         return 1
     fi
 
-    nano "$local_settings_dir/local_settings.$profile.yml"
+    vim "$local_settings_dir/local_settings.$profile.yml"
 }
 
 profile_list() {

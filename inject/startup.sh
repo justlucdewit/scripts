@@ -20,5 +20,11 @@ EOL
 
 fi
 
+# Vim plugins
+mkdir -p "$HOME/.vim/autoload"
+echo "source ~/scripts/extra_config_files/plug.vim" > "$HOME/.vim/autoload/plug.vim"
+
 # Create or clear the .vimrc file and write the hardcoded text
 echo "source ~/scripts/extra_config_files/LukesVimConfig.vim" > "$HOME/.vimrc"
+
+print_debug "Debug mode is enabled"

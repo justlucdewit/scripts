@@ -1,5 +1,6 @@
+source ~/scripts/inject/simple/aliases.sh
+source "$HOME/scripts/inject/simple/io_helpers.sh"
 source ~/scripts/inject/helpers.sh
-source ~/scripts/inject/aliases.sh
 
 alias lsr="lsr_main_command"
 
@@ -24,21 +25,26 @@ lsr_main_command() {
 
     if [ ! "$#" -gt 0 ]; then
         print_normal "usage: "
+        print_normal "  - lsr help"
         print_normal "  - lsr status"
         print_normal "  - lsr install"
-        print_normal "  - lsr uninstall" # Todo
-        print_normal "  - lsr reinstall" # Todo
+        print_normal "  - lsr uninstall"
+        print_normal "  - lsr reinstall"
         print_normal "  - lsr compile"
+        print_normal "  - lsr reload"
+        print_normal "  - lsr debug"
+        print_normal "  - lsr silence"
         return
     fi
 
     local command=$1
     shift
 
-    if is_in_list "$command" "status"; then
+    if is_in_list "$command" "help"; then
+        lsr_help
+    elif is_in_list "$command" "status"; then
         lsr_status
     elif is_in_list "$command" "install"; then
-        ensure_sudo
         lsr_install
     elif is_in_list "$command" "uninstall"; then
         lsr_uninstall
@@ -46,10 +52,81 @@ lsr_main_command() {
         lsr_reinstall
     elif is_in_list "$command" "compile"; then
         lsr_compile $@
+    elif is_in_list "$command" "reload"; then
+        lsr_reload
+    elif is_in_list "$command" "debug"; then
+        lsr_debug $@
+    elif is_in_list "$command" "silence"; then
+        lsr_debug $@
     else
         print_error "Command $command does not exist"
         lsr_main_command # Re-run for help command
     fi
+}
+
+lsr_silence() {
+    local SETTINGS_FILE=~/scripts/_settings.yml
+    local current_value=$(yq e '.silent' "$SETTINGS_FILE")
+
+    if [[ -n "$1" ]]; then
+        # If an argument is passed, set the value based on it
+        if [[ "$1" == "true" || "$1" == "false" ]]; then
+            yq e -i ".silent = $1" "$SETTINGS_FILE"
+        else
+            print_error "Invalid argument. Use 'true' or 'false'."
+        fi
+    else
+        # No argument passed, toggle the current value
+        if [[ "$current_value" == "true" ]]; then
+            yq e -i '.silent = false' "$SETTINGS_FILE"
+        else
+            yq e -i '.silent = true' "$SETTINGS_FILE"
+        fi
+    fi
+}
+
+lsr_help() {
+    local lhelp_file="$HOME/scripts/lhelp.txt"
+    
+    while IFS= read -r line || [[ -n $line ]]; do
+        if [[ $line == \#* ]]; then
+            printf "$RED%s$RESET\n" "$line"
+        else
+            printf "%s\n" "$line"
+        fi
+        
+    done < "$lhelp_file"
+
+    print_empty_line
+}
+
+lsr_debug() {
+    local SETTINGS_FILE=~/scripts/_settings.yml
+    local current_value=$(yq e '.debug' "$SETTINGS_FILE")
+
+    if [[ -n "$1" ]]; then
+        # If an argument is passed, set the value based on it
+        if [[ "$1" == "true" || "$1" == "false" ]]; then
+            yq e -i ".debug = $1" "$SETTINGS_FILE"
+            print_info "Debug mode set to $1."
+        else
+            print_error "Invalid argument. Use 'true' or 'false'."
+        fi
+    else
+        # No argument passed, toggle the current value
+        if [[ "$current_value" == "true" ]]; then
+            yq e -i '.debug = false' "$SETTINGS_FILE"
+            print_info "Debug mode disabled."
+        else
+            yq e -i '.debug = true' "$SETTINGS_FILE"
+            print_info "Debug mode enabled."
+        fi
+    fi
+}
+
+lsr_reload() {
+    source ~/.bashrc
+    print_success '~/.bashrc reloaded!'
 }
 
 lsr_status() {
@@ -88,7 +165,7 @@ lsr_install() {
     BASHRC_STARTER="# !! LSR LOADER START !!"
     BASHRC_ENDERER="# !! LSR LOADER END !!"
     BASHRC_IDENTIFIER="# Luke's Script Repository Loader"
-    CURRENT_VERSION="$NAME $FULL_VERSION"
+    CURRENT_VERSION="$FULL_VERSION"
     CURRENT_BUILD_FILE="build.sh"
     BUILD_FILE_PATH="$HOME/scripts/versions/dev/build.sh"
 
@@ -119,7 +196,7 @@ lsr_install() {
         if [[ "$isLite" == "true" ]]; then
             print_error "No build found for version $current_version"
         else
-            print_error "No build found for version $current_version-LITE"
+            print_error "No build found for version $FULL_VERSION-LITE"
         fi
 
         exit
@@ -128,19 +205,8 @@ lsr_install() {
     ensure_sudo
 
     # Install needed libraries
-    if ! install_if_not_exist "yq"; then
-        exit 1 # Exit the script with error code
-    fi
-
-    if ! install_if_not_exist "jq"; then
-        exit 1 # Exit the script with error code
-    fi
-
-    if ! install_if_not_exist "bc"; then
-        exit 1 # Exit the script with error code
-    fi
-
-    if ! install_if_not_exist "silversearcher-ag" "ag"; then
+    if ! command_exists "yq"; then
+        print_error "Cant install LSR, because yq is not installed"
         exit 1 # Exit the script with error code
     fi
 
@@ -163,7 +229,7 @@ lsr_install() {
         print_info "Script sourcing block already exists in $BASHRC_PATH"
     fi
 
-    reload_bash
+    lsr_main_command reload
 }
 
 lsr_uninstall() {
@@ -184,7 +250,7 @@ lsr_uninstall() {
     print_info "LSR has been reinstalled"
     print_info " - linstall to undo"
     print_info " - Open new session to confirm"
-    reload_bash
+    lsr_main_command reload
 }
 
 lsr_reinstall() {
@@ -222,23 +288,28 @@ lsr_compile() {
     local SCRIPT_PREFIX="$HOME/scripts/inject/"
 
     local lite_scripts_to_compile=(
-        "aliases"
+        "simple/aliases"
+        "simple/scripted_fallback"
     )
 
     local scripts_to_compile=(
         "helpers"
-        "requirementCheck"
+        "simple/requirementCheck"
+        "simple/aliases"
+        "simple/scripted_fallback"
         "startup"
+
         "composites/helpers"
+        
         "git_helpers" # TODO: make composite
         "tmux_helpers" # TODO: make composite
         "utils" # TODO: make composite
         "proj" # TODO: make composite
-        "aliases"
+        
         "local_settings" # TODO: make composite
         "work" # TODO: make composite
         "other" # TODO: make composite
-        "cfind" # TODO: make composite
+
         "composites/lsr/lsr"
         "composites/utils/list"
         "composites/docker/dock"
@@ -423,5 +494,5 @@ lsr_compile() {
     print_info "build-lite.sh:     $(get_line_count "$lite_build_file") Lines"
 
     print_empty_line
-    reload_bash
+    lsr_main_command reload
 }

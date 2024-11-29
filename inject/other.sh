@@ -111,96 +111,6 @@ set_powerline_ps1
 localsettings_reformat
 PROMPT_COMMAND=do_before_prompt
 
-# When command is not found, fall back to a .sh file if possible
-command_not_found_handle() {
-    cmd="$1"
-
-    # When command is not found, fallback on scripts
-    # If the script name starts with an underscore, it is hidden and thus not listed nor callable
-    # Location Priority:
-    #   - In current directory
-    #   - In ./_lsr_scripts folder
-    #   - In ./scripts/ folder
-    # Language Priority:
-    #   - .sh scripts
-    #   - .py scripts
-    #   - .js scripts
-    #   - npm scripts
-    
-    # Run the bash script if it exists
-    if [[ $cmd != _* ]]; then
-        if [[ -f "./$cmd.sh" ]]; then # Run the script
-            print_info "Running script $cmd.sh"
-            bash "./$cmd.sh" "${@:2}"
-            return
-
-        # Run the /_lsr_scripts/ bash script if it exists
-        elif [[ -d "./_lsr_scripts" && -f "./_lsr_scripts/$cmd.sh" ]]; then
-            print_info "Running script $cmd.sh"
-            bash "./_lsr_scripts/$cmd.sh" "${@:2}"
-            return
-
-        # Run the /scripts/ bash script if it exists
-        elif [[ -d "./scripts" && -f "./scripts/$cmd.sh" ]]; then
-            print_info "Running script $cmd.sh"
-            bash "./scripts/$cmd.sh" "${@:2}"
-            return
-
-        # Run the python script if it exists
-        elif [[ -f "./$cmd.py" ]]; then
-            print_info "Running script $cmd.py"
-            python3 "./$cmd.py" "${@:2}"
-            return
-
-        # Run the /_lsr_scripts/ python script if it exists
-        elif [[ -d "./_lsr_scripts" && -f "./_lsr_scripts/$cmd.py" ]]; then
-            print_info "Running script $cmd.py"
-            python3 "./_lsr_scripts/$cmd.py" "${@:2}"
-            return
-
-        # Run the /scripts/ python script if it exists
-        elif [[ -d "./scripts" && -f "./scripts/$cmd.py" ]]; then
-            print_info "Running script $cmd.py"
-            python3 "./scripts/$cmd.py" "${@:2}"
-            return
-
-        # Run the js script if it exists
-        elif [[ -f "./$cmd.js" ]]; then
-            print_info "Node script $cmd.js"
-            node "./$cmd.js" "${@:2}"
-            return
-
-        # Run the /_lsr_scripts/ js script if it exists
-        elif [[ -d "./_lsr_scripts" && -f "./_lsr_scripts/$cmd.js" ]]; then
-            print_info "Node script $cmd.js"
-            node "./_lsr_scripts/$cmd.js" "${@:2}"
-            return
-
-        # Run the /scripts/ js script if it exists
-        elif [[ -d "./scripts" && -f "./scripts/$cmd.js" ]]; then
-            print_info "Node script $cmd.js"
-            node "./scripts/$cmd.js" "${@:2}"
-            return
-
-        # Run the script from the npm folder if it exists
-        elif [[ -f "./package.json" && "$(grep \"$cmd\": package.json)" != "" ]]; then
-            print_info "Running NPM script '$cmd'"
-            npm run $cmd --silent
-            return
-        fi
-    fi
-
-    # Command was not found
-    suggestions=$(compgen -c "$cmd" | head -n 5)
-    if [[ -n "$suggestions" ]]; then
-        echo "bash: $cmd: command not found. Did you mean one of these?"
-        echo " - $suggestions" | while read -r suggestion; do echo "  $suggestion"; done
-    else
-        echo "bash: $cmd: command not found"
-    fi
-    return 127
-}
-
 packages() {
     if [[ -f "./package.json" ]]; then
         dependencies=$(jq '.dependencies' package.json)
@@ -227,9 +137,6 @@ packages() {
         # fi
     fi
 }
-
-alias s=scripts
-alias ss="select_scripts"
 
 select_scripts() {
     scripts_output=$(scripts)
@@ -329,51 +236,6 @@ scripts() {
             echo "Npm scripts:"
             jq -r ".scripts | \" - \" + keys[]" ./package.json
             echo ""
-        fi
-    fi
-}
-
-lsrdebug() {
-    local SETTINGS_FILE=~/scripts/_settings.yml
-    local current_value=$(yq e '.debug' "$SETTINGS_FILE")
-
-    if [[ -n "$1" ]]; then
-        # If an argument is passed, set the value based on it
-        if [[ "$1" == "true" || "$1" == "false" ]]; then
-            yq e -i ".debug = $1" "$SETTINGS_FILE"
-            print_info "Debug mode set to $1."
-        else
-            print_error "Invalid argument. Use 'true' or 'false'."
-        fi
-    else
-        # No argument passed, toggle the current value
-        if [[ "$current_value" == "true" ]]; then
-            yq e -i '.debug = false' "$SETTINGS_FILE"
-            print_info "Debug mode disabled."
-        else
-            yq e -i '.debug = true' "$SETTINGS_FILE"
-            print_info "Debug mode enabled."
-        fi
-    fi
-}
-
-lsrsilence() {
-    local SETTINGS_FILE=~/scripts/_settings.yml
-    local current_value=$(yq e '.silent' "$SETTINGS_FILE")
-
-    if [[ -n "$1" ]]; then
-        # If an argument is passed, set the value based on it
-        if [[ "$1" == "true" || "$1" == "false" ]]; then
-            yq e -i ".silent = $1" "$SETTINGS_FILE"
-        else
-            print_error "Invalid argument. Use 'true' or 'false'."
-        fi
-    else
-        # No argument passed, toggle the current value
-        if [[ "$current_value" == "true" ]]; then
-            yq e -i '.silent = false' "$SETTINGS_FILE"
-        else
-            yq e -i '.silent = true' "$SETTINGS_FILE"
         fi
     fi
 }
@@ -500,20 +362,7 @@ now() {
     print_empty_line
 }
 
-lhelp() {
-    local lhelp_file="$HOME/scripts/lhelp.txt"
-    
-    while IFS= read -r line || [[ -n $line ]]; do
-        if [[ $line == \#* ]]; then
-            printf "$RED%s$RESET\n" "$line"
-        else
-            printf "%s\n" "$line"
-        fi
-        
-    done < "$lhelp_file"
 
-    print_empty_line
-}
 
 # Ensure tmux is running
 setup_tmux_config
@@ -523,8 +372,6 @@ if [ -z "$TMUX" ]; then
 fi
 
 alias tu="time_until"
-alias tul="time_until_live"
-
 time_until() {
     # Define target times
     target0="8:30:00"
@@ -570,55 +417,6 @@ time_until() {
         echo "End of day has already passed today."
     fi
 }
-
-time_until_live() {
-    # Define target times
-    target1="12:30:00"
-    target2="17:00:00"
-    
-    # Get today's date and convert target times to seconds since midnight
-    today=$(date +%Y-%m-%d)
-    target1_sec=$(date -d "$today $target1" +%s)
-    target2_sec=$(date -d "$today $target2" +%s)
-    
-    # Function to convert seconds to hh:mm:ss format
-    format_time() {
-        local seconds=$1
-        printf "%02d:%02d:%02d" $((seconds / 3600)) $(((seconds % 3600) / 60)) $((seconds % 60))
-    }
-
-    # Continuous loop to update the remaining time every second
-    while true; do
-        # Get the current time in seconds since midnight
-        now=$(date +%s)
-        
-        # Calculate seconds remaining for each target
-        remaining1=$((target1_sec - now))
-        remaining2=$((target2_sec - now))
-
-        # Prepare the output strings for each target time
-        if [ $remaining1 -gt 0 ]; then
-            time_left_1230=$(format_time $remaining1)
-        else
-            time_left_1230="Already passed"
-        fi
-        
-        if [ $remaining2 -gt 0 ]; then
-            time_left_1700=$(format_time $remaining2)
-        else
-            time_left_1700="Already passed"
-        fi
-
-        # Display the remaining time in a single line, overwriting the line each second
-        printf "\rTime left until Break: %s | Time left until End of Day: %s" "$time_left_1230" "$time_left_1700"
-        
-        # Wait for 1 second before updating
-        sleep 1
-    done
-}
-
-alias e=exp
-alias eg="exp --go"
 
 exp() {
     local initial_dir="$(pwd)"
@@ -672,48 +470,6 @@ exp() {
     fi
 }
 
-copy() {
-    local pathToCopy="."
-    
-    if [ "$#" -gt 0 ]; then
-        pathToCopy="$1"
-    fi
-    
-    clear-copy
-    mkdir -p "$HOME/.copy"
-
-    # Check if the given path is the current directory
-    if [ "$pathToCopy" = "." ]; then
-        # If it's the current directory, copy the contents
-        cp -r * "$HOME/.copy"
-    else
-        cp -r "$pathToCopy" "$HOME/.copy"
-    fi
-}
-
-clear-copy() {
-    rm -rf "$HOME/.copy"
-}
-
-cut() {
-    local pathToCut="."
-    if [ ! "$#" -gt 0 ]; then
-        pathToCut="."
-    fi
-
-    copy "$pathToCut"
-    rm -rf "$pathToCut"
-}
-
-paste() {
-    local target="."
-    if [ "$#" -gt 0 ]; then
-        target="$1"
-    fi
-
-    # Ensure both hidden and non-hidden files are copied
-    cp -r "$HOME/.copy"/* "$target"
-    cp -r "$HOME/.copy"/.* "$target" 2>/dev/null
-}
-
-alias lg="lazygit"
+# For project composite
+# - everything in proj.sh
+# - 

@@ -1,5 +1,6 @@
 #!/bin/bash
 source "$HOME/scripts/inject/helpers.sh"
+source "$HOME/scripts/inject/simple/io_helpers.sh"
 source "$HOME/scripts/inject/composites/lsr/lsr.sh"
 
 # Recompile
