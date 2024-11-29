@@ -1,4 +1,4 @@
-set nu                  " Enable line numbers
+set relativenumber                  " Enable line numbers
 set ai                  " Enable auto indentation
 set expandtab           " Use spaces instead of tabs
 set tabstop=4           " Number of spaces per tab
@@ -14,7 +14,6 @@ set clipboard=unnamed   " Use system clipboard
 set statusline=File:\ %t\ \ \ Buffer:\ [%{bufname('%')}]\ \ \ %l:%c
 
 " Syntax and Appearance
-syntax on               " Enable syntax highlighting
 set background=dark     " Better visibility for dark themes
 
 " File Navigation
@@ -30,11 +29,22 @@ set autoread            " Auto-reload files if changed outside Vim
 nnoremap <C-s> :w<CR>                                       " Ctrl-s: Save file
 nnoremap <C-w> :q<CR>                                       " Ctrl-w: Close file
 nnoremap <C-n> :enew<CR>                                    " Ctrl-n: Open a new empty buffer
-nnoremap <C-t> :tabnew<CR>:NERDTreeExplore<CR>              " Ctrl-t: Open a new tab
-nnoremap <C-h> :tabprevious<CR>      " Ctrl-h: Move to previous tab
-nnoremap <C-l> :tabnext<CR>         " Ctrl-l: Move to next tab
+nnoremap <C-h> :tabprevious<CR>                             " Ctrl-h: Move to previous tab
+nnoremap <C-l> :tabnext<CR>                                 " Ctrl-l: Move to next tab
+
+" Open NERDTree with Ctrl+t
+nnoremap <C-o> :NERDTreeExplore<CR>                         " Ctrl-e Open a new tab
+
+nnoremap <C-q> :qa!<CR>
+nnoremap <C-c> \"+yy
+nnoremap <C-v> \"+p
+
+nnoremap <C-t> :tabnew<CR>                                  " Ctrl+t Open new tab
+nnoremap <C-f> /
+
 
 nnoremap <C-b> :ls<CR>:b<Space>         " Ctrl-b: List buffers and switch between them
+nnoremap <C-p> :Telescope find_files<CR> " Ctrl-p Telescope
 
 " Buffer and Window Navigation
 nnoremap <leader>bn :bnext<CR>   " Next buffer
@@ -59,16 +69,6 @@ set mouse=a                     " Enable mouse support in all modes
 " set wrap                        " Wrap long lines
 set scrolloff=8                 " Keep 8 lines visible above/below cursor
 set sidescrolloff=8             " Keep 8 lines visible to the left/right of cursor
-
-" Initialize vim-plug
-call plug#begin('~/.vim/plugged')
-
-" List your plugins here
-Plug 'preservim/nerdtree'
-Plug 'junegunn/fzf'
-Plug 'junegunn/fzf.vim'
-
-call plug#end()
 
 " Key mapping to toggle NERDTree
 nnoremap <leader>e :NERDTreeToggle<CR>
@@ -98,3 +98,11 @@ endfunction
 
 nnoremap <silent> yy :let @"=getline('.')<CR>:call YankToClipboard()<CR>
 vnoremap <silent> y :call YankToClipboard()<CR>
+
+call plug#begin()
+
+Plug 'preservim/nerdtree'
+Plug 'ctrlpvim/ctrlp.vim'
+" Plug 'folke/which-key.nvim'
+
+call plug#end()
