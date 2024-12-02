@@ -7,7 +7,7 @@ RESET='\033[0m'
 
 # Update PS1 to include the Git branch if in a Git repo
 get_project_branch_label() {
-    local current_project=$(get_current_project_label)
+    local current_project=$(project current)
     local current_branch=$(parse_git_branch)
 
     if [[ -n $current_project && -n $current_branch ]]; then
@@ -26,7 +26,7 @@ get_project_branch_label() {
 PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\[\033[00m\]\[\033[01;34m\]\w\[\033[00m\]$(get_project_branch_label)\$ '
 
 get_dir_part() {
-    current_project=$(cproj)
+    current_project=$(project current)
     if [[ -n $current_project ]]; then
         echo " 🔧 $current_project "
     else

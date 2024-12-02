@@ -41,7 +41,7 @@ lsr_main_command() {
     shift
 
     if is_in_list "$command" "help"; then
-        lsr_help
+        lsr_help $@
     elif is_in_list "$command" "status"; then
         lsr_status
     elif is_in_list "$command" "install"; then
@@ -307,18 +307,18 @@ lsr_compile() {
         "git_helpers" # TODO: make composite
         "tmux_helpers" # TODO: make composite
         "utils" # TODO: make composite
-        "proj" # TODO: make composite
         
         "local_settings" # TODO: make composite
         "work" # TODO: make composite
-        "other" # TODO: make composite
+        "other" # TODO: make composites
 
         "composites/lsr/lsr"
         "composites/utils/list"
         "composites/docker/dock"
         "composites/git/gitusers"
         "composites/git/branches"
-        "composites/settings/profile"
+        "composites/development/profile"
+        "composites/development/project"
     )
 
     # Compile LSR
