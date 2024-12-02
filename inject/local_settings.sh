@@ -1,6 +1,3 @@
-local_settings_file="$HOME/scripts/local_data/local_settings.yml"
-local_settings_dir="$(dirname "$local_settings_file")"
-
 alias lsget="localsettings_get"
 alias lsset="localsettings_set"
 alias lseval="localsettings_eval"
@@ -16,11 +13,11 @@ localsettings_ensureexists() {
         return 1  # Exit if validation fails
     fi
 
-    local value=$(yq e "$field // \"\"" "$local_settings_file")
+    local value=$(yq e "$field // \"\"" "$LSR_LOCAL_SETTINGS_FILE")
 
     # Create it if it does not exist
     if [[ -z "$value" ]]; then
-        yq e -i "$field = null" "$local_settings_file"
+        yq e -i "$field = null" "$LSR_LOCAL_SETTINGS_FILE"
         localsettings_reformat
     fi
 }
@@ -58,7 +55,7 @@ localsettings_eval_with_save() {
         command="$1"
     fi
 
-    yq e -iP "$command" "$local_settings_file"
+    yq e -iP "$command" "$LSR_LOCAL_SETTINGS_FILE"
 }
 
 localsettings_eval() {
@@ -68,7 +65,7 @@ localsettings_eval() {
         command="$1"
     fi
 
-    yq e -P "$command" "$local_settings_file"
+    yq e -P "$command" "$LSR_LOCAL_SETTINGS_FILE"
 }
 
 localsettings_get() {
@@ -98,7 +95,7 @@ localsettings_get() {
         localsettings_ensureexists "$field"
     fi
     
-    yq e -P "$field" "$local_settings_file"
+    yq e -P "$field" "$LSR_LOCAL_SETTINGS_FILE"
 }
 
 localsettings_set() {
@@ -192,11 +189,11 @@ localsettings_set() {
     if [[ $unquoted == "true" ]]; then
         # Set without quotes
         print_normal "YEEE"
-        print_normal "yq e -i \"$field=$value\" \"$local_settings_file\""
-        yq e -i "$field=$value" "$local_settings_file"
+        print_normal "yq e -i \"$field=$value\" \"$LSR_LOCAL_SETTINGS_FILE\""
+        yq e -i "$field=$value" "$LSR_LOCAL_SETTINGS_FILE"
     else
         # Set with quotes
-        yq e -i "$field=\"$value\"" "$local_settings_file"
+        yq e -i "$field=\"$value\"" "$LSR_LOCAL_SETTINGS_FILE"
     fi
 }
 
@@ -218,7 +215,7 @@ yq_validate_only_lookup() {
 }
 
 localsettings_reformat() {
-    yq e -P '.' -i "$local_settings_file"
+    yq e -P '.' -i "$LSR_LOCAL_SETTINGS_FILE"
     localsettings_sort .projects
     localsettings_sort .gitusers
     localsettings_sort .

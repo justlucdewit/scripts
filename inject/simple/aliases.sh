@@ -12,3 +12,5 @@ alias e=exp
 alias eg="exp --go"
 alias s=scripts
 alias ss="select_scripts"
+LSR_LOCAL_SETTINGS_FILE="$HOME/scripts/local_data/local_settings.yml"
+LSR_LOCAL_SETTINGS_DIR="$(dirname "$local_settings_file")"
