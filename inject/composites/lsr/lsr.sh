@@ -57,7 +57,7 @@ lsr_main_command() {
     elif is_in_list "$command" "debug"; then
         lsr_debug $@
     elif is_in_list "$command" "silence"; then
-        lsr_debug $@
+        lsr_silence $@
     else
         print_error "Command $command does not exist"
         lsr_main_command # Re-run for help command
@@ -86,6 +86,7 @@ lsr_silence() {
 }
 
 lsr_help() {
+    local output="$(
     local lhelp_file="$HOME/scripts/lhelp.txt"
     
     while IFS= read -r line || [[ -n $line ]]; do
@@ -97,7 +98,9 @@ lsr_help() {
         
     done < "$lhelp_file"
 
-    print_empty_line
+    print_empty_line)"
+
+    echo "$output" | less --raw-control-chars
 }
 
 lsr_debug() {
