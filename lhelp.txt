@@ -3,6 +3,17 @@ Source can be found on https://github.com/justlucdewit/scripts
 
 Help for LSR usage:
 
+# LSR
+lsr help                                    Show this help command
+lsr status                                  Show the current installation status of LSR
+lsr install                                 Install LSR (this runs ~/scripts/_install.sh)
+lsr uninstall                               Removes LSR installation from the system
+lsr reinstall                               Uninstalls and then installs LSR again
+lsr compile                                 Recompile the sourcecode in the ~/scripts/inject folder
+lsr reload                                  Reloads bashrc into the current session
+lsr debug                                   Toggles debug mode for LSR
+lsr silence                                 Toggles silent mode for LSR
+
 # Project management
 p                                           List all registered projects
 p <projectname>                             Jump to the directory belonging to that project
@@ -18,4 +29,3 @@ start [<projectname>]                       Starts the given/current laravel pro
 stop                                        Stops the current running laravel project in tmux
 switch <projectname>                        Switches to the given laravel project in tmux
 npmscripts                                  prints the available npm scripts in the current project
-
