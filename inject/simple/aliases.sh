@@ -1,6 +1,7 @@
 # Aliases for standard bash commands
 alias c='clear'
 alias l="ls -la"
+alias q="exit"
 
 # Aliases for 3rd party software
 alias lg="lazygit"
@@ -32,4 +33,4 @@ alias rb="lsr_reload"
 LSR_LOCAL_SETTINGS_FILE="$HOME/scripts/local_data/local_settings.yml"
 LSR_LOCAL_SETTINGS_DIR="$(dirname "$local_settings_file")"
 LSR_NOTES_DIR="$HOME/notes"
-LSR_NOTES_TODAY_FILE="$LSR_NOTES_DIR/journal/$(date +%d)-$(date +%m)-$(date +%Y).md"
+LSR_NOTES_TODAY_FILE="$LSR_NOTES_DIR/journal/$(date +%Y)-$(date +%m)-$(date +%d).md"
