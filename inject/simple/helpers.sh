@@ -1,9 +1,19 @@
 enable_lsr_silence() {
+    if [[ "$LSR_TYPE" == "LSR-LITE" ]]; then
+        print_error "enable_lsr_silence is LSR-FULL only"
+        exit
+    fi
+
     SETTINGS_FILE=~/scripts/_settings.yml
     yq e -i '.silent=true' "$SETTINGS_FILE"
 }
 
 disable_lsr_silence() {
+    if [[ "$LSR_TYPE" == "LSR-LITE" ]]; then
+        print_error "disable_lsr_silence is LSR-FULL only"
+        exit
+    fi
+
     SETTINGS_FILE=~/scripts/_settings.yml
     yq e -i '.silent=false' "$SETTINGS_FILE"
 }

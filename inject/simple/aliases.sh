@@ -30,6 +30,13 @@ alias yesterday='work --date=yesterday'
 alias today='work --date=today'
 alias rb="lsr_reload"
 
+alias lsget="localsettings_get"
+alias lsset="localsettings_set"
+alias lseval="localsettings_eval"
+alias lsdel="localsettings_delete"
+alias lssort="localsettings_sort"
+alias lsformat="localsettings_reformat"
+
 LSR_LOCAL_SETTINGS_FILE="$HOME/scripts/local_data/local_settings.yml"
 LSR_LOCAL_SETTINGS_DIR="$(dirname "$local_settings_file")"
 LSR_NOTES_DIR="$HOME/notes"

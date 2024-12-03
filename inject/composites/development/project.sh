@@ -86,7 +86,7 @@ project_go() {
     local project_dir="$(lseval ".projects | to_entries | map(select(.key == \"$query\")) | .[0].value.dir")"
     
     # Check if the provided project exists in the combined projects array
-    if [[ "$project_dir" != "null" ]]; then
+    if [[ "$project_dir" != "null" && "$project_dir" != "" ]]; then
         if [[ -d "$project_dir" ]]; then
             cd "$project_dir"
         else
@@ -106,7 +106,7 @@ project_go() {
             local extra_project_dir=$(echo "$extra_project" | cut -d':' -f2)
 
             if [[ "$query" == "$extra_project_name" ]]; then
-                cd "$query"
+                cd "$extra_project_dir"
                 return
             fi
         done
@@ -121,7 +121,7 @@ project_current() {
     cwd=$(pwd | xargs)  # Get the current working directory
 
     local current_project="$(lseval ".projects | to_entries | map(select(.value.dir == \"$cwd\")) | .[0].key")"
-    if [[ "$current_project" != "null" ]]; then
+    if [[ "$current_project" != "null" && "$current_project" != "" ]]; then
         echo "$current_project";
         return
     fi
@@ -160,7 +160,7 @@ project_new() {
 
     if [[ "$LSR_TYPE" == "LSR-LITE" ]]; then
         print_error "project new is LSR-FULL only"
-        exit
+        return
     fi
 
     if [[ -z "$project_name" ]]; then
@@ -199,7 +199,7 @@ project_delete() {
 
     if [[ "$LSR_TYPE" == "LSR-LITE" ]]; then
         print_error "project delete is LSR-FULL only"
-        exit
+        return
     fi
 
     if [[ -z "$project_name" ]]; then

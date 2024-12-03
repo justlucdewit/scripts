@@ -1,6 +1,6 @@
 source ~/scripts/inject/simple/aliases.sh
 source "$HOME/scripts/inject/simple/io_helpers.sh"
-source ~/scripts/inject/helpers.sh
+source "$HOME/scripts/inject/simple/helpers.sh"
 
 alias lsr="lsr_main_command"
 
@@ -291,15 +291,23 @@ lsr_compile() {
     local SCRIPT_PREFIX="$HOME/scripts/inject/"
 
     local lite_scripts_to_compile=(
+        "simple/helpers"
+        "simple/io_helpers"
         "simple/aliases"
         "simple/scripted_fallback"
         "simple/custom_ps1"
-        "git_helpers"
+        "simple/git_helpers"
+        "simple/utils"
+        "simple/local_settings"
+
+        "composites/utils/list"
+        "composites/development/project"
     )
 
     local scripts_to_compile=(
-        "helpers" # TODO attempt to make SSH-safe
+        "simple/helpers"
         "simple/requirementCheck" # TODO attempt to make SSH-safe
+        "simple/io_helpers"
         "simple/aliases"
         "simple/scripted_fallback"
         "simple/custom_ps1"
@@ -307,21 +315,21 @@ lsr_compile() {
 
         "composites/helpers" # TODO attempt to make SSH-safe
         
-        "git_helpers" # TODO: make composite
+        "simple/git_helpers" # TODO: make composite
         "tmux_helpers" # TODO: make composite  # TODO attempt to make SSH-safe
-        "utils" # TODO: make composite  # TODO attempt to make SSH-safe
+        "simple/utils"
         
-        "local_settings" # TODO: make composite  # TODO attempt to make SSH-safe
+        "simple/local_settings"
         "work" # TODO: make composite # TODO attempt to make SSH-safe
         "other" # TODO: make composites # TODO attempt to make SSH-safe
 
         "composites/lsr/lsr" # TODO attempt to make SSH-safe
-        "composites/utils/list" # TODO attempt to make SSH-safe
+        "composites/utils/list"
         "composites/docker/dock" # TODO attempt to make SSH-safe
         "composites/git/gitusers" # TODO attempt to make SSH-safe
         "composites/git/branches" # TODO attempt to make SSH-safe
         "composites/development/profile" # TODO attempt to make SSH-safe
-        "composites/development/project" # TODO attempt to make SSH-safe
+        "composites/development/project"
         "composites/development/notes" # TODO attempt to make SSH-safe
     )
 

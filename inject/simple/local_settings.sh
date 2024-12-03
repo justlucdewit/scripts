@@ -1,11 +1,9 @@
-alias lsget="localsettings_get"
-alias lsset="localsettings_set"
-alias lseval="localsettings_eval"
-alias lsdel="localsettings_delete"
-alias lssort="localsettings_sort"
-alias lsformat="localsettings_reformat"
-
 localsettings_ensureexists() {
+    # Dont do anything when using LSR-LITE since its config-less
+    if [[ "$LSR_TYPE" == "LSR-LITE" ]]; then
+        return
+    fi
+    
     local field="$1"
 
     # Validate the field before proceeding
@@ -23,6 +21,11 @@ localsettings_ensureexists() {
 }
 
 localsettings_sort() {
+    # Dont do anything when using LSR-LITE since its config-less
+    if [[ "$LSR_TYPE" == "LSR-LITE" ]]; then
+        return
+    fi
+
     local field=$1
 
     if [ "$#" -ne 1 ]; then
@@ -38,6 +41,11 @@ localsettings_sort() {
 }
 
 localsettings_delete() {
+    # Dont do anything when using LSR-LITE since its config-less
+    if [[ "$LSR_TYPE" == "LSR-LITE" ]]; then
+        return
+    fi
+
     local field=$1
 
     if [ "$#" -ne 1 ]; then
@@ -49,6 +57,11 @@ localsettings_delete() {
 }
 
 localsettings_eval_with_save() {
+    # Dont do anything when using LSR-LITE since its config-less
+    if [[ "$LSR_TYPE" == "LSR-LITE" ]]; then
+        return
+    fi
+
     local command="."
 
     if [[ -n $1 ]]; then
@@ -59,6 +72,11 @@ localsettings_eval_with_save() {
 }
 
 localsettings_eval() {
+    # Dont do anything when using LSR-LITE since its config-less
+    if [[ "$LSR_TYPE" == "LSR-LITE" ]]; then
+        return
+    fi
+
     local command="."
 
     if [[ -n $1 ]]; then
@@ -69,6 +87,11 @@ localsettings_eval() {
 }
 
 localsettings_get() {
+    # Dont do anything when using LSR-LITE since its config-less
+    if [[ "$LSR_TYPE" == "LSR-LITE" ]]; then
+        return
+    fi
+
     local allow_create=false
     local field="."
 
@@ -99,6 +122,11 @@ localsettings_get() {
 }
 
 localsettings_set() {
+    # Dont do anything when using LSR-LITE since its config-less
+    if [[ "$LSR_TYPE" == "LSR-LITE" ]]; then
+        return
+    fi
+
     local allow_create=false
     local field=""
     local value=""
@@ -215,6 +243,11 @@ yq_validate_only_lookup() {
 }
 
 localsettings_reformat() {
+    # Dont do anything when using LSR-LITE since its config-less
+    if [[ "$LSR_TYPE" == "LSR-LITE" ]]; then
+        return
+    fi
+
     yq e -P '.' -i "$LSR_LOCAL_SETTINGS_FILE"
     localsettings_sort .projects
     localsettings_sort .gitusers

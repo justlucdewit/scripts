@@ -5,12 +5,7 @@ BLUE='\033[0;34m'
 RESET='\033[0m'
 
 get_dir_part() {
-
-    # Only if project command exists
-    current_project=""
-    if command -v "project" >/dev/null 2>&1; then
-        current_project=$(project current)
-    fi
+    current_project=$(project current)
 
     if [[ -n $current_project ]]; then
         echo " 🔧 $current_project "
@@ -64,7 +59,7 @@ set_powerline_ps1() {
     local black_fg="\[\033[38;2;${black}m\]"       # Black Text
 
     # Only if profile command exists
-    if command -v "profile" >/dev/null 2>&1; then
+    if command_exists "profile"; then
         local current_profile="- $(profile current) "
     fi
 
