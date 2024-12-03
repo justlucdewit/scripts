@@ -9,7 +9,6 @@ create_journal_today_if_not_exists() {
     if [[ ! -f "$LSR_NOTES_TODAY_FILE" ]]; then
         {
             echo "# Done: "
-            echo "[0,00]      * Total"
             echo ""
             echo "# Todo: "
             echo ""
@@ -58,18 +57,18 @@ reconstruct_today() {
 notes_main_command() {
     notes_ensure_dir_exists
     create_journal_today_if_not_exists
-    notes_recalculate
+    # notes_recalculate
     
     if [ ! "$#" -gt 0 ]; then
         print_normal "usage: "
         print_normal "  - notes today"
-        print_normal "  - notes todo <todo>"
-        print_normal "  - notes done"
-        print_normal "  - notes backlog <todo>"
-        print_normal "  - notes todo-del"
-        print_normal "  - notes backlog-del"
-        print_normal "  - notes edit"
-        print_normal "  - notes sync"
+        # print_normal "  - notes todo <todo>"
+        # print_normal "  - notes done"
+        # print_normal "  - notes backlog <todo>"
+        # print_normal "  - notes todo-del"
+        # print_normal "  - notes backlog-del"
+        # print_normal "  - notes edit"
+        # print_normal "  - notes sync"
         return
     fi
 
@@ -78,21 +77,21 @@ notes_main_command() {
 
     if is_in_list "$command" "today"; then
         notes_today $@
-    elif is_in_list "$command" "todo"; then
-        notes_add_todo $@
-    elif is_in_list "$command" "done"; then
-        notes_todo_done $@
-    elif is_in_list "$command" "backlog"; then
-        notes_add_backlog $@
-    elif is_in_list "$command" "todo-del"; then
-        notes_delete_todo $@
-    elif is_in_list "$command" "backlog-del"; then
-        notes_delete_backlog $@
-    elif is_in_list "$command" "edit"; then
-        notes_edit $@
-    elif is_in_list "$command" "sync"; then
-        notes_sync $@
-    else
+    # elif is_in_list "$command" "todo"; then
+    #     notes_add_todo $@
+    # elif is_in_list "$command" "done"; then
+    #     notes_todo_done $@
+    # elif is_in_list "$command" "backlog"; then
+    #     notes_add_backlog $@
+    # elif is_in_list "$command" "todo-del"; then
+    #     notes_delete_todo $@
+    # elif is_in_list "$command" "backlog-del"; then
+    #     notes_delete_backlog $@
+    # elif is_in_list "$command" "edit"; then
+    #     notes_edit $@
+    # elif is_in_list "$command" "sync"; then
+    #     notes_sync $@
+    # else
         notes_main_command
     fi
 }
