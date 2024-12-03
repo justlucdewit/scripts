@@ -293,32 +293,36 @@ lsr_compile() {
     local lite_scripts_to_compile=(
         "simple/aliases"
         "simple/scripted_fallback"
+        "simple/custom_ps1"
+        "git_helpers"
     )
 
     local scripts_to_compile=(
-        "helpers"
-        "simple/requirementCheck"
+        "helpers" # TODO attempt to make SSH-safe
+        "simple/requirementCheck" # TODO attempt to make SSH-safe
         "simple/aliases"
         "simple/scripted_fallback"
-        "startup"
+        "simple/custom_ps1"
+        "startup" # TODO attempt to make SSH-safe
 
-        "composites/helpers"
+        "composites/helpers" # TODO attempt to make SSH-safe
         
         "git_helpers" # TODO: make composite
-        "tmux_helpers" # TODO: make composite
-        "utils" # TODO: make composite
+        "tmux_helpers" # TODO: make composite  # TODO attempt to make SSH-safe
+        "utils" # TODO: make composite  # TODO attempt to make SSH-safe
         
-        "local_settings" # TODO: make composite
-        "work" # TODO: make composite
-        "other" # TODO: make composites
+        "local_settings" # TODO: make composite  # TODO attempt to make SSH-safe
+        "work" # TODO: make composite # TODO attempt to make SSH-safe
+        "other" # TODO: make composites # TODO attempt to make SSH-safe
 
-        "composites/lsr/lsr"
-        "composites/utils/list"
-        "composites/docker/dock"
-        "composites/git/gitusers"
-        "composites/git/branches"
-        "composites/development/profile"
-        "composites/development/project"
+        "composites/lsr/lsr" # TODO attempt to make SSH-safe
+        "composites/utils/list" # TODO attempt to make SSH-safe
+        "composites/docker/dock" # TODO attempt to make SSH-safe
+        "composites/git/gitusers" # TODO attempt to make SSH-safe
+        "composites/git/branches" # TODO attempt to make SSH-safe
+        "composites/development/profile" # TODO attempt to make SSH-safe
+        "composites/development/project" # TODO attempt to make SSH-safe
+        "composites/development/notes" # TODO attempt to make SSH-safe
     )
 
     # Compile LSR
@@ -493,8 +497,8 @@ lsr_compile() {
     print_info "Finished recompiling LSR-LITE"
 
     print_empty_line
-    print_info "build.sh:     $(get_line_count "$build_file") Lines"
-    print_info "build-lite.sh:     $(get_line_count "$lite_build_file") Lines"
+    print_info "build.sh:      $(get_line_count "$build_file") Lines"
+    print_info "build-lite.sh: $(get_line_count "$lite_build_file") Lines"
 
     print_empty_line
     lsr_main_command reload
