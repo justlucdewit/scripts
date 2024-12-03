@@ -11,8 +11,13 @@ project_main_command() {
         echo "  - project <project_name>"
         echo "  - project current"
         echo "  - project select"
-        echo "  - project new <project_name>"
-        echo "  - project delete <project_name>"
+        
+        # Full-only commands
+        if [[ "$LSR_TYPE" == "LSR-FULL" ]]; then
+            echo "  - project new <project_name>"
+            echo "  - project delete <project_name>"
+        fi
+        
         return 0
     fi
 
@@ -43,13 +48,30 @@ project_list() {
 
     echo "Available projects:"
     lseval '.projects | to_entries | .[].key' | while read -r key; do
-
         if [[ "$current_project" == "$key" ]]; then
             echo -e "${green} - $key${reset}"
         else
             echo -e " - $key"
         fi
     done
+
+    # Handle LSR_EXTRA_PROJECTS
+    if [[ -n "$LSR_EXTRA_PROJECTS" ]]; then
+        
+        # Loop over all of the extra projects
+        local extra_project_count=$(lsrlist length LSR_EXTRA_PROJECTS)
+        for ((i=0; i<extra_project_count; i++)); do
+            local extra_project=$(lsrlist index LSR_EXTRA_PROJECTS "$i")
+            local extra_project_name=$(echo "$extra_project" | cut -d':' -f1)
+            local extra_project_dir=$(echo "$extra_project" | cut -d':' -f2)
+
+            if [[ "$current_project" == "$extra_project_name" ]]; then
+                echo -e "${green} - $extra_project_name${reset}"
+            else
+                echo -e " - $extra_project_name"
+            fi
+        done
+    fi
 }
 
 project_go() {
@@ -70,10 +92,28 @@ project_go() {
         else
             echo "Directory does not exist: $project_dir"
         fi
-    else
-        echo "Project '$query' not found. Available projects:"
-        project list
+        return
     fi
+
+    # Handle LSR_EXTRA_PROJECTS
+    if [[ -n "$LSR_EXTRA_PROJECTS" ]]; then
+        
+        # Loop over all of the extra projects
+        local extra_project_count=$(lsrlist length LSR_EXTRA_PROJECTS)
+        for ((i=0; i<extra_project_count; i++)); do
+            local extra_project=$(lsrlist index LSR_EXTRA_PROJECTS "$i")
+            local extra_project_name=$(echo "$extra_project" | cut -d':' -f1)
+            local extra_project_dir=$(echo "$extra_project" | cut -d':' -f2)
+
+            if [[ "$query" == "$extra_project_name" ]]; then
+                cd "$query"
+                return
+            fi
+        done
+    fi
+    
+    echo "Project '$query' not found. Available projects:"
+    project list
 }
 
 project_current() {
@@ -83,6 +123,23 @@ project_current() {
     local current_project="$(lseval ".projects | to_entries | map(select(.value.dir == \"$cwd\")) | .[0].key")"
     if [[ "$current_project" != "null" ]]; then
         echo "$current_project";
+        return
+    fi
+
+    # Handle LSR_EXTRA_PROJECTS
+    if [[ -n "$LSR_EXTRA_PROJECTS" ]]; then
+        
+        # Loop over all of the extra projects
+        local extra_project_count=$(lsrlist length LSR_EXTRA_PROJECTS)
+        for ((i=0; i<extra_project_count; i++)); do
+            local extra_project=$(lsrlist index LSR_EXTRA_PROJECTS "$i")
+            local extra_project_name=$(echo "$extra_project" | cut -d':' -f1)
+            local extra_project_dir=$(echo "$extra_project" | cut -d':' -f2)
+
+            if [[ "$cwd" == "$extra_project_dir" ]]; then
+                echo -e "$extra_project_name"
+            fi
+        done
     fi
 }
 
@@ -100,6 +157,11 @@ project_new() {
     local project_name="$1"
     local project_dir="$2"
     local yaml_file="$HOME/scripts/local_data/local_settings.yml"
+
+    if [[ "$LSR_TYPE" == "LSR-LITE" ]]; then
+        print_error "project new is LSR-FULL only"
+        exit
+    fi
 
     if [[ -z "$project_name" ]]; then
         echo "Usage: project new <project_name> [project_directory]"
@@ -134,6 +196,11 @@ project_new() {
 project_delete() {
     local project_name="$1"
     local yaml_file="$HOME/scripts/local_data/local_settings.yml"
+
+    if [[ "$LSR_TYPE" == "LSR-LITE" ]]; then
+        print_error "project delete is LSR-FULL only"
+        exit
+    fi
 
     if [[ -z "$project_name" ]]; then
         echo "Usage: project delete <project_name>"
