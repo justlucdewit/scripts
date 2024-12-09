@@ -1,3 +1,50 @@
+CURRENT_COMPOSITE_COMMAND=""
+declare -g CURRENT_COMPOSITE_SUBCOMMANDS=()
+
+composite_define_command() {
+    CURRENT_COMPOSITE_COMMAND="$1"
+    CURRENT_COMPOSITE_SUBCOMMANDS=()
+    unset CURRENT_COMPOSITE_SUBCOMMANDS_PARAMETERS
+    declare -gA CURRENT_COMPOSITE_SUBCOMMANDS_PARAMETERS
+}
+
+composite_define_subcommand() {
+    local subcommand="$1"
+    local parameters="$2"
+
+    CURRENT_COMPOSITE_SUBCOMMANDS+=("$subcommand")
+    CURRENT_COMPOSITE_SUBCOMMANDS_PARAMETERS["$subcommand"]="$parameters"
+}
+
+composite_print_help_message() {
+    echo "Usage: "
+
+    for subcommand in "${CURRENT_COMPOSITE_SUBCOMMANDS[@]}"; do
+        echo "  - $CURRENT_COMPOSITE_COMMAND $subcommand ${CURRENT_COMPOSITE_SUBCOMMANDS_PARAMETERS[$subcommand]}"
+    done
+}
+
+composite_handle_subcommand() {
+    local subcommand="$1"
+    shift
+
+    # If no sub command is given, print help
+    if [[ ! -n "$subcommand" ]]; then
+        composite_print_help_message
+        return 0
+    fi
+
+    # If sub command is not defined, give error and print help
+    if [[ ! -v CURRENT_COMPOSITE_SUBCOMMANDS_PARAMETERS["$subcommand"] ]]; then
+        print_error "Command '$CURRENT_COMPOSITE_COMMAND $subcommand' does not exist"
+        composite_print_help_message
+        return 1
+    fi
+
+    eval "${CURRENT_COMPOSITE_COMMAND}_$subcommand $@"
+    return 0
+}
+
 composite_help_get_flags() {
     reset_ifs
     local flags=()
@@ -27,7 +74,7 @@ composite_help_get_flags() {
 composite_help_get_rest() {
     reset_ifs
     local non_flags=()
-
+S
     # Split the remaining arguments into non-flags (does not start with --)
     for arg in "$@"; do
         # arg=$(echo "$arg" | sed "s/ /__LSR_SPACE_PLACEHOLDER__/g")

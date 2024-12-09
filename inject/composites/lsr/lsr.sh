@@ -23,45 +23,17 @@ lsr_main_command() {
     print_normal "▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓      "
     print_normal ""
 
-    if [ ! "$#" -gt 0 ]; then
-        print_normal "usage: "
-        print_normal "  - lsr help"
-        print_normal "  - lsr status"
-        print_normal "  - lsr install"
-        print_normal "  - lsr uninstall"
-        print_normal "  - lsr reinstall"
-        print_normal "  - lsr compile"
-        print_normal "  - lsr reload"
-        print_normal "  - lsr debug"
-        print_normal "  - lsr silence"
-        return
-    fi
-
-    local command=$1
-    shift
-
-    if is_in_list "$command" "help"; then
-        lsr_help $@
-    elif is_in_list "$command" "status"; then
-        lsr_status
-    elif is_in_list "$command" "install"; then
-        lsr_install
-    elif is_in_list "$command" "uninstall"; then
-        lsr_uninstall
-    elif is_in_list "$command" "reinstall"; then
-        lsr_reinstall
-    elif is_in_list "$command" "compile"; then
-        lsr_compile $@
-    elif is_in_list "$command" "reload"; then
-        lsr_reload
-    elif is_in_list "$command" "debug"; then
-        lsr_debug $@
-    elif is_in_list "$command" "silence"; then
-        lsr_silence $@
-    else
-        print_error "Command $command does not exist"
-        lsr_main_command # Re-run for help command
-    fi
+    composite_define_command "lsr"
+    composite_define_subcommand "help"
+    composite_define_subcommand "status"
+    composite_define_subcommand "install"
+    composite_define_subcommand "uninstall"
+    composite_define_subcommand "reinstall"
+    composite_define_subcommand "compile"
+    composite_define_subcommand "reload"
+    composite_define_subcommand "debug"
+    composite_define_subcommand "silence"
+    composite_handle_subcommand $@
 }
 
 lsr_silence() {

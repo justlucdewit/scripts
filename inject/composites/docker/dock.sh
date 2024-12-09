@@ -10,34 +10,13 @@ alias dock="dock_main_command"
 
 # Composite command
 dock_main_command() {
-    # Help command
-    if [ ! "$#" -gt 0 ]; then
-        echo "usage: "
-        echo "  - dock list"
-        echo "  - dock start <index>"
-        echo "  - dock stop <index>"
-        echo "  - dock delete <index>"
-        echo "  - dock restart"
-        return 0
-    fi
-
-    local command=$1
-    shift
-
-    if is_in_list "$command" "list,all"; then
-        dock_list $@
-    elif is_in_list "$command" "start,up,go"; then
-        dock_start_project $@
-    elif is_in_list "$command" "stop,down,halt"; then
-        dock_stop_project $@
-    elif is_in_list "$command" "del,delete,rem,remove"; then
-        dock_remove_project $@
-    elif is_in_list "$command" "restart,start,boot,reboot"; then
-        dock_restart $@
-    else
-        print_error "Command $command does not exist"
-        dock_main_command # Re-run for help command
-    fi
+    composite_define_command "dock"
+    composite_define_subcommand "list"
+    composite_define_subcommand "start" "<index>"
+    composite_define_subcommand "stop" "<index>"
+    composite_define_subcommand "delete" "<index>"
+    composite_define_subcommand "restart"
+    composite_handle_subcommand $@
 }
 
 dock_list() {
@@ -88,7 +67,7 @@ dock_list() {
     done
 }
 
-dock_start_project() {
+dock_start() {
     if [ -z "$1" ]; then
         print_error "Usage: dock start <number>"
         return 1
@@ -119,7 +98,7 @@ dock_start_project() {
 }
 
 # Stop a Docker container by its index (number)
-dock_stop_project() {
+dock_stop() {
     if [ -z "$1" ]; then
         print_error "Usage: dockstop <number>"
         return 1
@@ -147,7 +126,7 @@ dock_stop_project() {
 }
 
 # Remove a Docker container by its index (number)
-dock_remove_project() {
+dock_remove() {
     if [ -z "$1" ]; then
         print_error "Usage: dock remove <number>"
         return 1
