@@ -11,7 +11,7 @@ BASHRC_ENDERER="# !! LSR LOADER END !!"
 SETTINGS_FILE=~/scripts/_settings.yml
 HISTORY_FILE=~/scripts/local_data/version_history.yml
 
-lsr_main_command() {
+print_logo() {
     print_normal ""
     print_normal "▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓"
     print_normal "▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓"
@@ -22,7 +22,9 @@ lsr_main_command() {
     print_normal "▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓      "
     print_normal "▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓      "
     print_normal ""
+}
 
+lsr_main_command() {
     if [ ! "$#" -gt 0 ]; then
         print_normal "usage: "
         print_normal "  - lsr help"
@@ -30,10 +32,16 @@ lsr_main_command() {
         print_normal "  - lsr install"
         print_normal "  - lsr uninstall"
         print_normal "  - lsr reinstall"
-        print_normal "  - lsr compile"
-        print_normal "  - lsr reload"
-        print_normal "  - lsr debug"
-        print_normal "  - lsr silence"
+        print_normal "  - lsr version-list"
+        print_normal "  - lsr version-download"
+
+        if [[ "$LSR_IS_DEV" == "true" ]]; then
+            print_normal "  - lsr reload"
+            print_normal "  - lsr silence"
+            print_normal "  - lsr debug"
+            print_normal "  - lsr compile"
+        fi
+        
         return
     fi
 
@@ -58,6 +66,10 @@ lsr_main_command() {
         lsr_debug $@
     elif is_in_list "$command" "silence"; then
         lsr_silence $@
+    elif is_in_list "$command" "version-list"; then
+        lsr_version_list $@
+    elif is_in_list "$command" "version-download"; then
+        lsr_version_download $@
     else
         print_error "Command $command does not exist"
         lsr_main_command # Re-run for help command
@@ -512,4 +524,30 @@ lsr_compile() {
 
     print_empty_line
     lsr_main_command reload
+}
+
+lsr_version_list() {
+    echo "LSR versions:"
+    curl -s https://api.github.com/repos/justlucdewit/scripts/releases | jq -r '.[] | " - " + .name'
+}
+
+lsr_version_download() {
+    if [[ "$#" == "0" ]]; then
+        print_error "No version given"
+        print_error "Usage: lsr version-download <version>"
+        return
+    fi
+
+    local version="$1"
+    print_info "downloading version $version..."
+
+    # Get the download URLs
+    local download_url_1=$(curl -s https://api.github.com/repos/justlucdewit/scripts/releases | jq -r ".[] | select(.tag_name == \"$version\") | .assets[0] | .browser_download_url")
+    local download_url_2=$(curl -s https://api.github.com/repos/justlucdewit/scripts/releases | jq -r ".[] | select(.tag_name == \"$version\") | .assets[1] | .browser_download_url")
+
+    # No version found
+    if [[ "$download_url_1" == "" && "$download_url_2" == "" ]]; then
+        print_error "Version $version does not exist"
+        return
+    fi
 }
