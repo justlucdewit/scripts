@@ -308,6 +308,7 @@ lsr_compile() {
         "simple/aliases"
         "simple/scripted_fallback"
         "simple/custom_ps1"
+        "simple/startup"
         "simple/git_helpers"
         "simple/utils"
         "simple/local_settings"
@@ -324,7 +325,7 @@ lsr_compile() {
         "simple/aliases"
         "simple/scripted_fallback"
         "simple/custom_ps1"
-        "startup" # TODO attempt to make SSH-safe
+        "simple/startup"
 
         "composites/helpers" # TODO attempt to make SSH-safe
         
