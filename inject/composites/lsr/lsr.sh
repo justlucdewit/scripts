@@ -301,6 +301,7 @@ lsr_compile() {
         "simple/local_settings"
 
         "composites/utils/list"
+        "composites/utils/obj"
         "composites/development/project"
     )
 
@@ -325,6 +326,7 @@ lsr_compile() {
 
         "composites/lsr/lsr" # TODO attempt to make SSH-safe
         "composites/utils/list"
+        "composites/utils/obj"
         "composites/docker/dock" # TODO attempt to make SSH-safe
         "composites/git/gitusers" # TODO attempt to make SSH-safe
         "composites/git/branches" # TODO attempt to make SSH-safe

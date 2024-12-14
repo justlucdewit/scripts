@@ -37,6 +37,9 @@ alias lsdel="localsettings_delete"
 alias lssort="localsettings_sort"
 alias lsformat="localsettings_reformat"
 
+alias lsr_current_user="$(whoami)"
+alias lsr_current_host="$(hostname)"
+
 LSR_LOCAL_SETTINGS_FILE="$HOME/scripts/local_data/local_settings.yml"
 LSR_LOCAL_SETTINGS_DIR="$(dirname "$local_settings_file")"
 LSR_NOTES_DIR="$HOME/notes"
