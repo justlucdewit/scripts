@@ -528,8 +528,19 @@ lsr_compile() {
 }
 
 lsr_version_list() {
+        # Define the directory where versions are downloaded
+    DOWNLOAD_DIR="/path/to/your/download/location"
+    
     echo "LSR versions:"
-    curl -s https://api.github.com/repos/justlucdewit/scripts/releases | jq -r '.[] | " - " + .name'
+    # Fetch the versions from the GitHub API
+    curl -s https://api.github.com/repos/justlucdewit/scripts/releases | jq -r '.[] | .name' | while read -r version; do
+        # Check if the version exists in the download directory
+        if [ -f "$HOME/scripts/versions/remote_download_$version/build-full.sh" ]; then
+            echo " * $version"  # Add a star if the file exists
+        else
+            echo "   $version"  # Otherwise, just list the version
+        fi
+    done
 }
 
 lsr_version_download() {
@@ -551,4 +562,10 @@ lsr_version_download() {
         print_error "Version $version does not exist"
         return
     fi
+
+    # Download version
+    mkdir -p "$HOME/scripts/versions/remote_download_$version"
+    wget "$download_url_1" -qO "$HOME/scripts/versions/remote_download_$version/build-lite.sh" >/dev/null
+    wget "$download_url_2" -qO "$HOME/scripts/versions/remote_download_$version/build-full.sh" >/dev/null
+    print_info "version $version downloaded..."
 }

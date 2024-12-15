@@ -18,6 +18,7 @@ alias gco='git checkout'
 alias gbr='git branch --all'
 alias gc='git commit'
 alias gs='git stash'
+alias lcomp="lsr compile"
 
 # Aliases for LSR commands
 alias p="project go"
