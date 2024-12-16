@@ -99,29 +99,29 @@ git_users_list() {
             lsrlist append newRow "$user"
         fi
         if [[ $INCLUDE_FULLNAME == true ]]; then
-            local fullname="$(lsget .gitusers.$user.fullname)"
+            local fullname="$(localsettings_get .gitusers.$user.fullname)"
             lsrlist append newRow "$fullname"
         fi
         if [[ $INCLUDE_ALIASES == true ]]; then
-            local aliases="$(lseval ".gitusers.$user.aliases | join(\"\\,\")")"
+            local aliases="$(localsettings_eval ".gitusers.$user.aliases | join(\"\\,\")")"
             lsrlist append newRow "$aliases"
         fi
         if [[ $INCLUDE_INITIALS == true ]]; then
-            local initials="$(lseval ".gitusers.$user.initials // \" \"")"
+            local initials="$(localsettings_eval ".gitusers.$user.initials // \" \"")"
             lsrlist append newRow "$initials"
         fi
         if [[ $INCLUDE_PHONE == true ]]; then
-            local phone="$(lseval ".gitusers.$user.phone // \" \"")"
+            local phone="$(localsettings_eval ".gitusers.$user.phone // \" \"")"
             lsrlist append newRow "$phone"
         fi
         if [[ $INCLUDE_EMAIL == true ]]; then
-            local email="$(lseval ".gitusers.$user.email // \" \"")"
+            local email="$(localsettings_eval ".gitusers.$user.email // \" \"")"
             lsrlist append newRow "$email"
         fi
 
         rows+=("$newRow")
         ((index++))
-    done <<< "$(lseval ".gitusers | to_entries | .[] | .key")"
+    done <<< "$(localsettings_eval ".gitusers | to_entries | .[] | .key")"
 
     table "$headers" "${rows[@]}"
 }
