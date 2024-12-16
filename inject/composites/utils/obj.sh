@@ -34,7 +34,7 @@ obj_set() {
 	local variable_name="$2"
 	local value="$3"
     
-    object=$(echo "$object" | jq ".\"$variable_name\"=\"$value\"")
+    object=$(echo "$object" | jq -c ".\"$variable_name\"=\"$value\"")
 }
 
 obj_get() {
