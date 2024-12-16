@@ -109,7 +109,7 @@ table() {
     echo ""
 }
 
-list() {
+printlist() {
     eval "flags=($(composite_help_get_flags "$@"))"
     eval "args=($(composite_help_get_rest "$@"))"
 
@@ -161,7 +161,7 @@ selectable_list() {
     print_menu() {
         clear
         echo "Use Arrow Keys to navigate, Enter to select:"
-        list "$title" "$options_list" "--selected=${options[$selected]}" --selected-prefix="\e[1;32m => " --prefix="\e[0m  - "
+        printlist "$title" "$options_list" "--selected=${options[$selected]}" --selected-prefix="\e[1;32m => " --prefix="\e[0m  - "
         echo -ne "\e[0m"
     }
 
