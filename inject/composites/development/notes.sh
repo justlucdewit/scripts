@@ -39,8 +39,65 @@ notes_main_command() {
 
     composite_define_command "notes"
     composite_define_subcommand "today"
+    composite_define_subcommand "parse"
     composite_define_subcommand "make" "[day month year]"
     composite_handle_subcommand $@
+}
+
+notes_parse() {
+    local given_day="$1"
+    local given_month="$2"
+    local given_year="$3"
+
+    # Get the notes content
+    local daily_note_file="$LSR_NOTES_DIR/journal/$given_year-$given_month/$given_year-$given_month-$given_day.md"
+    local daily_note_content=$(cat "$daily_note_file")
+    # echo "$daily_note_content"
+    
+    # Loop over the notes content line by line
+    local mode="Done"
+    local tasks="["
+    while IFS= read -r line; do
+        if [[ "$line" == "# Done"* ]]; then
+            mode="Done"
+        fi
+
+        if [[ "$line" == "# Todo"* ]]; then
+            mode="Todo"
+        fi
+
+        if [[ "$line" == "# Backlog"* ]]; then
+            mode="Backlog"
+        fi
+
+        if [[ "$line" == "- "* ]]; then
+            # Parse the individual task line
+            local task_description="${line%% (*}"
+            task_description="${task_description:2}"
+            local task_duration=$(echo "$line" | awk -F'\\(|\\)' '{if (NF > 1) print $2; else print ""}')
+            
+            # Create the object
+            obj create currentTask
+            obj set currentTask description "$task_description"
+            obj set currentTask type "$mode"
+
+            if [[ -n "$task_duration" ]]; then
+                obj set currentTask duration "$task_duration"
+            fi
+
+            if [[ "$tasks" == "[" ]]; then
+                tasks+="$currentTask"
+            else
+                tasks+=",$currentTask"
+            fi
+        fi
+        # echo "Processing: $line"
+    done <<< "$daily_note_content"
+
+    tasks+="]"
+    echo "$tasks"
+
+    reset_ifs
 }
 
 notes_make() {
