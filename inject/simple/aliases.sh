@@ -18,6 +18,7 @@ alias gco='git checkout'
 alias gbr='git branch --all'
 alias gc='git commit'
 alias gs='git stash'
+alias lcomp="lsr compile"
 
 # Aliases for LSR commands
 alias p="project go"
@@ -37,7 +38,14 @@ alias lsdel="localsettings_delete"
 alias lssort="localsettings_sort"
 alias lsformat="localsettings_reformat"
 
+alias lsr_current_user="$(whoami)"
+alias lsr_current_host="$(hostname)"
+
 LSR_LOCAL_SETTINGS_FILE="$HOME/scripts/local_data/local_settings.yml"
 LSR_LOCAL_SETTINGS_DIR="$(dirname "$local_settings_file")"
+LSR_SETTING_FILE=~/scripts/_settings.yml
 LSR_NOTES_DIR="$HOME/notes"
+
+LSR_IS_DEV=$(yq e ".dev" "$LSR_SETTING_FILE")
+
 LSR_NOTES_TODAY_FILE="$LSR_NOTES_DIR/journal/$(date +%Y)-$(date +%m)-$(date +%d).md"

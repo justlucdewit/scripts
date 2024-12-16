@@ -11,7 +11,7 @@ BASHRC_ENDERER="# !! LSR LOADER END !!"
 SETTINGS_FILE=~/scripts/_settings.yml
 HISTORY_FILE=~/scripts/local_data/version_history.yml
 
-lsr_main_command() {
+print_logo() {
     print_normal ""
     print_normal "▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓"
     print_normal "▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓"
@@ -22,7 +22,9 @@ lsr_main_command() {
     print_normal "▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓      "
     print_normal "▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓      "
     print_normal ""
+}
 
+lsr_main_command() {
     composite_define_command "lsr"
     composite_define_subcommand "help"
     composite_define_subcommand "status"
@@ -35,6 +37,7 @@ lsr_main_command() {
     composite_define_subcommand "silence"
     composite_handle_subcommand $@
 }
+
 
 lsr_silence() {
     local SETTINGS_FILE=~/scripts/_settings.yml
@@ -268,11 +271,13 @@ lsr_compile() {
         "simple/aliases"
         "simple/scripted_fallback"
         "simple/custom_ps1"
+        "simple/startup"
         "simple/git_helpers"
         "simple/utils"
         "simple/local_settings"
 
         "composites/utils/list"
+        "composites/utils/obj"
         "composites/development/project"
     )
 
@@ -283,7 +288,7 @@ lsr_compile() {
         "simple/aliases"
         "simple/scripted_fallback"
         "simple/custom_ps1"
-        "startup" # TODO attempt to make SSH-safe
+        "simple/startup"
 
         "composites/helpers" # TODO attempt to make SSH-safe
         
@@ -297,6 +302,7 @@ lsr_compile() {
 
         "composites/lsr/lsr" # TODO attempt to make SSH-safe
         "composites/utils/list"
+        "composites/utils/obj"
         "composites/docker/dock" # TODO attempt to make SSH-safe
         "composites/git/gitusers" # TODO attempt to make SSH-safe
         "composites/git/branches" # TODO attempt to make SSH-safe
@@ -482,4 +488,47 @@ lsr_compile() {
 
     print_empty_line
     lsr_main_command reload
+}
+
+lsr_version_list() {
+        # Define the directory where versions are downloaded
+    DOWNLOAD_DIR="/path/to/your/download/location"
+    
+    echo "LSR versions:"
+    # Fetch the versions from the GitHub API
+    curl -s https://api.github.com/repos/justlucdewit/scripts/releases | jq -r '.[] | .name' | while read -r version; do
+        # Check if the version exists in the download directory
+        if [ -f "$HOME/scripts/versions/remote_download_$version/build-full.sh" ]; then
+            echo " * $version"  # Add a star if the file exists
+        else
+            echo "   $version"  # Otherwise, just list the version
+        fi
+    done
+}
+
+lsr_version_download() {
+    if [[ "$#" == "0" ]]; then
+        print_error "No version given"
+        print_error "Usage: lsr version-download <version>"
+        return
+    fi
+
+    local version="$1"
+    print_info "downloading version $version..."
+
+    # Get the download URLs
+    local download_url_1=$(curl -s https://api.github.com/repos/justlucdewit/scripts/releases | jq -r ".[] | select(.tag_name == \"$version\") | .assets[0] | .browser_download_url")
+    local download_url_2=$(curl -s https://api.github.com/repos/justlucdewit/scripts/releases | jq -r ".[] | select(.tag_name == \"$version\") | .assets[1] | .browser_download_url")
+
+    # No version found
+    if [[ "$download_url_1" == "" && "$download_url_2" == "" ]]; then
+        print_error "Version $version does not exist"
+        return
+    fi
+
+    # Download version
+    mkdir -p "$HOME/scripts/versions/remote_download_$version"
+    wget "$download_url_1" -qO "$HOME/scripts/versions/remote_download_$version/build-lite.sh" >/dev/null
+    wget "$download_url_2" -qO "$HOME/scripts/versions/remote_download_$version/build-full.sh" >/dev/null
+    print_info "version $version downloaded..."
 }
