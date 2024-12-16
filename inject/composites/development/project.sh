@@ -4,39 +4,18 @@ alias project=project_main_command
 project_main_command() {
     reset_ifs
     
-    # Help command
-    if [ ! "$#" -gt 0 ]; then
-        echo "usage: "
-        echo "  - project list"
-        echo "  - project <project_name>"
-        echo "  - project current"
-        echo "  - project select"
-        
-        # Full-only commands
-        if [[ "$LSR_TYPE" == "LSR-FULL" ]]; then
-            echo "  - project new <project_name>"
-            echo "  - project delete <project_name>"
-        fi
-        
-        return 0
+    composite_define_command "project"
+    composite_define_subcommand "list"
+    composite_define_subcommand "go"
+    composite_define_subcommand "current"
+    composite_define_subcommand "select"
+
+    if [[ "$LSR_TYPE" == "LSR-FULL" ]]; then
+        composite_define_subcommand "new"
+        composite_define_subcommand "delete"
     fi
 
-    local command=$1
-    shift
-
-    if is_in_list "$command" "list"; then
-        project_list $@
-    elif is_in_list "$command" "current"; then
-        project_current $@
-    elif is_in_list "$command" "select"; then
-        project_select $@
-    elif is_in_list "$command" "new"; then
-        project_new $@
-    elif is_in_list "$command" "delete"; then
-        project_delete $@
-    else
-        project_go $@
-    fi
+    composite_handle_subcommand $@
 }
 
 # Function to list all available projects, highlighting the current project in green

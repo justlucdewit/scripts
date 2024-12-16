@@ -15,17 +15,9 @@ lsr debug                                   Toggles debug mode for LSR
 lsr silence                                 Toggles silent mode for LSR
 
 # Project management
-p                                           List all registered projects
-p <projectname>                             Jump to the directory belonging to that project
-nproj <projectname> [<projectdirectory>]    Register current directory as project <projectname>
-rproj <projectname>                         Un-register project <projectname>
-cproj                                       Print the registered name of the current project
-gprojurl                                    Print the project URL to open in browser on start
-sprojurl <projecturl>                       Set the project URL to open in browser on start
-rprojurl                                    Remove the URL of the current project
-
-# Laravel Project management
-start [<projectname>]                       Starts the given/current laravel project in tmux
-stop                                        Stops the current running laravel project in tmux
-switch <projectname>                        Switches to the given laravel project in tmux
-npmscripts                                  prints the available npm scripts in the current project
+project list                                List all registered projects
+project go <project_name>                   Go to the directory of a specific project
+project current                             Echo the current project alias
+project select                              Select the project to go to from a list of projects
+project new <project_name>                  Create a new project in the current directory
+project delete <project_name>               Unregister the given project
