@@ -43,9 +43,13 @@ alias lsr_current_host="$(hostname)"
 
 LSR_LOCAL_SETTINGS_FILE="$HOME/scripts/local_data/local_settings.yml"
 LSR_LOCAL_SETTINGS_DIR="$(dirname "$local_settings_file")"
-LSR_SETTING_FILE=~/scripts/_settings.yml
-LSR_NOTES_DIR="$HOME/notes"
 
+LSR_DAY="$(date +%d)"
+LSR_MONTH="$(date +%m)"
+LSR_YEAR="$(date +%Y)"
+
+LSR_NOTES_DIR="$HOME/notes"
+LSR_SETTING_FILE=~/scripts/_settings.yml
+LSR_NOTES_TODAY_FILE="$LSR_NOTES_DIR/journal/$LSR_YEAR-$LSR_MONTH/$LSR_YEAR-$LSR_MONTH-$LSR_DAY.md"
 LSR_IS_DEV=$(yq e ".dev" "$LSR_SETTING_FILE")
 
-LSR_NOTES_TODAY_FILE="$LSR_NOTES_DIR/journal/$(date +%Y)-$(date +%m)-$(date +%d).md"

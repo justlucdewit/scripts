@@ -305,8 +305,10 @@ lsr_compile() {
         "composites/utils/obj"
         "composites/docker/dock" # TODO attempt to make SSH-safe
         "composites/git/gitusers" # TODO attempt to make SSH-safe
+        "composites/git/gitfeature" # TODO attempt to make SSH-safe
         "composites/git/branches" # TODO attempt to make SSH-safe
         "composites/development/profile" # TODO attempt to make SSH-safe
+        "composites/development/goto" # TODO attempt to make SSH-safe
         "composites/development/project"
         "composites/development/notes" # TODO attempt to make SSH-safe
     )

@@ -88,3 +88,25 @@ command_not_found_handle() {
     fi
     return 127
 }
+
+# Default commands to overwritten_commands
+# check_for_command_overwrite() {
+#     local command=$1
+#     local subcommand=$2
+
+#     overwrite_name="lsr_overwrite_${command}_${subcommand}"
+    
+#     if echo "$(declare -f)" | grep "^$overwrite_name ()" > /dev/null 2>&1; then
+#         echo "$overwrite_name"
+#         return 1
+#     fi
+
+#     return 0
+# }
+
+# lsr_overwrite_git_stats() {
+#     echo "git statistics overwrite"
+# }
+
+# shopt -s extdebug
+# trap 'check_for_command_overwrite $BASH_COMMAND' DEBUG
