@@ -21,3 +21,11 @@ project current                             Echo the current project alias
 project select                              Select the project to go to from a list of projects
 project new <project_name>                  Create a new project in the current directory
 project delete <project_name>               Unregister the given project
+
+# Profile management
+profile list                                List all created profiles
+profile current                             Echo the current profile name
+profile load <profile_name>                 Load profile with specified name
+profile save <profile_name>                 Save profile with specified name
+profile edit <profile_name>                 Edit profile with specified name in text editor
+profile delete <profile_name>               Delete profile with specified name

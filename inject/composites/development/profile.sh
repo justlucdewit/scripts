@@ -7,38 +7,15 @@ alias profile="profile_main_command"
 profile_main_command() {
     reset_ifs
 
-    # Help command
-    if [ ! "$#" -gt 0 ]; then
-        echo "usage: "
-        echo "  - profile current"
-        echo "  - profile list"
-        echo "  - profile load <identifier>"
-        echo "  - profile save <identifier>"
-        echo "  - profile edit <identifier>"  # TODO
-        echo "  - profile rename <old identifier> <new identifier>"  # TODO
-        echo "  - profile delete <identifier>"  # TODO
-        return 0
-    fi
+    composite_define_command "profile"
+    composite_define_subcommand "list"
+    composite_define_subcommand "current"
+    composite_define_subcommand "load"
+    composite_define_subcommand "save"
+    composite_define_subcommand "edit"
+    composite_define_subcommand "delete"
 
-    local command=$1
-    shift
-
-    if is_in_list "$command" "list"; then
-        profile_list $@
-    elif is_in_list "$command" "current"; then
-        profile_current $@
-    elif is_in_list "$command" "load"; then
-        profile_load $@
-    elif is_in_list "$command" "save"; then
-        profile_save $@
-    elif is_in_list "$command" "edit"; then
-        profile_edit $@
-    elif is_in_list "$command" "delete"; then
-        profile_delete $@
-    else
-        print_error "Command $command does not exist"
-        profile_main_command # Re-run for help command
-    fi
+    composite_handle_subcommand $@
 }
 
 profile_delete() {
