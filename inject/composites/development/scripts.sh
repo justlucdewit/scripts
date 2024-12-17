@@ -217,10 +217,10 @@ scripts_list() {
         basename="${filename%.sh}"  # Remove the .sh suffix
 
         if [[ "$basename" != "*"  && $basename != _* ]]; then
-
             if [[ -f "./_lsr_scripts/.lsrignore" && -n $(cat "./_lsr_scripts/.lsrignore" | grep "^$file$") ]]; then
                 continue
             fi
+            
             bashScriptsTxt+=" - $basename"
             bashScriptsTxt+=$'\n'
         fi
@@ -230,6 +230,10 @@ scripts_list() {
         basename="${filename%.py}"  # Remove the .py suffix
 
         if [[ "$basename" != "*"  && $basename != _* ]]; then
+            if [[ -f "./_lsr_scripts/.lsrignore" && -n $(cat "./_lsr_scripts/.lsrignore" | grep "^$file$") ]]; then
+                continue
+            fi
+
             pyScriptsTxt+=" - $basename"
             pyScriptsTxt+=$'\n'
         fi
@@ -239,6 +243,11 @@ scripts_list() {
         basename="${filename%.py}"  # Remove the .py suffix
 
         if [[ "$basename" != "*"  && $basename != _* ]]; then
+            echo "looking at $file"
+            if [[ -f "./_lsr_scripts/.lsrignore" && -n $(cat "./_lsr_scripts/.lsrignore" | grep "^$file$") ]]; then
+                continue
+            fi
+
             pyScriptsTxt+=" - $basename"
             pyScriptsTxt+=$'\n'
         fi
@@ -248,6 +257,10 @@ scripts_list() {
         basename="${filename%.js}"  # Remove the .js suffix
 
         if [[ "$basename" != "*"  && $basename != _* ]]; then
+            if [[ -f "./_lsr_scripts/.lsrignore" && -n $(cat "./_lsr_scripts/.lsrignore" | grep "^$file$") ]]; then
+                continue
+            fi
+
             jsScriptsTxt+=" - $basename"
             jsScriptsTxt+=$'\n'
         fi
@@ -257,6 +270,10 @@ scripts_list() {
         basename="${filename%.js}"  # Remove the .py suffix
 
         if [[ "$basename" != "*"  && $basename != _* ]]; then
+            if [[ -f "./_lsr_scripts/.lsrignore" && -n $(cat "./_lsr_scripts/.lsrignore" | grep "^$file$") ]]; then
+                continue
+            fi
+
             jsScriptsTxt+=" - $basename"
             jsScriptsTxt+=$'\n'
         fi
