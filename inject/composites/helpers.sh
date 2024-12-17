@@ -85,16 +85,16 @@ composite_help_get_flags() {
 composite_help_get_rest() {
     reset_ifs
     local non_flags=()
-S
+
     # Split the remaining arguments into non-flags (does not start with --)
     for arg in "$@"; do
-        # arg=$(echo "$arg" | sed "s/ /__LSR_SPACE_PLACEHOLDER__/g")
+        arg=$(echo "$arg" | sed 's/"/__LSR_QUOTE_PLACEHOLDER__/g')
         if [[ (! "$arg" =~ ^--) && (! "$arg" =~ ^-) ]]; then
             non_flags+=("\"$arg\"")
         fi
     done
 
-    echo "${non_flags[@]}"
+    echo "${non_flags[@]}" | sed 's/__LSR_QUOTE_PLACEHOLDER__/\"/g'
 }
 
 # Function to check if a flag is in the flags array

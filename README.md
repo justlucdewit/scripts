@@ -24,13 +24,21 @@ This should succesfully install Lukes Script Repository. No restart is needed.
 Everything should be emediately available
 
 # TODO:
- - Support for multiple users
+ - Automated lsr_script creation
+ - Profile switching protection
+ - Converting command
+ - Custom config syntax
  - Support for version downloading
  - Support for version switching
- - Easy install script
+ - Remake install script
+ - Easy user management
+ - Easy host management
+ - Easy tmux management
+ - Support for multiple users
 
  - Saving and starting with previous path
  - use helper prints for everything
+ - codefind
  - --fuzzy argument for codefind
  - Ensure no double build
  - npmscripts --show

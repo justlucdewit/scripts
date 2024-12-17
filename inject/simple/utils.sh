@@ -110,8 +110,12 @@ table() {
 }
 
 printlist() {
+    local listName=$1
+    local listItems=$2
+    
     eval "flags=($(composite_help_get_flags "$@"))"
     eval "args=($(composite_help_get_rest "$@"))"
+    
 
     local selectable="false"
     local prefix=" - "
@@ -127,19 +131,14 @@ printlist() {
     fi
 
     if composite_help_contains_flag selected "${flags[@]}"; then
-        selected_value=$(composite_help_get_flag_value selected "${flags[@]}")
+        local selected_index=$(composite_help_get_flag_value selected "${flags[@]}")
+        selected_value=$(lsrlist index listItems "$selected_index")
     fi
-
-
-    set -- "${args[@]}"
-
-    local listName=$1
-    local listItems=$2
 
     echo "$listName:"
 
     IFS=',' # Set the Internal Field Separator to comma
-    for listItem in $listItems; do
+    echo "$listItems" | yq eval '.[]' - | while read -r listItem; do
         if [[ "$listItem" == "$selected_value" ]]; then
             echo -e "$selected_prefix$listItem"
         else
@@ -150,18 +149,18 @@ printlist() {
 }
 
 selectable_list() {
-    title=$1
-    selected=0
+    local title=$1
     local -n return_ref=$2
-    options_list=$3
-    IFS=',' read -r -a options <<< "$options_list"
-    reset_ifs
+    local options="$3"
+    local selected_index=0
+    local options_length=$(lsrlist length options)
 
     # Function to display the menu
     print_menu() {
         clear
         echo "Use Arrow Keys to navigate, Enter to select:"
-        printlist "$title" "$options_list" "--selected=${options[$selected]}" --selected-prefix="\e[1;32m => " --prefix="\e[0m  - "
+        local selected_option=$(lsrlist index options)
+        printlist "$title" "$options" "--selected=$selected_index" --selected-prefix="\e[1;32m => " --prefix="\e[0m  - "
         echo -ne "\e[0m"
     }
 
@@ -178,21 +177,21 @@ selectable_list() {
                 read -rsn2 -t 0.1 input  # Read next two chars
                 case "$input" in
                     '[A')  # Up arrow
-                        ((selected--))
-                        if [ $selected -lt 0 ]; then
-                            selected=$((${#options[@]} - 1))
+                        ((selected_index--))
+                        if [ $selected_index -lt 0 ]; then
+                            selected_index=$(($options_length - 1))
                         fi
                         ;;
                     '[B')  # Down arrow
-                        ((selected++))
-                        if [ $selected -ge ${#options[@]} ]; then
-                            selected=0
+                        ((selected_index++))
+                        if [ $selected_index -ge $options_length ]; then
+                            selected_index=0
                         fi
                         ;;
                 esac
                 ;;
             '')  # Enter key
-                return_ref="${options[$selected]}"
+                return_ref=$(lsrlist index options "$selected_index")
                 break
                 ;;
         esac

@@ -26,7 +26,7 @@ alias sp="project select"
 alias e=exp
 alias eg="exp --go"
 alias s=scripts
-alias ss="select_scripts"
+alias ss="scripts select"
 alias yesterday='work --date=yesterday'
 alias today='work --date=today'
 alias rb="lsr_reload"

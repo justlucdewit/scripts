@@ -33,15 +33,6 @@ packages() {
     fi
 }
 
-select_scripts() {
-    scripts_output=$(scripts)
-    scripts_list=$(echo "$scripts_output" | grep '^ - ' | awk '{sub(/^ - /, ""); if (NR > 1) printf ","; printf "%s", $0} END {print ""}')
-    
-    local value=""
-    selectable_list "Select a script" value "$scripts_list"
-    $value
-}
-
 now() {
     local local_settings_file="$HOME/scripts/local_data/local_settings.yml"
     local local_settings_dir="$(dirname "$local_settings_file")"

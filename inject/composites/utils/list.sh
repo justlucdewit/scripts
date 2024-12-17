@@ -4,7 +4,7 @@ lsrlist() {
     composite_define_subcommand "create" "<listname>"
     composite_define_subcommand "append" "<listname> <item>"
     composite_define_subcommand "index" "<listname> <index>"
-    composite_define_subcommand "length" "<listname> <index>"
+    composite_define_subcommand "length" "<listname>"
     composite_handle_subcommand $@
 }
 

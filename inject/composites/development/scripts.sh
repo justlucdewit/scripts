@@ -29,13 +29,24 @@ scripts_main_command() {
     initialize_scripts_dir
 
     composite_define_command "scripts"
-    composite_define_subcommand "list" # Todo: lsrignore
+    composite_define_subcommand "list"
+    composite_define_subcommand "run" "<script-name>"
+    composite_define_subcommand "select"
     composite_define_subcommand "new" "<script-name>"
     composite_define_subcommand "find" "<script-name>"
-    composite_define_subcommand "run" "<script-name>"
     composite_define_subcommand "edit" "<script-name>"
     composite_help_overwrite "list"
     composite_handle_subcommand $@
+}
+
+scripts_select() {
+    local scripts_output=$(scripts list)
+    local scripts_list=$(echo "$scripts_output" | grep '^ - ' | awk '{sub(/^ - /, ""); if (NR > 1) printf ","; printf "\"%s\"", $0} END {print ""}')
+    scripts_list="[$scripts_list]"
+
+    local value=""
+    selectable_list "Select a script" value "$scripts_list"
+    $value
 }
 
 scripts_run() {
@@ -178,15 +189,18 @@ scripts_new() {
 # - python scripts
 # - nodejs scripts
 scripts_list() {
-    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || ( -d ./scripts && $(find ./scripts -wholename "*.sh" -print -quit) ) || ( -d ./_lsr_scripts && $(find ./_lsr_scripts -wholename "*.sh" -print -quit)) ]]; then
-        echo "Bash scripts:"
-    fi
+    local bashScriptsTxt=""
+    local pyScriptsTxt=""
+    local jsScriptsTxt=""
+    local npmScriptsTxt=""
+
     for file in ./*.sh; do
         filename="${file##*/}"      # Remove the ./ prefix
         basename="${filename%.sh}"  # Remove the .sh suffix
 
         if [[ "$basename" != "*" && $basename != _* ]]; then
-            echo " - $basename"
+            bashScriptsTxt+=" - $basename"
+            bashScriptsTxt+=$'\n'
         fi
     done
     for file in ./scripts/*.sh; do
@@ -194,7 +208,8 @@ scripts_list() {
         basename="${filename%.sh}"  # Remove the .sh suffix
 
         if [[ "$basename" != "*"  && $basename != _* ]]; then
-            echo " - $basename"
+            bashScriptsTxt+=" - $basename"
+            bashScriptsTxt+=$'\n'
         fi
     done
     for file in ./_lsr_scripts/*.sh; do
@@ -206,22 +221,17 @@ scripts_list() {
             if [[ -f "./_lsr_scripts/.lsrignore" && -n $(cat "./_lsr_scripts/.lsrignore" | grep "^$file$") ]]; then
                 continue
             fi
-            echo " - $basename"
+            bashScriptsTxt+=" - $basename"
+            bashScriptsTxt+=$'\n'
         fi
     done
-    if [[ $(find . -maxdepth 1 -wholename "./*.sh" -print -quit) || ( -d ./scripts && $(find ./scripts -wholename "*.sh" -print -quit) ) || ( -d ./_lsr_scripts && $(find ./_lsr_scripts -wholename "*.sh" -print -quit)) ]]; then
-        echo ""
-    fi
-
-    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || ( -d ./scripts && $(find ./scripts -wholename "*.py" -print -quit) ) || ( -d ./_lsr_scripts && $(find ./_lsr_scripts -wholename "*.py" -print -quit)) ]]; then
-        echo "Python scripts:"
-    fi
     for file in ./*.py; do
         filename="${file##*/}"      # Remove the ./scripts/ prefix
         basename="${filename%.py}"  # Remove the .py suffix
 
         if [[ "$basename" != "*"  && $basename != _* ]]; then
-            echo "- $basename"
+            pyScriptsTxt+=" - $basename"
+            pyScriptsTxt+=$'\n'
         fi
     done
     for file in ./scripts/*.py; do
@@ -229,22 +239,17 @@ scripts_list() {
         basename="${filename%.py}"  # Remove the .py suffix
 
         if [[ "$basename" != "*"  && $basename != _* ]]; then
-            echo " - $basename"
+            pyScriptsTxt+=" - $basename"
+            pyScriptsTxt+=$'\n'
         fi
     done
-    if [[ $(find . -maxdepth 1 -wholename "./*.py" -print -quit) || ( -d ./scripts && $(find ./scripts -wholename "*.py" -print -quit) ) || ( -d ./_lsr_scripts && $(find ./_lsr_scripts -wholename "*.py" -print -quit)) ]]; then
-        echo ""
-    fi
-    
-    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit) || ( -d ./scripts && $(find ./scripts -wholename "*js" -print -quit) ) || ( -d ./_lsr_scripts && $(find ./_lsr_scripts -wholename "*.js" -print -quit)) ]]; then
-        echo "Node scripts:"
-    fi
     for file in ./*.js; do
         filename="${file##*/}"      # Remove the ./scripts/ prefix
         basename="${filename%.js}"  # Remove the .js suffix
 
         if [[ "$basename" != "*"  && $basename != _* ]]; then
-            echo "- $basename"
+            jsScriptsTxt+=" - $basename"
+            jsScriptsTxt+=$'\n'
         fi
     done
     for file in ./scripts/*.js; do
@@ -252,14 +257,11 @@ scripts_list() {
         basename="${filename%.js}"  # Remove the .py suffix
 
         if [[ "$basename" != "*"  && $basename != _* ]]; then
-            echo " - $basename"
+            jsScriptsTxt+=" - $basename"
+            jsScriptsTxt+=$'\n'
         fi
     done
-    if [[ $(find . -maxdepth 1 -wholename "./*.js" -print -quit)  || ( -d ./scripts && $(find ./scripts -wholename "*.js" -print -quit) ) || ( -d ./_lsr_scripts && $(find ./_lsr_scripts -wholename "*.js" -print -quit)) ]]; then
-        echo ""
-    fi
 
-    local hasPrintedNpmScripts="false"
     if [[ -f "./package.json" ]]; then
         scripts=$(jq '.scripts' package.json)
         if [[ "$scripts" != "null" && "$scripts" != "{}" && -n "$scripts" ]]; then
@@ -269,18 +271,30 @@ scripts_list() {
                 if [[ -f "./_lsr_scripts/.lsrignore" && -n $(cat "./_lsr_scripts/.lsrignore" | grep "^npm@$line$") ]]; then
                     continue
                 fi
-
-                if [[ "$hasPrintedNpmScripts" == "false" ]]; then
-                    hasPrintedNpmScripts="true"
-                    echo "Npm scripts:"
-                fi
                 
-                echo " - $line"
+                npmScriptsTxt+=" - $line"
+                npmScriptsTxt+=$'\n'
             done <<< "$npmscripts"
-
-            if [[ "$hasPrintedNpmScripts"=="true" ]]; then
-                echo ""
-            fi
         fi
+    fi
+
+    if [[ -n "$bashScriptsTxt" ]]; then
+        echo "Bash scripts:"
+        echo "$bashScriptsTxt"
+    fi
+
+    if [[ -n "$pyScriptsTxt" ]]; then
+        echo "Python scripts:"
+        echo "$pyScriptsTxt"
+    fi
+
+    if [[ -n "$jsScriptsTxt" ]]; then
+        echo "Javascript scripts:"
+        echo "$jsScriptsTxt"
+    fi
+
+    if [[ -n "$npmScriptsTxt" ]]; then
+        echo "Npm scripts:"
+        echo "$npmScriptsTxt"
     fi
 }
