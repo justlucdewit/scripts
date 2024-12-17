@@ -105,5 +105,8 @@ LSR_YEAR="$(date +%Y)"
 LSR_NOTES_DIR="$HOME/notes"
 LSR_SETTING_FILE=~/scripts/_settings.yml
 LSR_NOTES_TODAY_FILE="$LSR_NOTES_DIR/journal/$LSR_YEAR-$LSR_MONTH/$LSR_YEAR-$LSR_MONTH-$LSR_DAY.md"
-LSR_IS_DEV=$(yq e ".dev" "$LSR_SETTING_FILE")
+
+if [[ "$LSR_TYPE" == "LSR-FULL" ]]; then
+    LSR_IS_DEV=$(yq e ".dev" "$LSR_SETTING_FILE")
+fi
 
