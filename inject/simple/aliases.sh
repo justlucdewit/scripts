@@ -12,7 +12,61 @@ alias refreshdns='powershell.exe -Command "ipconfig /flushdns"'
 alias subl='"/mnt/c/Program Files/Sublime Text/sublime_text.exe"'
 
 # Aliases for git commands
-alias gitlog='git log --pretty=format:"%C(green)%h %C(blue)%ad %C(red)%an%C(reset): %C(yellow)%s%C(reset)" --color --date=format:"%d/%m/%Y %H:%M"'
+alias gl="gitlog"
+gitlog() {
+    local n="$1"
+
+    if [[ -z "$n" ]]; then
+        n="5"
+    fi
+
+    # If current dir is not a project
+    local projectLabel=$(project current)
+    if [ -z "$projectLabel" ]; then
+        print_error "Current directory is not a project"
+        return
+    fi
+
+    echo -e "\033[36m=== $projectLabel ===\033[0m"
+
+    commits=$(git log -n$n --remotes --branches --pretty=format:"%H|%an|%ae|%s|%ad" --date=iso)
+
+    if [ -n "$commits" ]; then
+        # Loop through each commit to print the associated original branch name
+        while IFS='|' read -r commit_hash username email commit_message commit_date; do
+            # Check if the user matches the filter (if specified)
+            local gituser=$(find_git_user_by_alias "$username")
+            local gituser_identifier=$(echo "$gituser" | yq e '.identifier' -)
+            
+            # Convert both the filter and the username/identifier to lowercase for case-insensitive comparison
+            local lower_username="$(echo "$username" | tr '[:upper:]' '[:lower:]')"
+            local lower_identifier="$(echo "$gituser_identifier" | tr '[:upper:]' '[:lower:]')"
+            local lower_filter_user="$(echo "$filter_user" | tr '[:upper:]' '[:lower:]')"
+
+            # Use identifier if it's set; otherwise, use the username
+            if [[ -n "$filter_user" && "$lower_filter_user" != "$lower_identifier" && "$lower_username" != "$lower_filter_user" ]]; then
+                continue
+            fi
+            
+            # Mark that we found a commit
+            found_commits=true
+            
+            # Format the commit date into hours and minutes (HH:MM)
+            time=$(date -d "$commit_date" +%H:%M)
+            date=$(date -d "$commit_date" +%d/%M/%y)
+
+            # Map username to custom name
+            if [[ $gituser_identifier != "null" ]]; then
+                username=$gituser_identifier
+            fi
+
+            # Customize the output with colors
+            echo -e "\033[33m$date $time\033[0m \033[32m$username\033[0m\033[0m: $commit_message"
+        done <<< "$commits"
+    fi
+}
+
+
 alias gs='git status'
 alias gco='git checkout'
 alias gbr='git branch --all'
