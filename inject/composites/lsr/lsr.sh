@@ -272,6 +272,9 @@ lsr_compile() {
         "simple/scripted_fallback"
         "simple/custom_ps1"
         "simple/startup"
+
+        "composites/helpers"
+
         "simple/git_helpers"
         "simple/utils"
         "simple/local_settings"
@@ -290,7 +293,7 @@ lsr_compile() {
         "simple/custom_ps1"
         "simple/startup"
 
-        "composites/helpers" # TODO attempt to make SSH-safe
+        "composites/helpers"
         
         "simple/git_helpers" # TODO: make composite
         "tmux_helpers" # TODO: make composite  # TODO attempt to make SSH-safe
@@ -307,6 +310,7 @@ lsr_compile() {
         "composites/git/gitusers" # TODO attempt to make SSH-safe
         "composites/git/gitfeature" # TODO attempt to make SSH-safe
         "composites/git/branches" # TODO attempt to make SSH-safe
+        "composites/development/scripts" # TODO attempt to make SSH-safe
         "composites/development/profile" # TODO attempt to make SSH-safe
         "composites/development/goto" # TODO attempt to make SSH-safe
         "composites/development/project"
