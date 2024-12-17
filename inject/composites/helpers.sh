@@ -1,9 +1,15 @@
 CURRENT_COMPOSITE_COMMAND=""
+CURRENT_COMPOSITE_HELP_OVERWRITE=""
 declare -g CURRENT_COMPOSITE_SUBCOMMANDS=()
+
+composite_help_overwrite() {
+    CURRENT_COMPOSITE_HELP_OVERWRITE="$1"
+}
 
 composite_define_command() {
     CURRENT_COMPOSITE_COMMAND="$1"
     CURRENT_COMPOSITE_SUBCOMMANDS=()
+    CURRENT_COMPOSITE_HELP_OVERWRITE=""
     unset CURRENT_COMPOSITE_SUBCOMMANDS_PARAMETERS
     declare -gA CURRENT_COMPOSITE_SUBCOMMANDS_PARAMETERS
 }
@@ -30,6 +36,11 @@ composite_handle_subcommand() {
 
     # If no sub command is given, print help
     if [[ ! -n "$subcommand" ]]; then
+        if [[ -n "$CURRENT_COMPOSITE_HELP_OVERWRITE" ]]; then
+            eval "${CURRENT_COMPOSITE_COMMAND}_$CURRENT_COMPOSITE_HELP_OVERWRITE $@"
+            return
+        fi
+
         composite_print_help_message
         return 0
     fi
