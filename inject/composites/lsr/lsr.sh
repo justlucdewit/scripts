@@ -314,6 +314,7 @@ lsr_compile() {
         "composites/development/profile" # TODO attempt to make SSH-safe
         "composites/development/goto" # TODO attempt to make SSH-safe
         "composites/development/project"
+        "composites/development/wsl" # TODO attempt to make SSH-safe
         "composites/development/notes" # TODO attempt to make SSH-safe
     )
 
