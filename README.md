@@ -1,4 +1,4 @@
-<img src="./assets/LSR_trans_white.png" />
+![Logo](https://github.com/justlucdewit/scripts/blob/main/assets/LSR_trans_white.png?raw=true)
 
 # Lukes script repository
 A package of handy bash tools/command for software development and personal purposes.
