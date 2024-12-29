@@ -24,10 +24,12 @@ This should succesfully install Lukes Script Repository. No restart is needed.
 Everything should be emediately available
 
 # TODO:
- - Automated lsr_script creation
  - Profile switching protection
  - Converting command
+ - Multi-profiling
  - Custom config syntax
+ - term-gui-forms
+ - term-gui-apps
  - Support for version downloading
  - Support for version switching
  - Remake install script
