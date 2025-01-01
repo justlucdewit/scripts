@@ -1,7 +1,7 @@
-alias accounts="accounts_main_command"
+alias account="accounts_main_command"
 
-accounts_main_command() {
-    composite_define_command "accounts"
+account_main_command() {
+    composite_define_command "account"
     composite_define_subcommand "current"
     composite_define_subcommand "list"
     composite_define_subcommand "delete" "<account name>"
@@ -10,11 +10,11 @@ accounts_main_command() {
     composite_handle_subcommand "$@"
 }
 
-accounts_current() {
+account_current() {
     whoami
 }
 
-accounts_list() {
+account_list() {
     # Capture output of the command that lists non-system users
     local users=$(awk -F: '$3 >= 1000 && $3 < 65534 && $7 !~ /nologin|false/ {print $1}' /etc/passwd)
     local current_user=$(accounts_main_command current)
@@ -29,10 +29,12 @@ accounts_list() {
     done <<< "$users"
 }
 
-accounts_delete() {
+account_delete() {
     name="$1"
     local users=$(awk -F: '$3 >= 1000 && $3 < 65534 && $7 !~ /nologin|false/ {print $1}' /etc/passwd)
     local current_user=$(accounts_main_command current)
+
+    echo "$users"
 
     if [[ -z "$name" ]]; then
         print_error "No account name provided"
@@ -46,7 +48,12 @@ accounts_delete() {
 
     # Loop over all of the users
     while IFS= read -r user; do
-        continue
+        echo "comparing $user with $name"
+        if [[ "$user" == "$name" ]]; then
+            userdel -r "$name"
+            print_info "User '$name' succesfully deleted"
+            return
+        fi
     done <<< "$users"
 
     # Handle case where no account was found

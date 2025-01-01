@@ -320,7 +320,7 @@ lsr_compile() {
         "composites/development/project"
         "composites/development/wsl" # TODO attempt to make SSH-safe
         "composites/development/notes" # TODO attempt to make SSH-safe
-        "composites/system/accounts" # TODO attempt to make SSH-safe
+        "composites/system/account" # TODO attempt to make SSH-safe
     )
 
     # Compile LSR
