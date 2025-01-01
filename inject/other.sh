@@ -159,7 +159,7 @@ now() {
 setup_tmux_config
 tmux source-file ~/.tmux.conf
 if [ -z "$TMUX" ]; then
-    tmux
+    tmux -u
 fi
 
 alias tu="time_until"

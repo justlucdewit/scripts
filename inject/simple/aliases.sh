@@ -1,3 +1,5 @@
+# Original executables for overwrite
+LSR_ORIGINAL_LS=$(which ls)
 
 # Bash Colors
 LSR_COLOR_RED='\033[0;31m'

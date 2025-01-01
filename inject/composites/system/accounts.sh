@@ -46,7 +46,7 @@ accounts_delete() {
 
     # Loop over all of the users
     while IFS= read -r user; do
-        
+        continue
     done <<< "$users"
 
     # Handle case where no account was found
