@@ -1,3 +1,11 @@
+
+# Bash Colors
+LSR_COLOR_RED='\033[0;31m'
+LSR_COLOR_GREEN='\033[0;32m'
+LSR_COLOR_YELLOW='\033[0;33m'
+LSR_COLOR_BLUE='\033[0;34m'
+LSR_COLOR_RESET='\033[0m'
+
 # Aliases for standard bash commands
 alias c='clear'
 alias l="ls -la"
