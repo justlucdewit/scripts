@@ -1,6 +1,12 @@
 alias ls="overwrite_ls"
 
 overwrite_ls() {
+    local dir_location="$1"
+
+    if [[ -z "$dir_location" ]]; then
+        dir_location="."
+    fi
+
     local dirs_list_txt=""
     local symlink_list_txt=""
     local files_list_txt=""
@@ -89,7 +95,7 @@ overwrite_ls() {
 
             executable_list_txt+=" ⚙️ $name"
         fi
-    done < <($LSR_ORIGINAL_LS -l "$1" | tail -n +2)
+    done < <($LSR_ORIGINAL_LS -la "$dir_location" | tail -n +2)
 
     echo -n "$dirs_list_txt"
     echo -n "$symlink_list_txt"

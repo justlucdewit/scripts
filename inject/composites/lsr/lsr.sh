@@ -273,6 +273,8 @@ lsr_compile() {
         "simple/custom_ps1"
         "simple/startup"
 
+        "overwrites/ls"
+
         "composites/helpers"
 
         "simple/git_helpers"
@@ -292,6 +294,8 @@ lsr_compile() {
         "simple/scripted_fallback"
         "simple/custom_ps1"
         "simple/startup"
+
+        "overwrites/ls"
 
         "composites/helpers"
         
