@@ -85,6 +85,7 @@ set_powerline_ps1() {
 
 do_before_prompt() {
     set_powerline_ps1
+    auto_load_env_files
 }
 
 set_powerline_ps1
