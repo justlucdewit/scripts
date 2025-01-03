@@ -12,18 +12,18 @@ composite_define_command() {
     CURRENT_COMPOSITE_COMMAND="$1"
     CURRENT_COMPOSITE_SUBCOMMANDS=()
     CURRENT_COMPOSITE_HELP_OVERWRITE=""
-    unset CURRENT_COMPOSITE_SUBCOMMANDS_PARAMETERS
-    declare -g CURRENT_COMPOSITE_SUBCOMMANDS_PARAMETERS=()
+    unset CURRENT_COMPOSITE_SUBCOMMAND_ARGUMENTS
+    declare -g CURRENT_COMPOSITE_SUBCOMMAND_ARGUMENTS=()
     unset CURRENT_COMPOSITE_SUBCOMMAND_DESCRIPTIONS
     declare -gA CURRENT_COMPOSITE_SUBCOMMAND_DESCRIPTIONS
 }
 
 composite_define_subcommand() {
     local subcommand="$1"
-    local parameters="$2"
+    local arguments="$2"
 
     CURRENT_COMPOSITE_SUBCOMMANDS+=("$subcommand")
-    CURRENT_COMPOSITE_SUBCOMMANDS_PARAMETERS["$subcommand"]="$parameters"
+    CURRENT_COMPOSITE_SUBCOMMAND_ARGUMENTS["$subcommand"]="$arguments"
 }
 
 composite_define_subcommand_description() {
@@ -40,13 +40,19 @@ composite_print_help_message() {
         return
     fi
 
-    echo -e "${LSR_STYLE_UNDERLINE}Usage:${LSR_STYlE_RESET}\n " $CURRENT_COMPOSITE_COMMAND "[COMMAND]" "[ARGUMENTS]" "[OPTIONS]\n"
+    echo -e "${LSR_STYLE_UNDERLINE}Usage:${LSR_STYlE_RESET}\n " $CURRENT_COMPOSITE_COMMAND "[COMMAND]" "[ARGUMENTS]" "\n"
     echo -e "${LSR_STYLE_UNDERLINE}Commands:${LSR_STYlE_RESET}"
+
+    local argument_description=${CURRENT_COMPOSITE_SUBCOMMAND_ARGUMENTS["$CURRENT_COMPOSITE_COMMAND"]}
+    if [[ -n "$argument_description" ]]; then
+        argument_description=" $argument_description"
+    fi
 
     # Start with 4 due to 'help' command
     local longest_command_length=4
     for subcommand in "${CURRENT_COMPOSITE_SUBCOMMANDS[@]}"; do
-        local subcommand_length=${#subcommand}
+        local text="$subcommand$argument_description "
+        local subcommand_length=${#text}
         if [[ "$subcommand_length" -gt "$longest_command_length" ]]; then
             longest_command_length=$subcommand_length
         fi
@@ -56,10 +62,11 @@ composite_print_help_message() {
     echo -n "  help"
     echo "$(str_repeat " " "$((longest_command_length - 4))") Show this help message"
     for subcommand in "${CURRENT_COMPOSITE_SUBCOMMANDS[@]}"; do
-        echo -n "  $subcommand" #  ${CURRENT_COMPOSITE_SUBCOMMANDS_PARAMETERS[$subcommand]}
+        echo -n "  $subcommand$argument_description " #  ${CURRENT_COMPOSITE_SUBCOMMAND_ARGUMENTS[$subcommand]}
 
         if [[ -n "${CURRENT_COMPOSITE_SUBCOMMAND_DESCRIPTIONS[$subcommand]}" ]]; then
-            local current_command_command_length=${#subcommand}
+            local text="$subcommand$argument_description "
+            local current_command_command_length=${#text}
             echo -n "$(str_repeat " " "$((longest_command_length - current_command_command_length))")"
             echo -n " ${CURRENT_COMPOSITE_SUBCOMMAND_DESCRIPTIONS[$subcommand]}"
         fi
@@ -75,6 +82,7 @@ composite_handle_subcommand() {
     # Help sub command
     if [[ "$subcommand" == "" || "$subcommand" == "help" ]]; then
         composite_print_help_message
+        return 0
     fi
 
     for attempted_subcommand in "${CURRENT_COMPOSITE_SUBCOMMANDS[@]}"; do
@@ -93,10 +101,7 @@ composite_handle_subcommand() {
 
 
 
-
-
 # Helpers for flags and parameters
-
 composite_help_get_flags() {
     reset_ifs
     local flags=()
