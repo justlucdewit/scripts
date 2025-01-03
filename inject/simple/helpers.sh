@@ -105,3 +105,13 @@ requires_package() {
         print_warn "Package '$packageName' is required in order to use $requireScope"
     fi
 }
+
+str_repeat() {
+  local char=$1
+  local count=$2
+  local output=""
+  for ((i = 0; i < count; i++)); do
+    output+=$char
+  done
+  echo -en "$output"
+}

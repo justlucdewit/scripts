@@ -26,7 +26,9 @@ print_logo() {
 
 lsr_main_command() {
     composite_define_command "lsr"
-    composite_define_subcommand "help"
+
+    # Define subcommands
+    composite_define_subcommand "docs"
     composite_define_subcommand "status"
     composite_define_subcommand "install"
     composite_define_subcommand "uninstall"
@@ -35,6 +37,18 @@ lsr_main_command() {
     composite_define_subcommand "reload"
     composite_define_subcommand "debug"
     composite_define_subcommand "silence"
+
+    # Describe subcommands
+    composite_define_subcommand_description "docs" "Show documentation of all commands that come with LSR"
+    composite_define_subcommand_description "status" "Show the current installation status"
+    composite_define_subcommand_description "install" "Install LSR in the current session"
+    composite_define_subcommand_description "uninstall" "Uninstall LSR from the current session"
+    composite_define_subcommand_description "reinstall" "Uninstall and install LSR again in the current session"
+    composite_define_subcommand_description "compile" "Compile all the source code into a new version"
+    composite_define_subcommand_description "reload" "Reload the latest LSR version into the current session"
+    composite_define_subcommand_description "debug" "Toggles debug mode on/off, allows for special features in LSR"
+    composite_define_subcommand_description "silence" "Toggles silent mode on/off, Silents all LSR prints"
+
     composite_handle_subcommand $@
 }
 
@@ -60,7 +74,7 @@ lsr_silence() {
     fi
 }
 
-lsr_help() {
+lsr_docs() {
     local output="$(
     local lhelp_file="$HOME/scripts/lhelp.txt"
     
@@ -277,10 +291,13 @@ lsr_compile() {
 
         "composites/helpers"
 
+        "simple/auto_env_loader"
+
         "simple/git_helpers"
         "simple/utils"
         "simple/local_settings"
 
+        "composites/term_app/window"
         "composites/utils/list"
         "composites/utils/obj"
         "composites/development/project"
@@ -294,10 +311,11 @@ lsr_compile() {
         "simple/scripted_fallback"
         "simple/custom_ps1"
         "simple/startup"
-
+        
         "overwrites/ls"
 
         "composites/helpers"
+        "simple/auto_env_loader"
         
         "simple/git_helpers" # TODO: make composite
         "tmux_helpers" # TODO: make composite  # TODO attempt to make SSH-safe
@@ -307,6 +325,7 @@ lsr_compile() {
         "work" # TODO: make composite # TODO attempt to make SSH-safe
         "other" # TODO: make composites # TODO attempt to make SSH-safe
 
+        "composites/term_app/window"
         "composites/lsr/lsr" # TODO attempt to make SSH-safe
         "composites/utils/list"
         "composites/utils/obj"
@@ -340,7 +359,7 @@ lsr_compile() {
         if [[ -f "$SCRIPT_PREFIX$script.sh" ]]; then
             echo "# - $script.sh" >> "$build_file"  # Add a newline for separation
         else
-            print_info "Warning: $script does not exist, skipping."
+            print_warn "Warning: $script does not exist, skipping."
         fi
     done
 
@@ -426,7 +445,7 @@ lsr_compile() {
         if [[ -f "$SCRIPT_PREFIX$script.sh" ]]; then
             echo "# - $script.sh" >> "$lite_build_file"  # Add a newline for separation
         else
-            print_info "Warning: $script does not exist, skipping."
+            print_warn "Warning: $script does not exist, skipping."
         fi
     done
 

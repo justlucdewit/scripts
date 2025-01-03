@@ -9,8 +9,6 @@ git_branches_main_command() {
         "branches go <branch-name>"
     )
 
-    # composite_help_command "$filter" $argument_count "${defined_commands[@]}"
-
     # Help command
     if [ ! "$#" -gt 0 ]; then
         echo "usage: "

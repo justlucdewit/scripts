@@ -8,6 +8,12 @@ LSR_COLOR_YELLOW='\033[0;33m'
 LSR_COLOR_BLUE='\033[0;34m'
 LSR_COLOR_RESET='\033[0m'
 
+LSR_STYLE_UNDERLINE='\e[4m'
+LSR_STYLE_ITALIC='\e[3m'
+LSR_STYLE_DIM='\e[2m'
+LSR_STYLE_BOLD='\e[1m'
+LSR_STYlE_RESET='\e[0m'
+
 # Aliases for standard bash commands
 alias c='clear'
 alias l="ls -la"
