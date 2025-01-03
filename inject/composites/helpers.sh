@@ -14,8 +14,15 @@ composite_define_command() {
     CURRENT_COMPOSITE_HELP_OVERWRITE=""
     unset CURRENT_COMPOSITE_SUBCOMMAND_ARGUMENTS
     declare -gA CURRENT_COMPOSITE_SUBCOMMAND_ARGUMENTS=()
+
     unset CURRENT_COMPOSITE_SUBCOMMAND_DESCRIPTIONS
     declare -gA CURRENT_COMPOSITE_SUBCOMMAND_DESCRIPTIONS
+
+    unset CURRENT_COMPOSITE_SUBCOMMAND_PARAMETER_DESCRIPTION
+    declare -gA CURRENT_COMPOSITE_SUBCOMMAND_PARAMETER_DESCRIPTION
+
+    unset CURRENT_COMPOSITE_SUBCOMMAND_PARAMETER
+    declare -gA CURRENT_COMPOSITE_SUBCOMMAND_PARAMETER
 }
 
 composite_define_subcommand() {
@@ -31,6 +38,15 @@ composite_define_subcommand_description() {
     local description="$2"
 
     CURRENT_COMPOSITE_SUBCOMMAND_DESCRIPTIONS["$subcommand"]="$description"
+}
+
+composite_define_subcommand_parameter() {
+    local subcommand="$1"
+    local parameter="$2"
+    local description="$3"
+
+    CURRENT_COMPOSITE_SUBCOMMAND_PARAMETER["$subcommand"]="$parameter"
+    CURRENT_COMPOSITE_SUBCOMMAND_PARAMETER["$subcommand/$parameter"]="$description"
 }
 
 composite_print_help_message() {
