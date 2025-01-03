@@ -13,7 +13,7 @@ composite_define_command() {
     CURRENT_COMPOSITE_SUBCOMMANDS=()
     CURRENT_COMPOSITE_HELP_OVERWRITE=""
     unset CURRENT_COMPOSITE_SUBCOMMAND_ARGUMENTS
-    declare -g CURRENT_COMPOSITE_SUBCOMMAND_ARGUMENTS=()
+    declare -gA CURRENT_COMPOSITE_SUBCOMMAND_ARGUMENTS=()
     unset CURRENT_COMPOSITE_SUBCOMMAND_DESCRIPTIONS
     declare -gA CURRENT_COMPOSITE_SUBCOMMAND_DESCRIPTIONS
 }
@@ -43,14 +43,17 @@ composite_print_help_message() {
     echo -e "${LSR_STYLE_UNDERLINE}Usage:${LSR_STYlE_RESET}\n " $CURRENT_COMPOSITE_COMMAND "[COMMAND]" "[ARGUMENTS]" "\n"
     echo -e "${LSR_STYLE_UNDERLINE}Commands:${LSR_STYlE_RESET}"
 
-    local argument_description=${CURRENT_COMPOSITE_SUBCOMMAND_ARGUMENTS["$CURRENT_COMPOSITE_COMMAND"]}
-    if [[ -n "$argument_description" ]]; then
-        argument_description=" $argument_description"
-    fi
+    
 
     # Start with 4 due to 'help' command
     local longest_command_length=4
     for subcommand in "${CURRENT_COMPOSITE_SUBCOMMANDS[@]}"; do
+
+        local argument_description=${CURRENT_COMPOSITE_SUBCOMMAND_ARGUMENTS["$subcommand"]}
+        if [[ -n "$argument_description" ]]; then
+            argument_description=" $argument_description"
+        fi
+
         local text="$subcommand$argument_description "
         local subcommand_length=${#text}
         if [[ "$subcommand_length" -gt "$longest_command_length" ]]; then
@@ -62,6 +65,11 @@ composite_print_help_message() {
     echo -n "  help"
     echo "$(str_repeat " " "$((longest_command_length - 4))") Show this help message"
     for subcommand in "${CURRENT_COMPOSITE_SUBCOMMANDS[@]}"; do
+        local argument_description=${CURRENT_COMPOSITE_SUBCOMMAND_ARGUMENTS["$subcommand"]}
+        if [[ -n "$argument_description" ]]; then
+            argument_description=" $argument_description"
+        fi
+        
         echo -n "  $subcommand$argument_description " #  ${CURRENT_COMPOSITE_SUBCOMMAND_ARGUMENTS[$subcommand]}
 
         if [[ -n "${CURRENT_COMPOSITE_SUBCOMMAND_DESCRIPTIONS[$subcommand]}" ]]; then

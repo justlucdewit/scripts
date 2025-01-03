@@ -1,11 +1,22 @@
-alias account="accounts_main_command"
+alias account="account_main_command"
 
 account_main_command() {
     composite_define_command "account"
-    composite_define_subcommand "current"
-    composite_define_subcommand "list"
+
+    # Define subcommands
+    composite_define_subcommand "current" ""
+    composite_define_subcommand "list" ""
     composite_define_subcommand "delete" "<account name>"
     composite_define_subcommand "create" "<account name> <password>"
+    composite_define_subcommand "login" "<account name>"
+
+
+    # Describe subcommands
+    composite_define_subcommand_description "current" "Print the current user"
+    composite_define_subcommand_description "list" "List users on the host"
+    composite_define_subcommand_description "delete" "Delete a user with a given name"
+    composite_define_subcommand_description "create" "Create a new user with a given name and password"
+    composite_define_subcommand_description "login" "Login as the specified user"
 
     composite_handle_subcommand "$@"
 }
@@ -34,8 +45,6 @@ account_delete() {
     local users=$(awk -F: '$3 >= 1000 && $3 < 65534 && $7 !~ /nologin|false/ {print $1}' /etc/passwd)
     local current_user=$(accounts_main_command current)
 
-    echo "$users"
-
     if [[ -z "$name" ]]; then
         print_error "No account name provided"
         return
@@ -48,9 +57,8 @@ account_delete() {
 
     # Loop over all of the users
     while IFS= read -r user; do
-        echo "comparing $user with $name"
         if [[ "$user" == "$name" ]]; then
-            userdel -r "$name"
+            sudo userdel -r "$name" &> /dev/null
             print_info "User '$name' succesfully deleted"
             return
         fi
@@ -58,4 +66,26 @@ account_delete() {
 
     # Handle case where no account was found
     print_error "Account '$name' does not exist"
+}
+
+account_create() {
+    local username="$1"
+    local password="$2"
+
+    if [[ -z "$password" ]]; then
+        print_error "Password must not be empty"
+        return 1
+    fi
+
+    # Create the user and its home
+    sudo useradd -m "$username"
+    
+    # Set its password
+    echo "$username:$password" | sudo chpasswd
+}
+
+account_login() {
+    local username="$1"
+
+    su - "$username"
 }
