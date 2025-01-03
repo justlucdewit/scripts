@@ -7,13 +7,22 @@ alias profile="profile_main_command"
 profile_main_command() {
     reset_ifs
 
+    # Define subcommands
     composite_define_command "profile"
     composite_define_subcommand "list"
     composite_define_subcommand "current"
-    composite_define_subcommand "load"
-    composite_define_subcommand "save"
-    composite_define_subcommand "edit"
-    composite_define_subcommand "delete"
+    composite_define_subcommand "load" "<profile>"
+    composite_define_subcommand "save" "<profile>"
+    composite_define_subcommand "edit" "<profile>"
+    composite_define_subcommand "delete" "<profile>"
+
+    # Describe subcommands
+    composite_define_subcommand_description "list" "List all of the profiles available"
+    composite_define_subcommand_description "current" "Shows the currently active profile"
+    composite_define_subcommand_description "load" "Loads the given profile"
+    composite_define_subcommand_description "save" "Saves the current profile to the given profile name"
+    composite_define_subcommand_description "edit" "Edits the given profile in the editor"
+    composite_define_subcommand_description "delete" "Deletes the given profile"
 
     composite_handle_subcommand $@
 }

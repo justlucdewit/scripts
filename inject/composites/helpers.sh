@@ -34,8 +34,13 @@ composite_define_subcommand_description() {
 }
 
 composite_print_help_message() {
-    echo -e "${LSR_STYLE_UNDERLINE}Usage:${LSR_STYlE_RESET}\n " $CURRENT_COMPOSITE_COMMAND "[COMMAND]" "[ARGUMENTS]" "[OPTIONS]\n"
+    # Help overwrite
+    if [[ -n "$CURRENT_COMPOSITE_HELP_OVERWRITE" ]]; then
+        eval "${CURRENT_COMPOSITE_COMMAND}_$CURRENT_COMPOSITE_HELP_OVERWRITE $@"
+        return
+    fi
 
+    echo -e "${LSR_STYLE_UNDERLINE}Usage:${LSR_STYlE_RESET}\n " $CURRENT_COMPOSITE_COMMAND "[COMMAND]" "[ARGUMENTS]" "[OPTIONS]\n"
     echo -e "${LSR_STYLE_UNDERLINE}Commands:${LSR_STYlE_RESET}"
 
     # Start with 4 due to 'help' command
@@ -53,8 +58,6 @@ composite_print_help_message() {
     for subcommand in "${CURRENT_COMPOSITE_SUBCOMMANDS[@]}"; do
         echo -n "  $subcommand" #  ${CURRENT_COMPOSITE_SUBCOMMANDS_PARAMETERS[$subcommand]}
 
-
-
         if [[ -n "${CURRENT_COMPOSITE_SUBCOMMAND_DESCRIPTIONS[$subcommand]}" ]]; then
             local current_command_command_length=${#subcommand}
             echo -n "$(str_repeat " " "$((longest_command_length - current_command_command_length))")"
@@ -69,31 +72,21 @@ composite_handle_subcommand() {
     local subcommand="$1"
     shift
 
-    # If no sub command is given, print help
-    if [[ ! -n "$subcommand" ]]; then
-        if [[ -n "$CURRENT_COMPOSITE_HELP_OVERWRITE" ]]; then
-            eval "${CURRENT_COMPOSITE_COMMAND}_$CURRENT_COMPOSITE_HELP_OVERWRITE $@"
-            return
-        fi
-
-        composite_print_help_message
-        return 0
-    fi
-
     # Help sub command
-    if [[ $subcommand == "help" ]]; then
+    if [[ "$subcommand" == "" || "$subcommand" == "help" ]]; then
         composite_print_help_message
     fi
 
-    # If sub command is not defined, give error and print help
-    if [[ ! -v CURRENT_COMPOSITE_SUBCOMMANDS_PARAMETERS["$subcommand"] ]]; then
-        print_error "Command '$CURRENT_COMPOSITE_COMMAND $subcommand' does not exist"
-        composite_print_help_message
-        return 1
-    fi
+    for attempted_subcommand in "${CURRENT_COMPOSITE_SUBCOMMANDS[@]}"; do
+        if [[ "$attempted_subcommand" == "$subcommand" ]]; then
+            eval "${CURRENT_COMPOSITE_COMMAND}_$subcommand $@"
+            return 0
+        fi
+    done
 
-    eval "${CURRENT_COMPOSITE_COMMAND}_$subcommand $@"
-    return 0
+    print_error "Command '$CURRENT_COMPOSITE_COMMAND $subcommand' does not exist"
+    print_error "Try '$CURRENT_COMPOSITE_COMMAND help' instead"
+    return 1
 }
 
 
