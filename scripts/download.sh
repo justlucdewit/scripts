@@ -67,7 +67,7 @@ download_version() {
 		exit
 	fi
 
-	wget "https://github.com/justlucdewit/scripts/releases/download/$version/build-lite.sh" -qO "$HOME/scripts/versions/remote_download_$version/build-full.sh" >/dev/null
+	wget "https://github.com/justlucdewit/scripts/releases/download/$version/build-lite.sh" -qO "$HOME/scripts/versions/$version/build-full.sh" >/dev/null
 
 	if [[ $? != 0 ]]; then
 		print_error "Could not download LSR LITE $version, check if version exists"

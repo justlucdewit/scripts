@@ -75,9 +75,9 @@ install_lsr() {
 	INJECTION_CODE=""
 	BASHRC_STARTER="# !! LSR LOADER START !!"
     BASHRC_ENDERER="# !! LSR LOADER END !!"
-	BUILD_FILE_PATH="$HOME/scripts/versions/remote_download_$version/build-lite.sh"
+	BUILD_FILE_PATH="$HOME/scripts/versions/$version/build-lite.sh"
     if [[ $type == "full" ]]; then
-    	BUILD_FILE_PATH="$HOME/scripts/versions/remote_download_$version/build-full.sh"
+    	BUILD_FILE_PATH="$HOME/scripts/versions/$version/build-full.sh"
 	fi
 
 	mkdir -p "$LOCAL_DATA_DIR"
