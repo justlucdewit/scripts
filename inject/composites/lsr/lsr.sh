@@ -9,7 +9,6 @@ BASHRC_IDENTIFIER="# Luke's Script Repository Loader"
 BASHRC_STARTER="# !! LSR LOADER START !!"
 BASHRC_ENDERER="# !! LSR LOADER END !!"
 SETTINGS_FILE=~/scripts/_settings.yml
-HISTORY_FILE=~/scripts/local_data/version_history.yml
 
 print_logo() {
     print_normal ""
@@ -169,7 +168,7 @@ lsr_install() {
         CURRENT_VERSION="dev"
     fi
  
-   if [[ "$isLite" == "true" ]]; then
+    if [[ "$isLite" == "true" ]]; then
         CURRENT_BUILD_FILE="build-lite.sh"
     fi
 
@@ -225,13 +224,7 @@ lsr_install() {
 }
 
 lsr_uninstall() {
-    # 1. Remove the version history file if it exists
-    if [[ -f "$HISTORY_FILE" ]]; then
-        rm "$HISTORY_FILE"
-        print_info "Deleted version history file"
-    fi
-
-    # 2. Check if the LSR loader section exists before attempting to remove it
+    # Check if the LSR loader section exists before attempting to remove it
     if grep -q "^$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
         # Remove the LSR loader section from .bashrc
         sed -i "/^$BASHRC_STARTER/,/^$BASHRC_ENDERER/d" "$BASHRC_PATH"
