@@ -49,7 +49,7 @@ download_version() {
 		version="$(curl -s https://api.github.com/repos/justlucdewit/scripts/releases | jq -r ".[0].name")"
 	fi
 
-	if [[ -f "$HOME/scripts/versions/$version/build-full.sh" ]]; then
+	if [[ -f "$HOME/scripts/versions/$version/build.sh" ]]; then
 		print_warn "LSR $version is already downloaded"
 		exit
 	fi
@@ -60,7 +60,7 @@ download_version() {
 	mkdir -p "$version_dir"
 
 	# Download the latest version to the version folder
-	wget "https://github.com/justlucdewit/scripts/releases/download/$version/build.sh" -qO "$HOME/scripts/versions/$version/build-full.sh" >/dev/null
+	wget "https://github.com/justlucdewit/scripts/releases/download/$version/build.sh" -qO "$HOME/scripts/versions/$version/build.sh" >/dev/null
 
 	if [[ $? != 0 ]]; then
 		print_error "Could not download LSR FULL $version, check if version exists"

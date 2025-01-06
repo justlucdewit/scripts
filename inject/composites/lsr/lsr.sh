@@ -28,29 +28,20 @@ lsr_main_command() {
 
     # Define subcommands
     composite_define_subcommand "docs"
-    composite_define_subcommand "status"
-    composite_define_subcommand "install"
-    composite_define_subcommand "uninstall"
-    composite_define_subcommand "reinstall"
     composite_define_subcommand "compile"
-    composite_define_subcommand "reload"
+    composite_define_subcommand "disable"
     composite_define_subcommand "debug"
     composite_define_subcommand "silence"
 
     # Describe subcommands
     composite_define_subcommand_description "docs" "Show documentation of all commands that come with LSR"
-    composite_define_subcommand_description "status" "Show the current installation status"
-    composite_define_subcommand_description "install" "Install LSR in the current session"
-    composite_define_subcommand_description "uninstall" "Uninstall LSR from the current session"
-    composite_define_subcommand_description "reinstall" "Uninstall and install LSR again in the current session"
     composite_define_subcommand_description "compile" "Compile all the source code into a new version"
-    composite_define_subcommand_description "reload" "Reload the latest LSR version into the current session"
+    composite_define_subcommand_description "disable" "Disables LSR"
     composite_define_subcommand_description "debug" "Toggles debug mode on/off, allows for special features in LSR"
     composite_define_subcommand_description "silence" "Toggles silent mode on/off, Silents all LSR prints"
 
     composite_handle_subcommand $@
 }
-
 
 lsr_silence() {
     local SETTINGS_FILE=~/scripts/_settings.yml
@@ -120,141 +111,6 @@ lsr_reload() {
     print_success '~/.bashrc reloaded!'
 }
 
-lsr_status() {
-    # Variable to store installation status
-    local bashrc_installed=false
-    local local_data_installed=false
-
-    # Check if the identifier exists in .bashrc
-    if grep -q "$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
-        bashrc_installed=true
-    fi
-
-    # Check if both bashrc and version history are present
-    if [ "$bashrc_installed" = true ]; then
-        # Retrieve the installed version from _settings.yml
-        NAME=$(yq e '.name' "$SETTINGS_FILE")
-        MAJOR_VERSION=$(yq e '.version.major' "$SETTINGS_FILE")
-        MINOR_VERSION=$(yq e '.version.minor' "$SETTINGS_FILE")
-        FULL_VERSION="v$MAJOR_VERSION.$MINOR_VERSION"
-
-        print_success "$NAME $FULL_VERSION is installed."
-    else
-        print_error "Lukes Script Repository is not installed."
-    fi
-}
-
-lsr_install() {
-    # Defining variables of important files and locations
-    SETTINGS_FILE=~/scripts/_settings.yml
-    LOCAL_DATA_DIR=~/scripts/local_data
-    NAME=$(yq e '.name' $SETTINGS_FILE)
-    MAJOR_VERSION=$(yq e '.version.major' $SETTINGS_FILE)
-    MINOR_VERSION=$(yq e '.version.minor' $SETTINGS_FILE)
-    FULL_VERSION=v$MAJOR_VERSION.$MINOR_VERSION
-    BASHRC_PATH=~/.bashrc
-    BASHRC_STARTER="# !! LSR LOADER START !!"
-    BASHRC_ENDERER="# !! LSR LOADER END !!"
-    BASHRC_IDENTIFIER="# Luke's Script Repository Loader"
-    CURRENT_VERSION="$FULL_VERSION"
-    CURRENT_BUILD_FILE="build.sh"
-    BUILD_FILE_PATH="$HOME/scripts/versions/dev/build.sh"
-
-    # Get the correct build file based on the version and dev setting
-    isDev=$(yq e ".dev" "$SETTINGS_FILE")
-    isLite=$(yq e ".lite" "$SETTINGS_FILE")
-    
-    if [[ "$isDev" == "true" ]]; then
-        CURRENT_VERSION="dev"
-    fi
- 
-    if [[ "$isLite" == "true" ]]; then
-        CURRENT_BUILD_FILE="build-lite.sh"
-    fi
-
-    BUILD_FILE_PATH="$HOME/scripts/versions/$CURRENT_VERSION/$CURRENT_BUILD_FILE"
-
-    # Check if there is already an injection in bashrc
-    if grep -q "$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
-        print_error "There is already a LSR Loader located in bashrc\nFirst run lsr_uninstall to be able to install"
-        print_error "First run lsr_uninstall to be able to install"
-        exit 1
-    else
-        print_info "Installing LSR $CURRENT_VERSION"
-    fi
-
-    if [[ ! -f "$BUILD_FILE_PATH" ]]; then
-        if [[ "$isLite" == "true" ]]; then
-            print_error "No build found for version $current_version"
-        else
-            print_error "No build found for version $FULL_VERSION-LITE"
-        fi
-
-        exit
-    fi
-    
-    ensure_sudo
-
-    # Install needed libraries
-    if ! command_exists "yq"; then
-        print_error "Cant install LSR, because yq is not installed"
-        exit 1 # Exit the script with error code
-    fi
-
-    mkdir -p "$LOCAL_DATA_DIR"
-
-    # Check if the identifier already exists in .bashrc
-    if ! grep -q "$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
-        # Create a block of code to inject into .bashrc
-        INJECTION_CODE="\n\n$BASHRC_STARTER\n$BASHRC_IDENTIFIER\n"
-        INJECTION_CODE+="source \"$BUILD_FILE_PATH\" # Load LSR in current session\n" # Source the script
-        INJECTION_CODE+="print_info \"LSR $CURRENT_VERSION Has been loaded in current session\"\n" # Source the script
-        INJECTION_CODE+="$BASHRC_ENDERER"
-
-        # Append the injection code to .bashrc
-        echo -e "$INJECTION_CODE" >> "$BASHRC_PATH"
-        print_info "Injected script sourcing block into $BASHRC_PATH"
-        print_success "Installation of $CURRENT_VERSION was succefull\n"
-        print_info "Run 'source ~/.bashrc' to reload, or open a new terminal session"
-    else
-        print_info "Script sourcing block already exists in $BASHRC_PATH"
-    fi
-
-    lsr_main_command reload
-}
-
-lsr_uninstall() {
-    # Check if the LSR loader section exists before attempting to remove it
-    if grep -q "^$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
-        # Remove the LSR loader section from .bashrc
-        sed -i "/^$BASHRC_STARTER/,/^$BASHRC_ENDERER/d" "$BASHRC_PATH"
-        print_info "Removed LSR loader from $BASHRC_PATH"
-    fi
-
-    print_empty_line
-    print_info "LSR has been reinstalled"
-    print_info " - linstall to undo"
-    print_info " - Open new session to confirm"
-    lsr_main_command reload
-}
-
-lsr_reinstall() {
-    print_info "Uninstalling LSR"
-    lsrsilence true
-    lsr_uninstall
-    lsrsilence false
-
-    print_info "Recompiling LSR"
-    lsrsilence true
-    lsr_compile
-    lsrsilence false
-
-    print_info "Installing LSR"
-    lsrsilence true
-    lsr_install
-    lsrsilence false
-}
-
 lsr_compile() {
     local version_save_name="$1"
     if [[ $# == 0 ]]; then
@@ -320,6 +176,7 @@ lsr_compile() {
 
         "composites/term_app/window"
         "composites/lsr/lsr" # TODO attempt to make SSH-safe
+        "composites/lsr/lsrversion" # TODO attempt to make SSH-safe
         "composites/utils/list"
         "composites/utils/obj"
         "composites/docker/dock" # TODO attempt to make SSH-safe
@@ -511,48 +368,14 @@ lsr_compile() {
     print_info "build-lite.sh: $(get_line_count "$lite_build_file") Lines"
 
     print_empty_line
-    lsr_main_command reload
+    exec "$(which bash)" --login
 }
 
-lsr_version_list() {
-        # Define the directory where versions are downloaded
-    DOWNLOAD_DIR="/path/to/your/download/location"
-    
-    echo "LSR versions:"
-    # Fetch the versions from the GitHub API
-    curl -s https://api.github.com/repos/justlucdewit/scripts/releases | jq -r '.[] | .name' | while read -r version; do
-        # Check if the version exists in the download directory
-        if [ -f "$HOME/scripts/versions/remote_download_$version/build-full.sh" ]; then
-            echo " * $version"  # Add a star if the file exists
-        else
-            echo "   $version"  # Otherwise, just list the version
-        fi
-    done
-}
-
-lsr_version_download() {
-    if [[ "$#" == "0" ]]; then
-        print_error "No version given"
-        print_error "Usage: lsr version-download <version>"
-        return
+lsr_disable() {
+    # Check if the LSR loader section exists before attempting to remove it
+    if grep -q "^$BASHRC_IDENTIFIER" "$BASHRC_PATH"; then
+        # Remove the LSR loader section from .bashrc
+        sed -i "/^$BASHRC_STARTER/,/^$BASHRC_ENDERER/d" "$BASHRC_PATH"
+        print_success "Removed LSR loader from $BASHRC_PATH"
     fi
-
-    local version="$1"
-    print_info "downloading version $version..."
-
-    # Get the download URLs
-    local download_url_1=$(curl -s https://api.github.com/repos/justlucdewit/scripts/releases | jq -r ".[] | select(.tag_name == \"$version\") | .assets[0] | .browser_download_url")
-    local download_url_2=$(curl -s https://api.github.com/repos/justlucdewit/scripts/releases | jq -r ".[] | select(.tag_name == \"$version\") | .assets[1] | .browser_download_url")
-
-    # No version found
-    if [[ "$download_url_1" == "" && "$download_url_2" == "" ]]; then
-        print_error "Version $version does not exist"
-        return
-    fi
-
-    # Download version
-    mkdir -p "$HOME/scripts/versions/remote_download_$version"
-    wget "$download_url_1" -qO "$HOME/scripts/versions/remote_download_$version/build-lite.sh" >/dev/null
-    wget "$download_url_2" -qO "$HOME/scripts/versions/remote_download_$version/build-full.sh" >/dev/null
-    print_info "version $version downloaded..."
 }

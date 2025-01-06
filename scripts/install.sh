@@ -21,7 +21,7 @@ type="$1"
 version="$2"
 
 if [[ -z $type || -z $version ]]; then
-	print_error "Wrong ussage of install command. make sure you properly passed the LSR type and version"
+	print_error "Wrong usage of install command. make sure you properly passed the LSR type and version"
 	exit
 fi
 
@@ -77,7 +77,7 @@ install_lsr() {
     BASHRC_ENDERER="# !! LSR LOADER END !!"
 	BUILD_FILE_PATH="$HOME/scripts/versions/$version/build-lite.sh"
     if [[ $type == "full" ]]; then
-    	BUILD_FILE_PATH="$HOME/scripts/versions/$version/build-full.sh"
+    	BUILD_FILE_PATH="$HOME/scripts/versions/$version/build.sh"
 	fi
 
 	mkdir -p "$LOCAL_DATA_DIR"
@@ -106,8 +106,7 @@ install_lsr() {
 
 	print_info "Injected script sourcing block into $BASHRC_PATH"
     print_success "Installation of $version $type was succefull\n"
-    print_info "Run 'source ~/.bashrc' to reload, or open a new terminal session"
-    source "$HOME/.bashrc"
+	exec "$(which bash)" --login
 }
 
 # See if the required packages for yq are available

@@ -99,7 +99,6 @@ alias s=scripts
 alias ss="scripts select"
 alias yesterday='work --date=yesterday'
 alias today='work --date=today'
-alias rb="lsr_reload"
 
 alias lsget="localsettings_get"
 alias lsset="localsettings_set"
