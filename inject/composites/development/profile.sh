@@ -28,7 +28,7 @@ profile_main_command() {
 }
 
 profile_delete() {
-    local current_profile="$(profile current)"
+    local current_profile="$(profile_current)"
 
     # Get the profile name
     if [ "$#" -ne 1 ]; then
@@ -52,10 +52,12 @@ profile_delete() {
 
 profile_select() {
     profile_output=$(profile_list)
-    profile_list=$(echo "$profile_output" | grep '^ - ' | awk '{sub(/^ - /, ""); if (NR > 1) printf ","; printf "%s", $0} END {print ""}')
+    profile_list=$(echo "$profile_output" | grep '^ - ' | awk '{sub(/^ - /, ""); if (NR > 1) printf ","; printf "\"%s\"", $0} END {print ""}')
     
+    echo "$profile_list"
+
     local value=""
-    selectable_list "Select a profile" value "$profile_list"
+    selectable_list "Select a profile" value "[$profile_list]"
     profile load $value
 }
 
@@ -66,6 +68,11 @@ profile_load() {
         return 0  # Return an error code
     fi
     local profile=$1
+
+    if str_empty "$profile"; then
+        print_error "No profile was given"
+        return
+    fi
 
     # Make sure new profile exist
     if [[ ! -f "$local_settings_dir/local_settings.$profile.yml" ]]; then

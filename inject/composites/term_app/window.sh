@@ -44,9 +44,11 @@ alias window="window_main_command"
 window_main_command() {
     # Define subcommands
     composite_define_command "window"
-    composite_define_subcommand "create"
 
+    composite_define_subcommand "create"
     composite_define_subcommand_parameter "create" "--title" "Sets the title for window"
+    composite_define_subcommand_parameter "create" "--border" "Sets the borderstyle, can be either lines, invisible, or none"
+    composite_define_subcommand_parameter "create" "--submenu-list" "Comma seperated list of submenu titles"
 
     # Describe subcommands
     composite_define_subcommand_description "create" "Create a terminal-ui window application"
@@ -55,24 +57,26 @@ window_main_command() {
 }
 
 window_create() {
-    tput smcup
+    # tput smcup
 
-    while true; do
-        clear
+    register_window_menu "a,b,c"
+    register_window_menu "d,e,f"
+    register_window_menu "hello"
 
-        render_window "Bash Terminal UI Test"
-        register_window_menu "a,b,c"
-        register_window_menu "d,e,f"
-        register_window_menu "hello"
+    # while true; do
+    #     clear
 
-        # Get a keypress
-        read -n 1 -s key
+    #     render_window "Bash Terminal UI Test"
+        
+    #     # Get a keypress
+    #     read -n 1 -s key
 
-        if [[ "$key" == "q" ]]; then
-            echo "Exiting the loop."
-            break
-        fi
-    done
+    #     if [[ "$key" == "q" ]]; then
+    #         echo "Exiting the loop."
+    #         break
+    #     fi
+    # done
     
-    tput rmcup
+    # tput rmcup
+    echo "test => $LSR_COMPOSITE_FLAGS"
 }

@@ -106,6 +106,7 @@ requires_package() {
     fi
 }
 
+# Str helpers
 str_repeat() {
   local char=$1
   local count=$2
@@ -114,4 +115,43 @@ str_repeat() {
     output+=$char
   done
   echo -en "$output"
+}
+
+str_empty() {
+    local str="$1"
+    if [[ "$str" == "" ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+str_ends_with() {
+    local str="$1"
+    local value="$2"
+    if [[ "$str" == *"$value" ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+str_starts_with() {
+    local str="$1"
+    local value="$2"
+    if [[ "$str" == "$value"* ]]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+str_contains() {
+    local str="$1"
+    local value="$2"
+    if [[ "$str" == *"$value"* ]]; then
+        return 0
+    else
+        return 1
+    fi
 }

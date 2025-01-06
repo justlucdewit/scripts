@@ -45,8 +45,8 @@ composite_define_subcommand_parameter() {
     local parameter="$2"
     local description="$3"
 
-    CURRENT_COMPOSITE_SUBCOMMAND_PARAMETER["$subcommand"]="$parameter"
-    CURRENT_COMPOSITE_SUBCOMMAND_PARAMETER["$subcommand/$parameter"]="$description"
+    CURRENT_COMPOSITE_SUBCOMMAND_PARAMETER["$subcommand/$parameter"]="$parameter"
+    CURRENT_COMPOSITE_SUBCOMMAND_PARAMETER_DESCRIPTION["$subcommand/$parameter"]="$description"
 }
 
 composite_print_help_message() {
@@ -58,8 +58,6 @@ composite_print_help_message() {
 
     echo -e "${LSR_STYLE_UNDERLINE}Usage:${LSR_STYlE_RESET}\n " $CURRENT_COMPOSITE_COMMAND "[COMMAND]" "[ARGUMENTS]" "\n"
     echo -e "${LSR_STYLE_UNDERLINE}Commands:${LSR_STYlE_RESET}"
-
-    
 
     # Start with 4 due to 'help' command
     local longest_command_length=4
@@ -96,6 +94,24 @@ composite_print_help_message() {
         fi
 
         echo
+
+        local longest_parameter_length=1
+        for key in "${!CURRENT_COMPOSITE_SUBCOMMAND_PARAMETER[@]}"; do
+            local value="${CURRENT_COMPOSITE_SUBCOMMAND_PARAMETER[$key]}"
+            if [[ "$key" == "$subcommand/"* && "${#value}" -gt "$longest_parameter_length" ]]; then
+                longest_parameter_length="${#value}"
+            fi
+        done
+
+        for key in "${!CURRENT_COMPOSITE_SUBCOMMAND_PARAMETER[@]}"; do
+            if [[ "$key" == "$subcommand/"* ]]; then
+                local value="${CURRENT_COMPOSITE_SUBCOMMAND_PARAMETER[$key]}"
+                local value_length="${#value}"
+
+                local description="${CURRENT_COMPOSITE_SUBCOMMAND_PARAMETER_DESCRIPTION[$subcommand/$value]}"
+                echo "    $value$(str_repeat " " "$((longest_parameter_length - value_length))") $description"
+            fi
+        done
     done
 }
 
@@ -104,7 +120,7 @@ composite_handle_subcommand() {
     shift
 
     # Help sub command
-    if [[ "$subcommand" == "" || "$subcommand" == "help" ]]; then
+    if str_empty "$subcommand" || "$subcommand" == "help"; then
         composite_print_help_message
         return 0
     fi

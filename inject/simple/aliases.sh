@@ -14,6 +14,9 @@ LSR_STYLE_DIM='\e[2m'
 LSR_STYLE_BOLD='\e[1m'
 LSR_STYlE_RESET='\e[0m'
 
+alias true=0
+alias false=1
+
 # Aliases for standard bash commands
 alias c='clear'
 alias l="ls -la"

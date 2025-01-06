@@ -105,15 +105,15 @@ notes_make() {
     local month="$2"
     local year="$3"
 
-    if [[ "$day" == "" ]]; then
+    if str_empty "$day"; then
         day="$LSR_DAY"
     fi
 
-    if [[ "$month" == "" ]]; then
+    if str_empty "$month"; then
         month="$LSR_MONTH"
     fi
 
-    if [[ "$year" == "" ]]; then
+    if str_empty "$year"; then
         year="$LSR_YEAR"
     fi
 

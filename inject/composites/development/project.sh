@@ -124,10 +124,10 @@ project_current() {
 
 project_select() {
     projects_output=$(project list)
-    projects_list=$(echo "$projects_output" | grep '^ - ' | awk '{sub(/^ - /, ""); if (NR > 1) printf ","; printf "%s", $0} END {print ""}')
+    projects_list=$(echo "$projects_output" | grep '^ - ' | awk '{sub(/^ - /, ""); if (NR > 1) printf ","; printf "\"%s\"", $0} END {print ""}')
     
     local value=""
-    selectable_list "Select a project" value "$projects_list"
+    selectable_list "Select a project" value "[$projects_list]"
     project go $value
 }
 

@@ -31,7 +31,7 @@ lsrversion_download() {
 lsrversion_current() {
     local current_version="$(grep "source \"$HOME/scripts/versions/" "$HOME/.bashrc" | awk -F'/' '{print $(NF-1)}')"
 
-    if [[ "$current_version" == "" ]]; then
+    if str_empty "$current_version"; then
         print_warn "LSR is not installed"
         return
     fi
