@@ -65,15 +65,15 @@ overwrite_ls() {
         # echo
 
         if [[ "$type" == "dir" && "$name" != "." && "$name" != ".." ]]; then
-            if [[ -n "$dirs_list_txt$symlink_list_txt$files_list_txt$executable_list_txt" ]]; then
+            if [[ -n "$dirs_list_txt" ]]; then
                 dirs_list_txt+=$'\n'
             fi
             
-            dirs_list_txt+=" 🗂️ $name"
+            dirs_list_txt+=" 📁 $name"
         fi
 
         if [[ "$type" == "symlink" ]]; then
-            if [[ -n "$dirs_list_txt$symlink_list_txt$files_list_txt$executable_list_txt" ]]; then
+            if [[ -n "$symlink_list_txt" ]]; then
                 symlink_list_txt+=$'\n'
             fi
 
@@ -81,7 +81,7 @@ overwrite_ls() {
         fi
 
         if [[ "$type" == "file" ]]; then
-            if [[ -n "$dirs_list_txt$symlink_list_txt$files_list_txt$executable_list_txt" ]]; then
+            if [[ -n "$files_list_txt" ]]; then
                 files_list_txt+=$'\n'
             fi
 
@@ -89,7 +89,7 @@ overwrite_ls() {
         fi
 
         if [[ "$type" == "executable" ]]; then
-            if [[ -n "$dirs_list_txt$symlink_list_txt$files_list_txt$executable_list_txt" ]]; then
+            if [[ -n "$executable_list_txt" ]]; then
                 executable_list_txt+=$'\n'
             fi
 
@@ -97,10 +97,38 @@ overwrite_ls() {
         fi
     done < <($LSR_ORIGINAL_LS -la "$dir_location" | tail -n +2)
 
-    echo -n "$dirs_list_txt"
-    echo -n "$symlink_list_txt"
-    echo -n "$files_list_txt"
-    echo -n "$executable_list_txt"
-    echo
+    local first_one=true
+    if [[ -n $dirs_list_txt ]]; then
+        echo "$dirs_list_txt"
+        first_one=false
+    fi
+
+    if [[ -n $symlink_list_txt ]]; then
+        if [[ "$first_one" == "true" ]]; then
+            echo
+        fi
+
+        echo "$symlink_list_txt"
+        first_one=false
+    fi
+
+    if [[ -n $files_list_txt ]]; then
+        if [[ "$first_one" == "true" ]]; then
+            echo
+        fi
+
+        echo "$files_list_txt"
+        first_one=false
+    fi
+
+    if [[ -n $executable_list_txt ]]; then
+        if [[ "$first_one" == "true" ]]; then
+            echo
+        fi
+
+        echo "$executable_list_txt"
+        first_one=false
+    fi
+
     echo
 }

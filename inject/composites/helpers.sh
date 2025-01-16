@@ -120,14 +120,14 @@ composite_handle_subcommand() {
     shift
 
     # Help sub command
-    if str_empty "$subcommand" || "$subcommand" == "help"; then
+    if str_empty "$subcommand" || str_equals "$subcommand" "help"; then
         composite_print_help_message
         return 0
     fi
 
     for attempted_subcommand in "${CURRENT_COMPOSITE_SUBCOMMANDS[@]}"; do
         if [[ "$attempted_subcommand" == "$subcommand" ]]; then
-            eval "${CURRENT_COMPOSITE_COMMAND}_$subcommand $@"
+            eval "${CURRENT_COMPOSITE_COMMAND}_$subcommand \"$@\""
             return 0
         fi
     done
@@ -136,10 +136,6 @@ composite_handle_subcommand() {
     print_error "Try '$CURRENT_COMPOSITE_COMMAND help' instead"
     return 1
 }
-
-
-
-
 
 # Helpers for flags and parameters
 composite_help_get_flags() {

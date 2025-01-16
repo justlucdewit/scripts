@@ -126,6 +126,17 @@ str_empty() {
     fi
 }
 
+str_equals() {
+    local str1="$1"
+    local str2="$2"
+
+    if [[ "$str1" == "$str2" ]]; then
+        return 0
+    fi
+
+    return 1
+}
+
 str_ends_with() {
     local str="$1"
     local value="$2"

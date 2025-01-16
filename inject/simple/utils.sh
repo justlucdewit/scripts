@@ -14,6 +14,7 @@ table() {
     local colCount="${#headers[@]}"
     local colLengths=()
     for header in "${headers[@]}"; do
+        header=$(echo -e "$header" | sed -E 's/\x1B\[[0-9;]*[a-zA-Z]//g')
         local headerLength="${#header}"
         colLengths+=("$headerLength")
     done
@@ -28,7 +29,7 @@ table() {
 
         IFS=',' read -r -a rowValues <<< "$row"
         for ((i = 0; i < ${#rowValues[@]}; i++)); do
-            local value=$(echo "${rowValues[i]}" | sed 's/__ESCAPED_COMMA__/,/g')
+            local value=$(echo -e "${rowValues[i]}" | sed 's/__ESCAPED_COMMA__/,/g' | sed -E 's/\x1B\[[0-9;]*[a-zA-Z]//g')
             local valueLength="${#value}"
             local currColWidth="${colLengths[i]}"
 
@@ -58,7 +59,7 @@ table() {
         local headerLength="${colLengths[i]}"
         local currHeaderLength="${#header}"
 
-        echo -n "│ $header"
+        echo -ne "│ $header"
         echo -n "$(printf ' %.0s' $(seq 1 $(( headerLength - currHeaderLength + 1 ))))"
     done
     echo "│"
@@ -85,11 +86,14 @@ table() {
         IFS=',' read -r -a rowValues <<< "$row"
         for ((i = 0; i < ${#rowValues[@]}; i++)); do
             local value=$(echo "${rowValues[i]}" | sed 's/__ESCAPED_COMMA__/,/g')
+            local clean_value=$(echo -e "${rowValues[i]}" | sed 's/__ESCAPED_COMMA__/,/g' | sed -E 's/\x1B\[[0-9;]*[a-zA-Z]//g')
             local currColLength="${colLengths[i]}"
-            local currValuelength="${#value}"
+            local currValuelength="${#clean_value}"
             local numberOfSpacesNeeded="$((currColLength - currValuelength + 1))"
 
-            echo -n "│ $value"
+            # echo "<$numberOfSpacesNeeded>"
+
+            echo -ne "│ $value"
             echo -n "$(printf ' %.0s' $(seq 1 $numberOfSpacesNeeded))"
         done
         echo "│"

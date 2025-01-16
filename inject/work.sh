@@ -35,7 +35,7 @@ work() {
 
     # Loop through all subdirectories (assuming they are Git repositories)
     reset_ifs
-    for repo in $(localsettings_eval ".projects[] | .dir"); do # Go through all of the projects
+    for repo in $(jq -r ".[] | \"$HOME/projects/\" + .repo" "$HOME/projects/projects.json"); do # Go through all of the projects
         if [ -d "$repo/.git" ]; then # If they are git repos
             # Change into the repository's directory, fetch all
             cd "$repo" || continue
@@ -86,7 +86,7 @@ work() {
                     fi
 
                     # Customize the output with colors
-                    echo -e "\033[32m$username\033[0m@\033[33m$time\033[0m\033[0m: $commit_message"
+                    echo -e "\033[32m$username\033[0m@\033[33m$time\033[0m\033[0m$LSR_COLOR_BLUE#$commit_hash$LSR_COLOR_RESET: $commit_message"
                 done <<< "$commits"
             fi
 

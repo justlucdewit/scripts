@@ -199,6 +199,10 @@ scripts_list() {
         basename="${filename%.sh}"  # Remove the .sh suffix
 
         if [[ "$basename" != "*" && $basename != _* ]]; then
+            if [[ -f "./_lsr_scripts/.lsrignore" && -n $(cat "./_lsr_scripts/.lsrignore" | grep "^$file$") ]]; then
+                continue
+            fi
+
             bashScriptsTxt+=" - $basename"
             bashScriptsTxt+=$'\n'
         fi
@@ -208,6 +212,10 @@ scripts_list() {
         basename="${filename%.sh}"  # Remove the .sh suffix
 
         if [[ "$basename" != "*"  && $basename != _* ]]; then
+            if [[ -f "./_lsr_scripts/.lsrignore" && -n $(cat "./_lsr_scripts/.lsrignore" | grep "^$file$") ]]; then
+                continue
+            fi
+
             bashScriptsTxt+=" - $basename"
             bashScriptsTxt+=$'\n'
         fi
