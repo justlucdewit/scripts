@@ -38,3 +38,37 @@ fi
 if [[ "$LSR_TYPE" != "LSR-LITE" ]]; then
     tmux set -g status off
 fi
+
+# Print welcome message
+print_info "Welcome $(whoami)!"
+print_info "Today is $(date "+%d-%m-%Y")"
+
+# Create notes dir
+mkdir -p "$LSR_NOTES_DIR"
+mkdir -p "$LSR_NOTES_DIR/journal"
+day="$LSR_DAY"
+month="$LSR_MONTH"
+year="$LSR_YEAR"
+journal_file="$LSR_NOTES_DIR/journal/$year-$month/$year-$month-$day.md"
+journal_dir="$(dirname $journal_file)"
+
+if [[ ! -f "$journal_file" ]]; then
+    mkdir -p "$journal_dir"
+    {
+        echo "# Done: "
+        echo ""
+        echo "# Todo: "
+        echo ""
+        echo "# Backlog: "
+        echo ""
+    } > "$journal_file"
+fi
+
+day_count="$(find $HOME/notes/journal/ -type f | wc -l)"
+
+# Print more information when LSR-FULL is loaded
+if [[ "$LSR_TYPE" != "LSR-LITE" ]]; then
+    print_info "Today is your workday number $day_count!"
+fi
+
+echo

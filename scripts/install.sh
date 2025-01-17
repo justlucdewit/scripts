@@ -100,7 +100,6 @@ install_lsr() {
     {
 	    echo -e "\n\n$BASHRC_STARTER\n$BASHRC_IDENTIFIER\n"
 	    echo -e "source \"$BUILD_FILE_PATH\" # Load LSR in current session\n" # Source the script
-	    echo -e "print_info \"LSR $version $type Has been loaded in current session\"\n" # Source the script
 	    echo -e "$BASHRC_ENDERER"
 	} >> "$BASHRC_PATH"
 
