@@ -1,5 +1,4 @@
 source ~/scripts/inject/simple/aliases.sh
-source "$HOME/scripts/inject/simple/io_helpers.sh"
 source "$HOME/scripts/inject/simple/helpers.sh"
 
 alias lsr="lsr_main_command"
@@ -130,7 +129,6 @@ lsr_compile() {
 
     local lite_scripts_to_compile=(
         "simple/helpers"
-        "simple/io_helpers"
         "simple/aliases"
         "simple/scripted_fallback"
         "simple/custom_ps1"
@@ -149,13 +147,11 @@ lsr_compile() {
         "composites/term_app/window"
         "composites/utils/list"
         "composites/utils/obj"
-        "composites/development/project"
     )
 
     local scripts_to_compile=(
         "simple/helpers"
         "simple/requirementCheck" # TODO attempt to make SSH-safe
-        "simple/io_helpers"
         "simple/aliases"
         "simple/scripted_fallback"
         "simple/custom_ps1"
@@ -186,7 +182,6 @@ lsr_compile() {
         "composites/development/scripts" # TODO attempt to make SSH-safe
         "composites/development/profile" # TODO attempt to make SSH-safe
         "composites/development/goto" # TODO attempt to make SSH-safe
-        "composites/development/project"
         "composites/development/wsl" # TODO attempt to make SSH-safe
         "composites/development/notes" # TODO attempt to make SSH-safe
         "composites/system/account" # TODO attempt to make SSH-safe

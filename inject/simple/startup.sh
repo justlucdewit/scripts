@@ -1,3 +1,5 @@
+# Use the core functionality
+source "$HOME/scripts/core/lsr.core.sh"
 
 # Inject the LSR gitconfig in the global gitconfig
 if [[ "$LSR_TYPE" != "LSR-LITE" ]]; then

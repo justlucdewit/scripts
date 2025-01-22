@@ -5,7 +5,7 @@ BLUE='\033[0;34m'
 RESET='\033[0m'
 
 get_dir_part() {
-    current_project=$(project_current)
+    current_project=$(project current)
 
     if [[ -n $current_project ]]; then
         echo " 🔧 $current_project "
