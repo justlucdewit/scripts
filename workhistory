@@ -1,0 +1,132 @@
+#! /bin/bash
+source "$HOME/.lsr_core/core/lsr.core.sh"
+
+JOURNAL_DIRECTORY="/mnt/c/Users/LucdeWit/My Drive (lucdw2001@gmail.com)/notes/journal"
+JQ_OBJECT_COMMAND="echo \"{}\" | jq \""
+DATE_FILTER="*"
+alias true=0
+alias false=1
+
+LSR_SET_COMMAND "workhistory"
+LSR_SET_SUBCOMMAND "projects"
+LSR_SET_SUBCOMMAND "tasks"
+
+LSR_DESCRIBE_SUBCOMMAND "projects" "List all projects that have been worked on"
+LSR_DESCRIBE_SUBCOMMAND "day" "Give summary of tasks on a specific date-query"
+
+
+function parse_file() {
+    local file="$1"
+    local day="$(basename "$file")"
+    day="${day%.md}"
+    local in_done_section=false  # Boolean to track whether we are in the # Done section
+
+    if [[ "$day" != $DATE_FILTER ]]; then
+        return
+    fi
+
+    # Read the file line by line
+    while IFS= read -r line; do
+
+        # Keep track of section
+        if [[ "$line" == "#"* ]]; then
+            if [[ "$line" == "# Done"* ]]; then
+                in_done_section=true
+            else
+                in_done_section=false
+            fi
+        fi
+
+        # If in the # Done section, check for lines starting with "- " or " -"
+        if $in_done_section && [[ "$line" == "-"* || "$line" == " -"* ]]; then
+            # Remove the leading `-` and surrounding spaces
+            line=$(echo "$line" | sed -E 's/^[[:space:]]*-[[:space:]]*//')
+            
+            # Extract the hours
+            local hours=$(echo "$line" | grep -oE '^\[[0-9]+(\.[0-9]+)?\]' | sed 's/[\[\]]//g' | tr -d '[]')
+            line=$(echo "$line" | sed -E 's/^\[[0-9]+(\.[0-9]+)?\][[:space:]]*//')
+
+            local project=$(echo "$line" | cut -d'/' -f1)
+            local task=$(echo "$line" | cut -d'/' -f2-)
+
+            if [[ -z "$hours" ]]; then
+                hours="0"
+            fi
+
+            # Add this project's task to the jq object
+            JQ_OBJECT_COMMAND+=".[\\\"$project\\\"]//={} | .[\\\"$project\\\"].tasks += [ { description: \\\"$(echo "$task" | awk '$1=$1' )\\\", day: \\\"$day\\\", hours: $hours } ] | "
+        fi
+    done < "$file"
+
+    # After the loop, output the result of the accumulated jq object
+    # echo "$JQ_OBJECT_COMMAND"
+}
+
+function workhistory_projects() {
+    echo "All projects worked on: "
+    local table_rows=()
+
+    while IFS= read -r filepath; do
+        dirname=$(dirname "$filepath")
+        filename=$(basename "$filepath")
+
+        parse_file "$filepath"
+
+        # JQ_OBJECT_COMMAND="$(parse_file "$filepath")"
+    done < <(find "$JOURNAL_DIRECTORY" -type f -name "*.md")
+
+    # Now JQ_OBJECT_COMMAND should have the correct value
+    local jq_object="${JQ_OBJECT_COMMAND%???}\""
+    local projects_list="$(eval "$jq_object")"
+    projects_list="$(echo "$projects_list" | jq 'to_entries | .[] | .value.total_hours = ( .value.tasks | map(.hours) | add )')"
+
+    echo "$projects_list" | jq -r "\" - \" + .key"
+
+    # table "project,task count,hour count"
+}
+
+function workhistory_tasks() {
+    local date_filter="2025-01-23"
+    local table_rows=()
+    echo "Overview of tasks done"
+    echo "Date filter: $date_filter"
+    echo
+
+    if LSR_PARAMETER_GIVEN "--date"; then
+        DATE_FILTER="$(LSR_PARAMETER_VALUE "--date")"
+    fi
+
+    while IFS= read -r filepath; do
+        dirname=$(dirname "$filepath")
+        filename=$(basename "$filepath")
+
+        parse_file "$filepath"
+
+        # JQ_OBJECT_COMMAND="$(parse_file "$filepath")"
+    done < <(find "$JOURNAL_DIRECTORY" -type f -name "*.md")
+
+    # Now JQ_OBJECT_COMMAND should have the correct value
+    local jq_object="${JQ_OBJECT_COMMAND%???}\""
+    local projects_list="$(eval "$jq_object")"
+    projects_list="$(echo "$projects_list" | jq 'to_entries | .[] | .value.total_hours = ( .value.tasks | map(.hours) | add )')"
+
+    # Get all the tasks belonging to the specific filters
+
+    # .tasks | select(.day == \"$date_filter\")
+    local task_rows="$(echo "$projects_list" | jq -r ".value.tasks[].project=.key | .value.tasks[] | .project + \",\" + .description + \",\" + \"\\(.hours)\"")"
+    local total_hours="$(echo "$projects_list" | jq -r ".value.total_hours" | jq -s "add")"
+
+    IFS=$'\n'
+    read -r -d '' -a lines <<< "$task_rows"
+    for task in "${lines[@]}"; do
+        table_rows+=("$task")
+    done
+
+    table "Project,Task,Hours" "${table_rows[@]}"
+    echo "Total amount of hours: $total_hours"
+}
+
+
+LSR_CLI_INPUT_PARSER $@
+LSR_HANDLE_COMMAND "${LSR_PARSED_ARGUMENTS[@]}"
+exit 0

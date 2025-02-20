@@ -1,0 +1,6 @@
+#!/bin/bash
+remote="$1"
+
+# source <(curl -s "https://raw.githubusercontent.com/justlucdewit/lsr_core/master/special/_remote_init.sh")
+
+ssh "$remote" -t "source <(curl -s \"https://raw.githubusercontent.com/justlucdewit/lsr_core/master/special/_remote_init.sh\")"
