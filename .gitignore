@@ -1,0 +1,10 @@
+*
+!.gitignore
+
+# Project script for project management. using my ~/projects/projects.json file
+!project/
+!project/*
+
+# Torn script for interacting with the Torn city API
+!torn/
+!torn/*
