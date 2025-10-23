@@ -8,3 +8,11 @@
 # Torn script for interacting with the Torn city API
 !torn/
 !torn/*
+
+# 2do script for task management
+!2do/
+!2do/*
+
+# Better-cat script for enhanced cat command
+!better_cat/
+!better_cat/*
